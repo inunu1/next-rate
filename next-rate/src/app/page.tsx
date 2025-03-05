@@ -89,6 +89,7 @@ export default function Home() {
           />
           Go to nextjs.org →
         </a>
+        Hello Inunu1!
       </footer>
     </div>
   );
