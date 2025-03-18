@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 
-// ダミーデータベース
-const players: any[] = [];
+// プレイヤー型の定義
+interface Player {
+  id: number;
+  name: string;
+  rating: number;
+}
+
+// プレイヤーデータ格納用のダミーデータベース
+const players: Player[] = [];
 
 export async function POST(req: Request) {
   try {
     const { name, rating } = await req.json();
 
-    // 簡易バリデーション
+    // バリデーション
     if (!name || !rating || isNaN(rating) || rating < 0) {
       return NextResponse.json(
         { message: "Invalid player data." },
@@ -15,13 +22,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // プレイヤー情報を保存（ダミーデータベース）
-    players.push({ id: players.length + 1, name, rating });
+    // 新規プレイヤー追加
+    const newPlayer: Player = {
+      id: players.length + 1,
+      name,
+      rating,
+    };
+
+    players.push(newPlayer);
+
     return NextResponse.json({
       message: "Player registered successfully!",
-      player: { name, rating },
+      player: newPlayer,
     });
   } catch (error) {
+    console.error("Error registering player:", error);
     return NextResponse.json({ message: "Registration failed." }, { status: 500 });
   }
 }
