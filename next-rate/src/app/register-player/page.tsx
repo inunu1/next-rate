@@ -1,14 +1,12 @@
-"use client"; // ✅ クライアントコンポーネントとして宣言
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function Signup() { // ← ここが default export
+export default function Signup() {
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
+    rating: "",
   });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -23,14 +21,23 @@ export default function Signup() { // ← ここが default export
     e.preventDefault();
     setError(null);
 
-    const res = await fetch("/api/register", {
+    // レートが数値かどうかチェック
+    if (isNaN(Number(formData.rating)) || Number(formData.rating) < 0) {
+      setError("Rating must be a valid positive number.");
+      return;
+    }
+
+    const res = await fetch("/api/register-player", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({
+        name: formData.name,
+        rating: Number(formData.rating), // 数値変換
+      }),
     });
 
     if (res.ok) {
-      router.push("/login"); // 登録後ログイン画面へ
+      router.push("/players"); // 登録後プレイヤー一覧ページへ
     } else {
       const data = await res.json();
       setError(data.message || "Registration failed.");
@@ -40,7 +47,7 @@ export default function Signup() { // ← ここが default export
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Add New Player</h2>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
@@ -49,41 +56,19 @@ export default function Signup() { // ← ここが default export
           <input
             type="text"
             name="name"
-            placeholder="Name"
+            placeholder="Player Name"
             value={formData.name}
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded"
             required
           />
 
-          {/* Email */}
+          {/* Rating */}
           <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Password */}
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Password Confirmation */}
-          <input
-            type="password"
-            name="password_confirmation"
-            placeholder="Confirm Password"
-            value={formData.password_confirmation}
+            type="number"
+            name="rating"
+            placeholder="Initial Rating"
+            value={formData.rating}
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded"
             required
@@ -94,7 +79,7 @@ export default function Signup() { // ← ここが default export
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
           >
-            Register
+            Register Player
           </button>
         </form>
       </div>
