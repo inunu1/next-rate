@@ -1,5 +1,6 @@
-import NextAuth, { AuthOptions } from "next-auth";
+import NextAuth, { AuthOptions, Session, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { JWT } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
@@ -14,15 +15,14 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials) return null;
 
-        // prisma.User に注意（Userは大文字）
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-        console.log("User fetched from DB:", user);  // ← ここにログ
+        console.log("User fetched from DB:", user);
         if (!user) return null;
 
         const isValid = await bcrypt.compare(credentials.password, user.hashedPassword);
-        console.log("Password valid:", isValid);    // ← ここにログ
+        console.log("Password valid:", isValid);
         if (!isValid) return null;
 
         return { id: user.id, email: user.email, name: user.name };
@@ -33,12 +33,26 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
+    async jwt({
+      token,
+      user,
+    }: {
+      token: JWT;
+      user?: User;
+    }): Promise<JWT> {
       if (user) token.id = user.id;
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
-      if (token && session.user) session.user.id = token.id as string;
+    async session({
+      session,
+      token,
+    }: {
+      session: Session;
+      token: JWT;
+    }): Promise<Session> {
+      if (token && session.user) {
+        (session.user as { id: string }).id = token.id as string;
+      }
       return session;
     },
   },
