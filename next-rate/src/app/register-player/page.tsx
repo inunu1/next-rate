@@ -1,4 +1,3 @@
-// ファイル: src/app/register-player/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -10,7 +9,7 @@ export default function RegisterPlayerPage() {
 
   const handleSubmit = () => {
     alert(`姓: ${lastName}, 名: ${firstName}, レート: ${rating}`);
-    window.close(); // 登録後にポップアップを閉じる
+    // window.close(); ← 通常のブラウザではセキュリティ上 close() は効果なしのことが多い
   };
 
   return (
