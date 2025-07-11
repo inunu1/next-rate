@@ -10,7 +10,7 @@ interface Player {
 }
 
 export default function IndexPlayerPage() {
-  const [players, setPlayers] = useState<Player[]>([
+  const [players, _setPlayers] = useState<Player[]>([
     { id: 1, lastName: '緒方', firstName: '健太', rating: 1500 },
     { id: 2, lastName: '白井', firstName: '大輔', rating: 1600 },
     { id: 3, lastName: '中深', firstName: '優', rating: 1450 },
