@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next",
+      "config": {
+        "includeFiles": [
+          "node_modules/.prisma/client/**",
+          "prisma/schema.prisma"
+        ]
+      }
+    }
+  ]
+}
