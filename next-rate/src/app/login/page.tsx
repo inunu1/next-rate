@@ -20,6 +20,7 @@ export default function LoginPage() {
     });
 
     if (res?.ok) {
+      console.log(res);
       router.push("/dashboard"); // ログイン後のページ
     } else {
       alert("ログインに失敗しました");
