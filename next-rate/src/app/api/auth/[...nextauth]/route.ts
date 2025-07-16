@@ -15,6 +15,7 @@ const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("authorize function called");
         if (!credentials) return null;
 
         const user = await prisma.user.findUnique({
