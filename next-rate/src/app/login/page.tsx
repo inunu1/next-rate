@@ -44,7 +44,7 @@ export default function LoginPage() {
           <label className="block text-sm font-medium">Password</label>
           <input
             type="password"
-            className="w-full border px-3 py-2 rounded"
+            className="w-full border px-30 py-2 rounded"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
