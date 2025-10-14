@@ -1,7 +1,7 @@
 .main {
   min-height: 100vh;
   padding: 2rem;
-  background-color: rgb(49, 143, 174);
+  background-color: #f0f4f8; /* 明るいブルーグレーで視認性◎ */
 }
 
 .title {
@@ -9,24 +9,19 @@
   font-weight: bold;
   margin-bottom: 2rem;
   text-align: center;
-}
-
-.centerBox {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 3rem;
+  color: #333;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  color: black;
   gap: 1.5rem;
   justify-items: center;
 }
 
-.cardBlue,
-.cardGreen,
-.cardYellow {
+/* 共通カードスタイル */
+.card {
   width: 240px;
   padding: 1.5rem;
   background-color: blue;
@@ -35,16 +30,18 @@
   text-align: center;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-weight: 500;
 }
 
+/* ホバー色（アクセント） */
 .cardBlue:hover {
-  background-color: #dbeafe;
+  background-color: yellow;
 }
 
 .cardGreen:hover {
-  background-color: #d1fae5;
+  background-color: yellow;
 }
 
 .cardYellow:hover {
-  background-color: #fef9c3;
+  background-color: yellow;
 }
