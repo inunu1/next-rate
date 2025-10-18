@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import styles from './DashboardPage.module.css';
+import styles from './Dashboard.module.css';
 
 export default function DashboardPage() {
   return (

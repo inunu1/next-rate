@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import styles from "./Login.module.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,43 +27,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md p-8 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg bg-white dark:bg-gray-800">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">
-          ログイン
-        </h1>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>ログイン</h1>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
+        <form onSubmit={handleLogin} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Email</label>
             <input
               type="email"
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.input}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Password
-            </label>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Password</label>
             <input
               type="password"
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.input}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors"
-          >
+          <button type="submit" className={styles.button}>
             ログイン
           </button>
         </form>
