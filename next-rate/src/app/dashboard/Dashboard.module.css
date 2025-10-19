@@ -1,20 +1,4 @@
 /* ============================
-   共通変数（カスタムプロパティ）
-============================ */
-:root {
-  --color-text-dark: #1f2937;
-  --color-text-light: #ffffff;
-  --color-blue: #3b82f6;
-  --color-blue-hover: #2563eb;
-  --color-green: #10b981;
-  --color-green-hover: #059669;
-  --color-yellow: #facc15;
-  --color-yellow-hover: #fbbf24;
-  --color-header-bg: gainsboro;
-  --color-overlay: rgba(0, 0, 0, 0.4);
-}
-
-/* ============================
    レイアウト・構造
 ============================ */
 .main {
