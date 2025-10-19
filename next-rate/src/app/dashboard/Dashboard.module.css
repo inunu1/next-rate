@@ -25,18 +25,21 @@
 ============================ */
 .button {
   display: block;
-  padding: 1rem;
+  padding: 2rem 1rem;
   text-align: center;
-  font-weight: bold;
+  font-size: 1.25rem;
+  font-weight: 700;
   border-radius: 0.5rem;
   text-decoration: none;
   transition: background-color 0.3s ease;
   color: var(--color-text-light);
   border: none;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .buttonBlue {
+  composes: button;
   background-color: var(--color-blue);
 }
 .buttonBlue:hover {
@@ -44,6 +47,7 @@
 }
 
 .buttonGreen {
+  composes: button;
   background-color: var(--color-green);
 }
 .buttonGreen:hover {
@@ -51,6 +55,7 @@
 }
 
 .buttonYellow {
+  composes: button;
   background-color: var(--color-yellow);
   color: var(--color-text-dark);
 }
@@ -91,7 +96,8 @@
 .navLink {
   composes: button buttonBlue;
   padding: 0.5rem 1rem;
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 1rem;
   border-radius: 0.375rem;
 }
 
