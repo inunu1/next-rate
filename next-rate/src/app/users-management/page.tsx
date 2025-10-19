@@ -6,11 +6,11 @@ import styles from './users-management.module.css';
 export default function Page() {
   return (
     <main className={styles.main}>
-      <h1 className={styles.title}>ダッシュボード</h1>
+      <h1 className={styles.title}>管理者管理画面</h1>
 
       <div className={styles.grid}>
         <Link href="/users-management" className={styles.buttonBlue}>
-          管理者画面
+          管理者追加
         </Link>
         <Link href="/players-management" className={styles.buttonBlue}>
           対局管理画面
