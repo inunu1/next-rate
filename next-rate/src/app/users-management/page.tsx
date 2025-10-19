@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import styles from './Dashboard.module.css';
+import styles from './users-management.module.css';
 
-export default function DashboardPage() {
+export default function Page() {
   return (
     <main className={styles.main}>
       <h1 className={styles.title}>ダッシュボード</h1>
