@@ -1,0 +1,41 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-top: 2rem;
+}
+
+.buttonBlue,
+.buttonGreen,
+.buttonYellow {
+  display: block;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.buttonBlue {
+  background-color: #3b82f6;
+}
+.buttonBlue:hover {
+  background-color: #2563eb;
+}
+
+.buttonGreen {
+  background-color: #10b981;
+}
+.buttonGreen:hover {
+  background-color: #059669;
+}
+
+.buttonYellow {
+  background-color: #facc15;
+  color: #1f2937;
+}
+.buttonYellow:hover {
+  background-color: #fbbf24;
+}
