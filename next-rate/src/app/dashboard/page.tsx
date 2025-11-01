@@ -1,5 +1,6 @@
 'use client';
 
+import { signOut } from 'next-auth/react';
 import styles from './Dashboard.module.css';
 
 export default function DashboardPage() {
@@ -12,10 +13,7 @@ export default function DashboardPage() {
           <nav className={styles.nav}>
             <button
               className={styles.navLink}
-              onClick={() => {
-                // ログアウト処理をここに実装
-                console.log('ログアウト処理');
-              }}
+              onClick={() => signOut({ callbackUrl: '/login' })}
             >
               ログアウト
             </button>
