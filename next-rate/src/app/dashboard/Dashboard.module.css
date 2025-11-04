@@ -1,131 +1,29 @@
-/* ============================
-   レイアウト・構造
-============================ */
-.main {
-  background-color: var(--color-text-light);
+.container {
   padding: 2rem;
+  text-align: center;
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 2rem;
   margin-bottom: 1.5rem;
-  color: var(--color-text-dark);
 }
 
-.grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  margin-top: 2rem;
-}
-
-/* ============================
-   ボタンスタイル
-============================ */
-.button {
-  display: block;
-  padding: 2rem 1rem;
-  text-align: center;
-  font-size: 2.5rem;
-  font-weight: 700;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-  color: var(--color-text-light);
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.buttonBlue {
-  composes: button;
-  background-color: var(--color-blue);
-}
-.buttonBlue:hover {
-  background-color: var(--color-blue-hover);
-}
-
-.buttonGreen {
-  composes: button;
-  background-color: var(--color-green);
-}
-.buttonGreen:hover {
-  background-color: var(--color-green-hover);
-}
-
-.buttonYellow {
-  composes: button;
-  background-color: var(--color-yellow);
-  color: var(--color-text-dark);
-}
-.buttonYellow:hover {
-  background-color: var(--color-yellow-hover);
-}
-
-/* ============================
-   ナビゲーションバー
-============================ */
-.header {
-  background-color: var(--color-header-bg);
-  padding: 1rem 2rem;
-  color: var(--color-text-dark);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.navContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--color-text-dark);
-}
-
-.nav {
+.buttonGroup {
   display: flex;
   gap: 1rem;
-}
-
-.navLink {
-  composes: button buttonBlue;
-  padding: 0.5rem 1rem;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 0.375rem;
-}
-
-.navLink.active {
-  background-color: #1d4ed8;
-}
-
-/* ============================
-   モーダル（ポップアップ）
-============================ */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--color-overlay);
-  display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 100;
 }
 
-.modal {
-  background-color: var(--color-text-light);
-  padding: 2rem;
-  border-radius: 0.5rem;
-  width: 400px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  text-align: center;
+.button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #005bb5;
 }
