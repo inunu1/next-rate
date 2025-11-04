@@ -1,6 +1,6 @@
 'use client';
 
-import styles from './DashboardClient.module.css';
+import styles from './Dashboard.module.css';
 
 export default function DashboardClient() {
   return (
