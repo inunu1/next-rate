@@ -27,7 +27,7 @@
 
 .navButton {
   padding: 0.5rem 1rem;
-  background-color: #e53e3e;
+  background-color: #3182ce;
   color: white;
   border: none;
   border-radius: 4px;
@@ -35,7 +35,7 @@
 }
 
 .navButton:hover {
-  background-color: #c53030;
+  background-color: #2b6cb0;
 }
 
 .main {

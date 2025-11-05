@@ -21,7 +21,7 @@ export default function DashboardClient() {
               console.log('レーティング計算実行');
             }}
           >
-            レーティング計算
+            レート計算
           </button>
         </div>
       </header>
