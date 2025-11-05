@@ -1,16 +1,20 @@
 'use client';
 
 import styles from './Admin.module.css';
+import { AdminUser } from '@/types/admin';
 import { useState } from 'react';
 
-export default function AdminClient() {
+type Props = {
+  users: AdminUser[];
+};
+
+export default function AdminClient({ users }: Props) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
 
   const handleRegister = () => {
     console.log('登録処理:', { email, name, password });
-    // TODO: API呼び出しで登録処理を実装
   };
 
   return (
@@ -59,15 +63,16 @@ export default function AdminClient() {
             </tr>
           </thead>
           <tbody>
-            {/* TODO: 管理者一覧をマッピング表示 */}
-            <tr>
-              <td>admin@example.com</td>
-              <td>管理者A</td>
-              <td>
-                <button className={styles.actionButton}>編集</button>
-                <button className={styles.actionButton}>削除</button>
-              </td>
-            </tr>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.email}</td>
+                <td>{user.name ?? '未設定'}</td>
+                <td>
+                  <button className={styles.actionButton}>編集</button>
+                  <button className={styles.actionButton}>削除</button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </main>
