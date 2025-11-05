@@ -1,15 +1,28 @@
 .container {
+  background-color: white; /* ✅ 背景を白に変更 */
   padding: 2rem;
+  min-height: 100vh;
 }
 
 .menuBar {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  background-color: #f0f0f0; /* グレー背景 */
-  padding: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f0f0f0; /* ✅ グレー背景 */
+  padding: 1rem 2rem;
   border-radius: 6px;
+  margin-bottom: 2rem;
+}
+
+.menuTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.menuActions {
+  display: flex;
+  gap: 1rem;
 }
 
 .navButton {
@@ -27,11 +40,6 @@
 
 .main {
   text-align: center;
-}
-
-.title {
-  font-size: 2rem;
-  margin-bottom: 2rem;
 }
 
 .grid {

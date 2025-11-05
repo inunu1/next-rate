@@ -7,25 +7,27 @@ export default function DashboardClient() {
     <div className={styles.container}>
       {/* メニューバー */}
       <header className={styles.menuBar}>
-        <button
-          className={styles.navButton}
-          onClick={() => location.href = '/api/auth/signout'}
-        >
-          ログアウト
-        </button>
-        <button
-          className={styles.navButton}
-          onClick={() => {
-            console.log('レーティング計算実行');
-          }}
-        >
-          レーティング計算
-        </button>
+        <h1 className={styles.menuTitle}>トップメニュー</h1>
+        <div className={styles.menuActions}>
+          <button
+            className={styles.navButton}
+            onClick={() => location.href = '/api/auth/signout'}
+          >
+            ログアウト
+          </button>
+          <button
+            className={styles.navButton}
+            onClick={() => {
+              console.log('レーティング計算実行');
+            }}
+          >
+            レーティング計算
+          </button>
+        </div>
       </header>
 
       {/* メインコンテンツ */}
       <main className={styles.main}>
-        <h1 className={styles.title}>トップメニュー</h1>
         <div className={styles.grid}>
           <button className={styles.gridButton} onClick={() => location.href = '/admin'}>
             管理者管理
