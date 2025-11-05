@@ -26,14 +26,14 @@ export default function DashboardClient() {
       {/* メインコンテンツ */}
       <main className={styles.main}>
         <h1 className={styles.title}>トップメニュー</h1>
-        <div className={styles.buttonGroup}>
-          <button className={styles.button} onClick={() => location.href = '/admin'}>
+        <div className={styles.grid}>
+          <button className={styles.gridButton} onClick={() => location.href = '/admin'}>
             管理者管理
           </button>
-          <button className={styles.button} onClick={() => location.href = '/player'}>
+          <button className={styles.gridButton} onClick={() => location.href = '/player'}>
             対局者管理
           </button>
-          <button className={styles.button} onClick={() => location.href = '/result'}>
+          <button className={styles.gridButton} onClick={() => location.href = '/result'}>
             対局結果管理
           </button>
         </div>
