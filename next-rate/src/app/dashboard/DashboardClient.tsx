@@ -16,7 +16,6 @@ export default function DashboardClient() {
         <button
           className={styles.navButton}
           onClick={() => {
-            // レーティング計算処理（API呼び出しなどに置き換え可能）
             console.log('レーティング計算実行');
           }}
         >
