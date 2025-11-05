@@ -7,7 +7,7 @@ export default function DashboardClient() {
     <div className={styles.container}>
       {/* メニューバー */}
       <header className={styles.menuBar}>
-        <h1 className={styles.menuTitle}>トップメニュー</h1>
+        <h1 className={styles.menuTitle}>メニュー</h1>
         <div className={styles.menuActions}>
           <button
             className={styles.navButton}
