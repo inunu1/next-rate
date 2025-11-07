@@ -2,6 +2,7 @@
 
 import styles from './Admin.module.css';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AdminUser } from '@/types/admin';
 
 type Props = {
@@ -9,10 +10,22 @@ type Props = {
 };
 
 export default function AdminClient({ users }: Props) {
+  const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [adminList, setAdminList] = useState(users);
+
+  const fetchAdmins = async () => {
+    const res = await fetch('/api/admin');
+    if (!res.ok) {
+      alert('一覧取得に失敗しました');
+      return [];
+    }
+    const data: AdminUser[] = await res.json();
+    return data;
+  };
 
   const handleRegister = async () => {
     try {
@@ -28,16 +41,17 @@ export default function AdminClient({ users }: Props) {
         return;
       }
 
-      const newUser: AdminUser = await res.json();
-      alert(`登録成功: ${newUser.email}`);
-
-      // 入力クリア
+      alert('登録成功');
       setEmail('');
       setName('');
       setPassword('');
 
-      // 一覧に追加
-      setAdminList((prev) => [newUser, ...prev]);
+      // ✅ 最新一覧を取得して反映
+      const updatedList = await fetchAdmins();
+      setAdminList(updatedList);
+
+      // ✅ 管理者管理画面へリダイレクト（再表示）
+      router.push('/admin');
     } catch (err) {
       alert('通信エラーが発生しました');
       console.error(err);
