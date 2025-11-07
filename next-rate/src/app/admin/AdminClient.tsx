@@ -1,8 +1,8 @@
 'use client';
 
 import styles from './Admin.module.css';
-import { AdminUser } from '@/types/admin';
 import { useState } from 'react';
+import { AdminUser } from '@/types/admin';
 
 type Props = {
   users: AdminUser[];
@@ -12,9 +12,36 @@ export default function AdminClient({ users }: Props) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [adminList, setAdminList] = useState(users);
 
-  const handleRegister = () => {
-    console.log('登録処理:', { email, name, password });
+  const handleRegister = async () => {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, password }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`登録失敗: ${error.error}`);
+        return;
+      }
+
+      const newUser: AdminUser = await res.json();
+      alert(`登録成功: ${newUser.email}`);
+
+      // 入力クリア
+      setEmail('');
+      setName('');
+      setPassword('');
+
+      // 一覧に追加
+      setAdminList((prev) => [newUser, ...prev]);
+    } catch (err) {
+      alert('通信エラーが発生しました');
+      console.error(err);
+    }
   };
 
   return (
@@ -63,7 +90,7 @@ export default function AdminClient({ users }: Props) {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {adminList.map((user) => (
               <tr key={user.id}>
                 <td>{user.email}</td>
                 <td>{user.name ?? '未設定'}</td>
