@@ -1,8 +1,6 @@
 'use client';
 
 import styles from './Admin.module.css';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { AdminUser } from '@/types/admin';
 
 type Props = {
@@ -10,90 +8,22 @@ type Props = {
 };
 
 export default function AdminClient({ users }: Props) {
-  const router = useRouter();
-
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [adminList, setAdminList] = useState(users);
-
-  const fetchAdmins = async () => {
-    const res = await fetch('/api/admin');
-    if (!res.ok) {
-      alert('一覧取得に失敗しました');
-      return [];
-    }
-    const data: AdminUser[] = await res.json();
-    return data;
-  };
-
-  const handleRegister = async () => {
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, password }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        alert(`登録失敗: ${error.error}`);
-        return;
-      }
-
-      alert('登録成功');
-      setEmail('');
-      setName('');
-      setPassword('');
-
-      // ✅ 最新一覧を取得して反映
-      const updatedList = await fetchAdmins();
-      setAdminList(updatedList);
-
-      // ✅ 管理者管理画面へリダイレクト（再表示）
-      router.push('/admin');
-    } catch (err) {
-      alert('通信エラーが発生しました');
-      console.error(err);
-    }
-  };
-
   return (
     <div className={styles.container}>
       {/* メニューバー */}
       <header className={styles.menuBar}>
         <h1 className={styles.title}>管理者管理</h1>
-        <button className={styles.registerButton} onClick={handleRegister}>
-          管理者登録
-        </button>
       </header>
 
       {/* フォームバー */}
-      <section className={styles.formBar}>
-        <input
-          className={styles.input}
-          type="email"
-          placeholder="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className={styles.input}
-          type="text"
-          placeholder="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className={styles.input}
-          type="password"
-          placeholder="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </section>
+      <form action="/admin/register" method="POST" className={styles.formBar}>
+        <input name="email" type="email" placeholder="email" required className={styles.input} />
+        <input name="name" type="text" placeholder="name" className={styles.input} />
+        <input name="password" type="password" placeholder="password" required className={styles.input} />
+        <button type="submit" className={styles.registerButton}>管理者登録</button>
+      </form>
 
-      {/* メインコンテンツ */}
+      {/* 一覧表示 */}
       <main className={styles.main}>
         <table className={styles.table}>
           <thead>
@@ -104,7 +34,7 @@ export default function AdminClient({ users }: Props) {
             </tr>
           </thead>
           <tbody>
-            {adminList.map((user) => (
+            {users.map((user) => (
               <tr key={user.id}>
                 <td>{user.email}</td>
                 <td>{user.name ?? '未設定'}</td>
