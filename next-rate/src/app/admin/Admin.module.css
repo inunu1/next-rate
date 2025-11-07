@@ -55,11 +55,12 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  color: :black;
 }
 
 .table th,
 .table td {
-  border: 1px solid #ccc;
+  border: 1px solid #0b0b0b;
   padding: 0.75rem;
   text-align: center;
 }
