@@ -39,8 +39,10 @@ export default function AdminClient({ users }: Props) {
                 <td>{user.email}</td>
                 <td>{user.name ?? '未設定'}</td>
                 <td>
-                  <button className={styles.actionButton}>編集</button>
-                  <button className={styles.actionButton}>削除</button>
+                  <form action={`/admin/delete`} method="POST" style={{ display: 'inline' }}>
+                    <input type="hidden" name="id" value={user.id} />
+                    <button type="submit" className={styles.actionButton}>削除</button>
+                  </form>
                 </td>
               </tr>
             ))}
