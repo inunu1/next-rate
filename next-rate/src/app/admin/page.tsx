@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'; // ✅ これを追加
+
 import AdminClient from './AdminClient';
 import { prisma } from '@/lib/prisma';
 
