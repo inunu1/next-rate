@@ -15,10 +15,12 @@ export default function AdminClient({ users, currentUserId }: Props) {
       <header className={styles.menuBar}>
         <h1 className={styles.title}>管理者管理</h1>
         <nav className={styles.nav}>
-          <ul className={styles.navList}>
-            <li><a href="/admin" className={styles.navItem}>一覧</a></li>
-            <li><a href="/logout" className={styles.navItem}>ログアウト</a></li>
-          </ul>
+         <button
+            className={styles.navButton}
+            onClick={() => location.href = 'dashboard'}
+          >
+            Dashboard
+          </button>
         </nav>
       </header>
 
