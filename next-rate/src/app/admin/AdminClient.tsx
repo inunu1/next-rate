@@ -17,11 +17,35 @@ export default function AdminClient({ users, currentUserId }: Props) {
         <nav className={styles.nav}>
           <ul className={styles.navList}>
             <li><a href="/admin" className={styles.navItem}>一覧</a></li>
-            <li><a href="/admin/register" className={styles.navItem}>登録</a></li>
             <li><a href="/logout" className={styles.navItem}>ログアウト</a></li>
           </ul>
         </nav>
       </header>
+
+      {/* 登録フォームバー */}
+      <form action="/admin/register" method="POST" className={styles.formBar}>
+        <input
+          name="email"
+          type="email"
+          placeholder="メールアドレス"
+          required
+          className={styles.input}
+        />
+        <input
+          name="name"
+          type="text"
+          placeholder="名前（任意）"
+          className={styles.input}
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="パスワード"
+          required
+          className={styles.input}
+        />
+        <button type="submit" className={styles.registerButton}>管理者登録</button>
+      </form>
 
       {/* 一覧表示 */}
       <main className={styles.main}>
@@ -39,8 +63,9 @@ export default function AdminClient({ users, currentUserId }: Props) {
                 <td>{user.email}</td>
                 <td>{user.name ?? '未設定'}</td>
                 <td>
+                  <button className={styles.actionButton}>編集</button>
                   {user.id !== currentUserId && (
-                    <form action="/admin/delete" method="POST">
+                    <form action="/admin/delete" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="id" value={user.id} />
                       <button type="submit" className={styles.actionButton}>削除</button>
                     </form>
