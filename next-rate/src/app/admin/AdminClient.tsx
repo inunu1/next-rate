@@ -16,7 +16,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
         <h1 className={styles.title}>管理者管理</h1>
         <nav className={styles.nav}>
          <button
-            className={styles.navButton}
+            className={styles.actionButton}
             onClick={() => location.href = 'dashboard'}
           >
             Dashboard

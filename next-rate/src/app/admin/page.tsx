@@ -4,10 +4,16 @@ import AdminClient from './AdminClient';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
-  const currentUserId = session?.user?.id ?? '';
+
+  if (!session?.user?.id) {
+    redirect('/login'); // ✅ 未ログインならログインページへ
+  }
+
+  const currentUserId = session.user.id;
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
