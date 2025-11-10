@@ -15,7 +15,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
       <header className={styles.menuBar}>
         <h1 className={styles.title}>管理者管理</h1>
         <nav className={styles.nav}>
-         <button
+          <button
             className={styles.actionButton}
             onClick={() => location.href = 'dashboard'}
           >
@@ -65,7 +65,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
                 <td>{user.email}</td>
                 <td>{user.name ?? '未設定'}</td>
                 <td>
-                  <button className={styles.actionButton}>編集</button>
                   {user.id !== currentUserId && (
                     <form action="/admin/delete" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="id" value={user.id} />
