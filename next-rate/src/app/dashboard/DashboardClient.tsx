@@ -32,10 +32,10 @@ export default function DashboardClient() {
           <button className={styles.gridButton} onClick={() => location.href = '/admin'}>
             管理者管理
           </button>
-          <button className={styles.gridButton} onClick={() => location.href = '/player'}>
+          <button className={styles.gridButton} onClick={() => location.href = '/players'}>
             対局者管理
           </button>
-          <button className={styles.gridButton} onClick={() => location.href = '/result'}>
+          <button className={styles.gridButton} onClick={() => location.href = '/results'}>
             対局結果管理
           </button>
         </div>
