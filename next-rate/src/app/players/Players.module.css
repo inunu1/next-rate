@@ -1,81 +1,84 @@
 .container {
-  max-width: 960px;
-  margin: auto;
   padding: 2rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  min-height: 100vh;
 }
 
 .menuBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #f0f0f0;
+  padding: 1rem 2rem;
+  border-radius: 6px;
   margin-bottom: 2rem;
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: bold;
-}
-
-.nav {
-  display: flex;
-  gap: 1rem;
-}
-
-.actionButton {
-  background-color: #0070f3;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.actionButton:hover {
-  background-color: #005bb5;
-}
-
-.formBar {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
-.input {
-  padding: 0.5rem;
-  font-size: 1rem;
-  flex: 1;
-  min-width: 200px;
+  color: #333;
 }
 
 .registerButton {
-  background-color: #28a745;
+  padding: 0.5rem 1rem;
+  background-color: #3182ce;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .registerButton:hover {
-  background-color: #218838;
+  background-color: #2b6cb0;
+}
+
+.formBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .main {
-  overflow-x: auto;
+  text-align: center;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1rem;
+  color: black;
 }
 
 .table th,
 .table td {
+  border: 1px solid #0b0b0b;
   padding: 0.75rem;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
+  text-align: center;
+  color: black;
+}
+
+.actionButton {
+  margin: 0 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  background-color: #2b6cb0;
 }

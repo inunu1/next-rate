@@ -23,7 +23,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         <nav className={styles.nav}>
           <button
             className={styles.actionButton}
-            onClick={() => (location.href = '/dashboard')}
+            onClick={() => location.href = '/dashboard'}
           >
             Dashboard
           </button>

@@ -1,12 +1,23 @@
-import { getSessionUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import PlayersClient from "./PlayersClient";
+export const dynamic = 'force-dynamic';
+
+import PlayersClient from './PlayersClient';
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export default async function PlayersPage() {
-  const user = await getSessionUser();
-  if (!user) return <meta httpEquiv="refresh" content="0;url=/login" />;
+  const session = await getServerSession(authOptions);
 
-  const players = await prisma.player.findMany();
+  if (!session?.user?.id) {
+    redirect('/login');
+  }
 
-  return <PlayersClient players={players} currentUserId={user.id} />;
+  const currentUserId = session.user.id;
+
+  const players = await prisma.player.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return <PlayersClient players={players} currentUserId={currentUserId} />;
 }
