@@ -11,7 +11,6 @@ export async function POST(req: Request) {
   const currentRate = parseInt(form.get("currentRate")?.toString() ?? "0", 10);
 
   if (!id || isNaN(currentRate)) return redirect("/players?error=E104");
-
   if (id === user.id) return redirect("/players?error=E104");
 
   await prisma.player.update({
