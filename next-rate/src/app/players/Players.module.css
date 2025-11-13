@@ -1,32 +1,30 @@
 .container {
-  max-width: 800px;
+  max-width: 960px;
   margin: auto;
-  background: white;
   padding: 2rem;
+  background: #fff;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
 }
 
-.header {
+.menuBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
 }
 
-.form {
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
 }
 
-.input, .select {
-  padding: 0.5rem;
-  font-size: 1rem;
-}
-
-.button {
+.actionButton {
   background-color: #0070f3;
   color: white;
   border: none;
@@ -35,8 +33,39 @@
   cursor: pointer;
 }
 
-.button:hover {
+.actionButton:hover {
   background-color: #005bb5;
+}
+
+.formBar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.registerButton {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.registerButton:hover {
+  background-color: #218838;
+}
+
+.main {
+  overflow-x: auto;
 }
 
 .table {
@@ -44,7 +73,8 @@
   border-collapse: collapse;
 }
 
-.th, .td {
+.table th,
+.table td {
   padding: 0.75rem;
   border-bottom: 1px solid #ddd;
   text-align: left;
