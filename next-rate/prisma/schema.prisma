@@ -22,4 +22,5 @@ model Player {
   initialRate Int
   currentRate Int
   createdAt   DateTime @default(now())
+  deletedAt   DateTime? // ← 論理削除用フィールド
 }

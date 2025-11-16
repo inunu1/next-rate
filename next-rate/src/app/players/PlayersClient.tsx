@@ -70,18 +70,9 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                 <td>{player.initialRate}</td>
                 <td>
                   {player.id !== currentUserId && (
-                    <form action="/players/update" method="POST" style={{ display: 'inline' }}>
+                    <form action="/players/delete" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="id" value={player.id} />
-                      <input
-                        type="number"
-                        name="currentRate"
-                        placeholder="新レート"
-                        required
-                        min={1000}
-                        max={9999}
-                        className={styles.input}
-                      />
-                      <button type="submit" className={styles.actionButton}>編集</button>
+                      <button type="submit" className={styles.actionButton}>削除</button>
                     </form>
                   )}
                 </td>

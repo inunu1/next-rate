@@ -16,8 +16,9 @@ export default async function PlayersPage() {
   const currentUserId = session.user.id;
 
   const players = await prisma.player.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+  where: { deletedAt: null }, // ← 削除済みを除外
+  orderBy: { createdAt: 'desc' },
+});
 
   return <PlayersClient players={players} currentUserId={currentUserId} />;
 }
