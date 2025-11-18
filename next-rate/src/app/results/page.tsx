@@ -12,6 +12,6 @@ export default async function ResultsPage() {
 
   const players = await prisma.player.findMany({ where: { deletedAt: null } });
   const results = await prisma.result.findMany({ orderBy: { playedAt: 'desc' } });
-
+  
   return <ResultsClient players={players} results={results} />;
 }
