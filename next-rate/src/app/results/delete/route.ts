@@ -9,15 +9,10 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
   const id = form.get('id')?.toString();
-  const currentRate = parseInt(form.get('currentRate')?.toString() ?? '0', 10);
 
-  if (!id || isNaN(currentRate)) return redirect('/players?error=E104');
-  if (id === session.user.id) return redirect('/players?error=E104');
+  if (!id) return redirect('/results?error=E103');
 
-  await prisma.player.update({
-    where: { id },
-    data: { currentRate },
-  });
+  await prisma.result.delete({ where: { id } });
 
-  return redirect('/players');
+  return redirect('/results');
 }
