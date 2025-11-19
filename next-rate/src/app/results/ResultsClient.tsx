@@ -27,18 +27,33 @@ export default function ResultsClient({ players, results }: Props) {
   }, [results]);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">試合結果一覧</h1>
-      <ul className="space-y-2">
-        {formattedResults.map((r) => (
-          <li key={r.id} className="border p-4 rounded shadow">
-            <div className="font-semibold">
-              {r.winnerName} ({r.winnerRate}) vs {r.loserName} ({r.loserRate})
-            </div>
-            <div className="text-sm text-gray-500">試合日時: {r.playedAtFormatted}</div>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-6">
+      <section>
+        <h2 className="text-xl font-bold">登録プレイヤー一覧</h2>
+        <ul className="grid grid-cols-2 gap-2 mt-2">
+          {players.map((p) => (
+            <li key={p.id} className="text-sm text-gray-700 border p-2 rounded">
+              {p.name}（初期: {p.initialRate} / 現在: {p.currentRate}）
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold">試合結果一覧</h2>
+        <ul className="space-y-2 mt-2">
+          {formattedResults.map((r) => (
+            <li key={r.id} className="border p-4 rounded shadow">
+              <div className="font-semibold">
+                {r.winnerName} ({r.winnerRate}) vs {r.loserName} ({r.loserRate})
+              </div>
+              <div className="text-sm text-gray-500">
+                試合日時: {r.playedAtFormatted}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
