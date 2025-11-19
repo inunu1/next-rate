@@ -24,3 +24,15 @@ model Player {
   createdAt   DateTime @default(now())
   deletedAt   DateTime? // ← 論理削除用フィールド
 }
+
+model Result {
+  id          String   @id @default(uuid())
+  winnerId    String
+  winnerName  String
+  winnerRate  Int
+  loserId     String
+  loserName   String
+  loserRate   Int
+  playedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
