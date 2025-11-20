@@ -22,5 +22,5 @@ export default async function ResultsPage() {
     playedAt: new Date(r.playedAt),
   }));
 
-  return <ResultsClient results={results} sessionUserId={session.user.id} />;
+  return <ResultsClient results={results} />;
 }

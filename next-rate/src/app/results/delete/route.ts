@@ -16,10 +16,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'E201: 試合IDが見つかりません' }, { status: 400 });
   }
 
-  if (result.winnerId === session.user.id || result.loserId === session.user.id) {
-    return NextResponse.json({ error: 'E202: 自分自身の試合は削除できません' }, { status: 403 });
-  }
-
   await prisma.result.delete({ where: { id: resultId } });
   redirect('/results');
 }

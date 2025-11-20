@@ -9,10 +9,9 @@ type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
 
 type Props = {
   results: ResultWithDate[];
-  sessionUserId: string;
 };
 
-export default function ResultsClient({ results, sessionUserId }: Props) {
+export default function ResultsClient({ results }: Props) {
   const formattedResults = useMemo(() => {
     return results.map((r) => ({
       ...r,
