@@ -28,32 +28,37 @@ export default function ResultsClient({ players, results }: Props) {
 
   return (
     <div className="space-y-6">
-      <section>
-        <h2 className="text-xl font-bold">登録プレイヤー一覧</h2>
-        <ul className="grid grid-cols-2 gap-2 mt-2">
-          {players.map((p) => (
-            <li key={p.id} className="text-sm text-gray-700 border p-2 rounded">
-              {p.name}（初期: {p.initialRate} / 現在: {p.currentRate}）
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">対局管理</h1>
+        {/* 今後ここに新規登録ボタンを追加可能 */}
+      </div>
 
-      <section>
-        <h2 className="text-xl font-bold">試合結果一覧</h2>
-        <ul className="space-y-2 mt-2">
+      <table className="w-full border text-sm">
+        <thead className="bg-gray-100 text-left">
+          <tr>
+            <th className="p-2">日時</th>
+            <th className="p-2">勝者</th>
+            <th className="p-2">敗者</th>
+            <th className="p-2">アクション</th>
+          </tr>
+        </thead>
+        <tbody>
           {formattedResults.map((r) => (
-            <li key={r.id} className="border p-4 rounded shadow">
-              <div className="font-semibold">
-                {r.winnerName} ({r.winnerRate}) vs {r.loserName} ({r.loserRate})
-              </div>
-              <div className="text-sm text-gray-500">
-                試合日時: {r.playedAtFormatted}
-              </div>
-            </li>
+            <tr key={r.id} className="border-t">
+              <td className="p-2">{r.playedAtFormatted}</td>
+              <td className="p-2">
+                {r.winnerName}（{r.winnerRate}）
+              </td>
+              <td className="p-2">
+                {r.loserName}（{r.loserRate}）
+              </td>
+              <td className="p-2">
+                <button className="text-red-600 hover:underline">削除</button>
+              </td>
+            </tr>
           ))}
-        </ul>
-      </section>
+        </tbody>
+      </table>
     </div>
   );
 }
