@@ -72,7 +72,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                   {player.id !== currentUserId && (
                     <form action="/players/delete" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="id" value={player.id} />
-                      <button type="submit" className={styles.actionButton}>削除</button>
+                      <button type="submit" className={styles.actionButton}>出禁</button>
                     </form>
                   )}
                 </td>

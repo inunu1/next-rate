@@ -13,18 +13,14 @@ export default async function ResultsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login');
 
-  const players = await prisma.player.findMany({
-    where: { deletedAt: null },
-  });
-
-  const rawResults = await prisma.result.findMany({
+  const resultsRaw = await prisma.result.findMany({
     orderBy: { playedAt: 'desc' },
   });
 
-  const results: ResultWithDate[] = rawResults.map((r) => ({
+  const results: ResultWithDate[] = resultsRaw.map((r) => ({
     ...r,
     playedAt: new Date(r.playedAt),
   }));
 
-  return <ResultsClient players={players} results={results} />;
+  return <ResultsClient results={results} sessionUserId={session.user.id} />;
 }

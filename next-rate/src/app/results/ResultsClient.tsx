@@ -1,6 +1,6 @@
 'use client';
 
-import type { Player, Result as PrismaResult } from '@prisma/client';
+import type { Result as PrismaResult } from '@prisma/client';
 import { useMemo } from 'react';
 
 type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
@@ -8,11 +8,11 @@ type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
 };
 
 type Props = {
-  players: Player[];
   results: ResultWithDate[];
+  sessionUserId: string;
 };
 
-export default function ResultsClient({ players, results }: Props) {
+export default function ResultsClient({ results, sessionUserId }: Props) {
   const formattedResults = useMemo(() => {
     return results.map((r) => ({
       ...r,
@@ -27,52 +27,39 @@ export default function ResultsClient({ players, results }: Props) {
   }, [results]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">対局管理</h1>
-        {/* 今後ここに新規登録ボタンを追加可能 */}
-      </div>
+    <main>
+      <header>
+        <h1>対局管理</h1>
+        <form action="/dashboard" method="get">
+          <button type="submit">Dashboardへ</button>
+        </form>
+      </header>
 
-      <section>
-        <h2 className="text-lg font-semibold">登録プレイヤー一覧</h2>
-        <ul className="grid grid-cols-2 gap-2 mt-2">
-          {players.map((p) => (
-            <li key={p.id} className="text-sm text-gray-700 border p-2 rounded">
-              {p.name}（初期: {p.initialRate} / 現在: {p.currentRate}）
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mt-6">試合結果一覧</h2>
-        <table className="w-full border text-sm mt-2">
-          <thead className="bg-gray-100 text-left">
-            <tr>
-              <th className="p-2">日時</th>
-              <th className="p-2">勝者</th>
-              <th className="p-2">敗者</th>
-              <th className="p-2">アクション</th>
+      <table>
+        <thead>
+          <tr>
+            <th>日時</th>
+            <th>勝者</th>
+            <th>敗者</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formattedResults.map((r) => (
+            <tr key={r.id}>
+              <td>{r.playedAtFormatted}</td>
+              <td>{r.winnerName}（{r.winnerRate}）</td>
+              <td>{r.loserName}（{r.loserRate}）</td>
+              <td>
+                <form action="/results/delete" method="post">
+                  <input type="hidden" name="id" value={r.id} />
+                  <button type="submit">削除</button>
+                </form>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {formattedResults.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="p-2">{r.playedAtFormatted}</td>
-                <td className="p-2">
-                  {r.winnerName}（{r.winnerRate}）
-                </td>
-                <td className="p-2">
-                  {r.loserName}（{r.loserRate}）
-                </td>
-                <td className="p-2">
-                  <button className="text-red-600 hover:underline">削除</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+          ))}
+        </tbody>
+      </table>
+    </main>
   );
 }
