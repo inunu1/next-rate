@@ -27,71 +27,82 @@ export default function ResultsClient({ players, results }: Props) {
   }, [results]);
 
   return (
-    <main>
-      <header>
-        <h1>対局管理</h1>
+    <div className="space-y-6">
+      {/* タイトルバー */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">対局結果管理</h1>
         <form action="/dashboard" method="get">
-          <button type="submit">Dashboardへ</button>
+          <button type="submit" className="border px-4 py-1 rounded">
+            Dashboardへ
+          </button>
         </form>
-      </header>
+      </div>
 
-      <section>
-        <h2>新規対局登録</h2>
-        <form action="/results/register" method="post">
-          <label>
-            勝者:
-            <select name="winnerId" required>
-              <option value="">選択してください</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            敗者:
-            <select name="loserId" required>
-              <option value="">選択してください</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit">登録</button>
-        </form>
-      </section>
-
-      <section>
-        <h2>試合結果一覧</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>日時</th>
-              <th>勝者</th>
-              <th>敗者</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {formattedResults.map((r) => (
-              <tr key={r.id}>
-                <td>{r.playedAtFormatted}</td>
-                <td>{r.winnerName}（{r.winnerRate}）</td>
-                <td>{r.loserName}（{r.loserRate}）</td>
-                <td>
-                  <form action="/results/delete" method="post">
-                    <input type="hidden" name="id" value={r.id} />
-                    <button type="submit">削除</button>
-                  </form>
-                </td>
-              </tr>
+      {/* 登録フォームバー */}
+      <form
+        action="/results/register"
+        method="post"
+        className="flex gap-4 items-center border p-4 rounded"
+      >
+        <label>
+          勝者:
+          <select name="winnerId" required className="ml-2 border rounded px-2 py-1">
+            <option value="">選択してください</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
-          </tbody>
-        </table>
-      </section>
-    </main>
+          </select>
+        </label>
+        <label>
+          敗者:
+          <select name="loserId" required className="ml-2 border rounded px-2 py-1">
+            <option value="">選択してください</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="border px-4 py-1 rounded bg-gray-100">
+          登録
+        </button>
+      </form>
+
+      {/* 一覧テーブル */}
+      <table className="w-full border text-sm">
+        <thead className="bg-gray-100 text-left">
+          <tr>
+            <th className="p-2">日時</th>
+            <th className="p-2">勝者</th>
+            <th className="p-2">敗者</th>
+            <th className="p-2">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formattedResults.map((r) => (
+            <tr key={r.id} className="border-t">
+              <td className="p-2">{r.playedAtFormatted}</td>
+              <td className="p-2">
+                {r.winnerName}（{r.winnerRate}）
+              </td>
+              <td className="p-2">
+                {r.loserName}（{r.loserRate}）
+              </td>
+              <td className="p-2">
+                <form action="/results/delete" method="post">
+                  <input type="hidden" name="id" value={r.id} />
+                  <button type="submit" className="text-red-600 hover:underline">
+                    削除
+                  </button>
+                </form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
