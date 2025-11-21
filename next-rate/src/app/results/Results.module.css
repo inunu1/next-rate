@@ -1,92 +1,84 @@
-/* ベーススタイル */
-body {
-  font-family: system-ui, sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #f9fafb;
-  color: #333;
+.container {
+  padding: 2rem;
+  background-color: white;
+  min-height: 100vh;
 }
 
-/* タイトルバー */
-header, .title-bar {
+.menuBar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  background-color: #f0f0f0;
+  padding: 1rem 2rem;
+  border-radius: 6px;
+  margin-bottom: 2rem;
 }
 
-h1 {
+.title {
   font-size: 1.5rem;
   font-weight: bold;
+  color: #333;
 }
 
-/* フォームバー */
-.form-bar {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  border: 1px solid #ddd;
-  padding: 0.75rem;
-  border-radius: 6px;
-  background: #fff;
-  margin-bottom: 1rem;
-}
-
-.form-bar label {
-  font-size: 0.9rem;
-}
-
-.form-bar select,
-.form-bar input[type="text"],
-.form-bar input[type="number"] {
-  margin-left: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #ccc;
+.registerButton {
+  padding: 0.5rem 1rem;
+  background-color: #3182ce;
+  color: white;
+  border: none;
   border-radius: 4px;
-}
-
-.form-bar button {
-  padding: 0.4rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #f3f4f6;
   cursor: pointer;
 }
 
-.form-bar button:hover {
-  background: #e5e7eb;
+.registerButton:hover {
+  background-color: #2b6cb0;
 }
 
-/* テーブル */
-table {
+.formBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main {
+  text-align: center;
+}
+
+.table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  background: #fff;
+  color: black;
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
+.table th,
+.table td {
+  border: 1px solid #0b0b0b;
+  padding: 0.75rem;
+  text-align: center;
+  color: black;
 }
 
-th {
-  background: #f3f4f6;
-  text-align: left;
-}
-
-tr:nth-child(even) {
-  background: #fafafa;
-}
-
-/* 操作ボタン */
-button.delete {
-  color: #d00;
-  background: none;
+.actionButton {
+  margin: 0 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #3182ce;
+  color: white;
   border: none;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-button.delete:hover {
-  text-decoration: underline;
+.actionButton:hover {
+  background-color: #2b6cb0;
 }
