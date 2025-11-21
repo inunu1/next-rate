@@ -13,20 +13,19 @@ export async function POST(req: Request) {
   const loserId = formData.get('loserId') as string;
 
   if (!winnerId || !loserId) {
-    return NextResponse.json({ error: 'E203: 勝者と敗者を選択してください' }, { status: 400 });
+    return NextResponse.json({ error: '勝者と敗者を選択してください' }, { status: 400 });
   }
   if (winnerId === loserId) {
-    return NextResponse.json({ error: 'E203: 勝者と敗者は同一にできません' }, { status: 400 });
+    return NextResponse.json({ error: '勝者と敗者は同一にできません' }, { status: 400 });
   }
 
   const winner = await prisma.player.findUnique({ where: { id: winnerId } });
   const loser = await prisma.player.findUnique({ where: { id: loserId } });
 
   if (!winner || !loser) {
-    return NextResponse.json({ error: 'E204: プレイヤーが存在しません' }, { status: 400 });
+    return NextResponse.json({ error: 'プレイヤーが存在しません' }, { status: 400 });
   }
 
-  // レート計算は仮でそのまま保持（将来拡張可能）
   await prisma.result.create({
     data: {
       winnerId,

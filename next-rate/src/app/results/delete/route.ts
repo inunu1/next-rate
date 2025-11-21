@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   const result = await prisma.result.findUnique({ where: { id: resultId } });
   if (!result) {
-    return NextResponse.json({ error: 'E201: 試合IDが見つかりません' }, { status: 400 });
+    return NextResponse.json({ error: '試合IDが見つかりません' }, { status: 400 });
   }
 
   await prisma.result.delete({ where: { id: resultId } });
