@@ -1,6 +1,6 @@
 'use client';
 
-import type { Result as PrismaResult } from '@prisma/client';
+import type { Player, Result as PrismaResult } from '@prisma/client';
 import { useMemo } from 'react';
 
 type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
@@ -8,10 +8,11 @@ type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
 };
 
 type Props = {
+  players: Player[];
   results: ResultWithDate[];
 };
 
-export default function ResultsClient({ results }: Props) {
+export default function ResultsClient({ players, results }: Props) {
   const formattedResults = useMemo(() => {
     return results.map((r) => ({
       ...r,
@@ -34,31 +35,63 @@ export default function ResultsClient({ results }: Props) {
         </form>
       </header>
 
-      <table>
-        <thead>
-          <tr>
-            <th>日時</th>
-            <th>勝者</th>
-            <th>敗者</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {formattedResults.map((r) => (
-            <tr key={r.id}>
-              <td>{r.playedAtFormatted}</td>
-              <td>{r.winnerName}（{r.winnerRate}）</td>
-              <td>{r.loserName}（{r.loserRate}）</td>
-              <td>
-                <form action="/results/delete" method="post">
-                  <input type="hidden" name="id" value={r.id} />
-                  <button type="submit">削除</button>
-                </form>
-              </td>
+      <section>
+        <h2>新規対局登録</h2>
+        <form action="/results/register" method="post">
+          <label>
+            勝者:
+            <select name="winnerId" required>
+              <option value="">選択してください</option>
+              {players.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            敗者:
+            <select name="loserId" required>
+              <option value="">選択してください</option>
+              {players.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">登録</button>
+        </form>
+      </section>
+
+      <section>
+        <h2>試合結果一覧</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>日時</th>
+              <th>勝者</th>
+              <th>敗者</th>
+              <th>操作</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {formattedResults.map((r) => (
+              <tr key={r.id}>
+                <td>{r.playedAtFormatted}</td>
+                <td>{r.winnerName}（{r.winnerRate}）</td>
+                <td>{r.loserName}（{r.loserRate}）</td>
+                <td>
+                  <form action="/results/delete" method="post">
+                    <input type="hidden" name="id" value={r.id} />
+                    <button type="submit">削除</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     </main>
   );
 }
