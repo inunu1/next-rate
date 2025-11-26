@@ -3,6 +3,24 @@
 import styles from './Dashboard.module.css';
 
 export default function DashboardClient() {
+  const handleRecalculate = async () => {
+    try {
+      const res = await fetch('/api/rating/recalculate', {
+        method: 'POST',
+      });
+      if (res.ok) {
+        alert('レーティング再計算が完了しました');
+        location.reload();
+      } else {
+        const data = await res.json();
+        alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('通信エラーが発生しました');
+    }
+  };
+
   return (
     <div className={styles.container}>
       {/* メニューバー */}
@@ -11,15 +29,13 @@ export default function DashboardClient() {
         <div className={styles.menuActions}>
           <button
             className={styles.navButton}
-            onClick={() => location.href = '/api/auth/signout'}
+            onClick={() => (location.href = '/api/auth/signout')}
           >
             ログアウト
           </button>
           <button
             className={styles.navButton}
-            onClick={() => {
-              console.log('レーティング計算実行');
-            }}
+            onClick={handleRecalculate}
           >
             レート計算
           </button>
@@ -29,13 +45,22 @@ export default function DashboardClient() {
       {/* メインコンテンツ */}
       <main className={styles.main}>
         <div className={styles.grid}>
-          <button className={styles.gridButton} onClick={() => location.href = '/admin'}>
+          <button
+            className={styles.gridButton}
+            onClick={() => (location.href = '/admin')}
+          >
             管理者管理
           </button>
-          <button className={styles.gridButton} onClick={() => location.href = '/players'}>
+          <button
+            className={styles.gridButton}
+            onClick={() => (location.href = '/players')}
+          >
             対局者管理
           </button>
-          <button className={styles.gridButton} onClick={() => location.href = '/results'}>
+          <button
+            className={styles.gridButton}
+            onClick={() => (location.href = '/results')}
+          >
             対局結果管理
           </button>
         </div>
