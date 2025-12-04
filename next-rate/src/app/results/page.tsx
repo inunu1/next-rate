@@ -3,11 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import ResultsClient from './ResultsClient';
-import type { Result as PrismaResult, Player } from '@prisma/client';
-
-type ResultWithDate = Omit<PrismaResult, 'playedAt'> & {
-  playedAt: Date;
-};
+import type { Player, Result } from '@prisma/client';
 
 export default async function ResultsPage() {
   const session = await getServerSession(authOptions);
@@ -18,14 +14,10 @@ export default async function ResultsPage() {
     orderBy: { name: 'asc' },
   });
 
-  const resultsRaw = await prisma.result.findMany({
+  // リレーションは使わず、Result のみ取得
+  const results: Result[] = await prisma.result.findMany({
     orderBy: { playedAt: 'desc' },
   });
-
-  const results: ResultWithDate[] = resultsRaw.map((r) => ({
-    ...r,
-    playedAt: new Date(r.playedAt),
-  }));
 
   return <ResultsClient players={players} results={results} />;
 }

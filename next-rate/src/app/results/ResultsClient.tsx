@@ -4,7 +4,7 @@ import type { Player, Result } from '@prisma/client';
 
 type Props = {
   players: Player[];
-  results: (Result & { winner: Player; loser: Player })[];
+  results: Result[];
 };
 
 export default function ResultsClient({ players, results }: Props) {
@@ -32,13 +32,7 @@ export default function ResultsClient({ players, results }: Props) {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-        {/* 対局日時入力欄 */}
-        <input
-          type="datetime-local"
-          name="playedAt"
-          required
-          className="input"
-        />
+        <input type="datetime-local" name="playedAt" required className="input" />
         <button type="submit" className="registerButton">登録</button>
       </form>
 
