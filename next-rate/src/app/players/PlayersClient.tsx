@@ -7,7 +7,6 @@ type Player = {
   name: string;
   initialRate: number;
   currentRate: number;
-  deletedAt?: Date | null; // 論理削除用フィールド
 };
 
 type Props = {
@@ -24,7 +23,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         <nav className={styles.nav}>
           <button
             className={styles.actionButton}
-            onClick={() => (location.href = '/dashboard')}
+            onClick={() => location.href = '/dashboard'}
           >
             Dashboard
           </button>
@@ -49,9 +48,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
           max={9999}
           className={styles.input}
         />
-        <button type="submit" className={styles.registerButton}>
-          対局者登録
-        </button>
+        <button type="submit" className={styles.registerButton}>対局者登録</button>
       </form>
 
       {/* 一覧表示 */}
@@ -62,7 +59,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               <th>プレイヤー名</th>
               <th>現在レート</th>
               <th>初期レート</th>
-              <th>有効 / 出禁</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -73,19 +70,9 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                 <td>{player.initialRate}</td>
                 <td>
                   {player.id !== currentUserId && (
-                    <form
-                      action="/players/toggle-ban"
-                      method="POST"
-                      style={{ display: 'inline' }}
-                    >
+                    <form action="/players/delete" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="id" value={player.id} />
-                      <input
-                        type="checkbox"
-                        name="banned"
-                        defaultChecked={!!player.deletedAt}
-                        onChange={(e) => e.currentTarget.form?.submit()}
-                        className={styles.input}
-                      />
+                      <button type="submit" className={styles.actionButton}>出禁</button>
                     </form>
                   )}
                 </td>
