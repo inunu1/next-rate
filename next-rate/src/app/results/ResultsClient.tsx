@@ -1,7 +1,7 @@
 'use client';
 
 import type { Player, Result } from '@prisma/client';
-import styles from './Results.module.css'; // ← CSSモジュールをインポート
+import styles from './Results.module.css';
 
 type Props = {
   players: Player[];
@@ -9,6 +9,22 @@ type Props = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+  const handleRecalculate = async () => {
+    try {
+      const res = await fetch('/api/rating/recalculate', { method: 'POST' });
+      if (res.ok) {
+        alert('レーティング再計算が完了しました');
+        location.reload();
+      } else {
+        const data = await res.json();
+        alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('通信エラーが発生しました');
+    }
+  };
+
   return (
     <div className={styles.container}>
       {/* タイトルバー */}
@@ -20,7 +36,18 @@ export default function ResultsClient({ players, results }: Props) {
       </div>
 
       {/* 登録フォーム */}
-      <form action="/results/register" method="post" className={styles.formBar}>
+      <form
+        action="/results/register"
+        method="post"
+        className={styles.formBar}
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          await fetch('/results/register', { method: 'POST', body: fd });
+          // ✅ DashboardClient と同じように再計算 API を呼ぶ
+          await handleRecalculate();
+        }}
+      >
         <select name="winnerId" required className={styles.input}>
           <option value="">勝者を選択</option>
           {players.map((p) => (
@@ -54,7 +81,17 @@ export default function ResultsClient({ players, results }: Props) {
               <td>{r.winnerName}（{r.winnerRate}）</td>
               <td>{r.loserName}（{r.loserRate}）</td>
               <td>
-                <form action="/results/delete" method="post">
+                <form
+                  action="/results/delete"
+                  method="post"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.currentTarget);
+                    await fetch('/results/delete', { method: 'POST', body: fd });
+                    // ✅ 削除後も再計算 API を呼ぶ
+                    await handleRecalculate();
+                  }}
+                >
                   <input type="hidden" name="id" value={r.id} />
                   <button type="submit" className={styles.actionButton}>削除</button>
                 </form>
