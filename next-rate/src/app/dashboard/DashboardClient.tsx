@@ -3,24 +3,6 @@
 import styles from './Dashboard.module.css';
 
 export default function DashboardClient() {
-  const handleRecalculate = async () => {
-    try {
-      const res = await fetch('/api/rating/recalculate', {
-        method: 'POST',
-      });
-      if (res.ok) {
-        alert('レーティング再計算が完了しました');
-        location.reload();
-      } else {
-        const data = await res.json();
-        alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('通信エラーが発生しました');
-    }
-  };
-
   return (
     <div className={styles.container}>
       {/* メニューバー */}
@@ -32,12 +14,6 @@ export default function DashboardClient() {
             onClick={() => (location.href = '/api/auth/signout')}
           >
             ログアウト
-          </button>
-          <button
-            className={styles.navButton}
-            onClick={handleRecalculate}
-          >
-            レート計算
           </button>
         </div>
       </header>

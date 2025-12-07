@@ -25,7 +25,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
             className={styles.actionButton}
             onClick={() => location.href = '/dashboard'}
           >
-            Dashboard
+            メニュー
           </button>
         </nav>
       </header>
