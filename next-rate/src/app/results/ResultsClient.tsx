@@ -31,7 +31,7 @@ export default function ResultsClient({ players, results }: Props) {
       <div className={styles.menuBar}>
         <h1 className={styles.title}>対局結果管理</h1>
         <form action="/dashboard" method="get">
-          <button type="submit" className={styles.actionButton}>Dashboardへ</button>
+          <button type="submit" className={styles.actionButton}>メニュー</button>
         </form>
       </div>
 
