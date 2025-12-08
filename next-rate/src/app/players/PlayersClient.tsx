@@ -3,6 +3,7 @@
 import styles from './Players.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
+import RegisterForm from '@/components/RegisterForm';
 
 type Player = {
   id: string;
@@ -30,11 +31,19 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         }}
       />
 
-      <form action="/players/register" method="POST" className={styles.formBar}>
-        <input name="name" type="text" placeholder="ユーザー名" required className={styles.input} />
-        <input name="initialRate" type="number" placeholder="初期レート（4桁）" required min={1000} max={9999} className={styles.input} />
-        <button type="submit" className={styles.registerButton}>対局者登録</button>
-      </form>
+      <RegisterForm
+        action="/players/register"
+        submitLabel="対局者登録"
+        classNames={{
+          formBar: styles.formBar,
+          input: styles.input,
+          submitButton: styles.registerButton,
+        }}
+        fields={[
+          { name: "name", type: "text", placeholder: "ユーザー名", required: true },
+          { name: "initialRate", type: "number", placeholder: "初期レート（4桁）", required: true, min: 1000, max: 9999 },
+        ]}
+      />
 
       <main className={styles.main}>
         <DataTable

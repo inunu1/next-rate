@@ -4,6 +4,7 @@ import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
+import RegisterForm from '@/components/RegisterForm';
 
 type Props = {
   players: Player[];
@@ -36,49 +37,30 @@ export default function ResultsClient({ players, results }: Props) {
         styles={{
           menuBar: styles.menuBar,
           title: styles.title,
-          nav: styles.nav ?? styles.menuBar, // navクラスがなければmenuBarを流用
+          nav: styles.nav ?? styles.menuBar,
           actionButton: styles.actionButton,
         }}
       />
 
-      {/* 登録フォーム */}
-      <form
+      {/* 登録フォーム（共通化） */}
+      <RegisterForm
         action="/results/register"
-        method="post"
-        className={styles.formBar}
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          await fetch('/results/register', { method: 'POST', body: fd });
-          await handleRecalculate();
+        submitLabel="登録"
+        classNames={{
+          formBar: styles.formBar,
+          input: styles.input,
+          submitButton: styles.registerButton,
         }}
-      >
-        <select name="winnerId" required className={styles.input}>
-          <option value="">勝者を選択</option>
-          {players.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select name="loserId" required className={styles.input}>
-          <option value="">敗者を選択</option>
-          {players.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="datetime-local"
-          name="playedAt"
-          required
-          className={styles.input}
-        />
-        <button type="submit" className={styles.registerButton}>
-          登録
-        </button>
-      </form>
+        fields={[
+          { name: 'winnerId', type: 'text', placeholder: '勝者ID', required: true },
+          { name: 'loserId', type: 'text', placeholder: '敗者ID', required: true },
+          { name: 'playedAt', type: 'datetime-local', placeholder: '日時', required: true },
+        ]}
+        onSubmit={async () => {
+          await fetch('/api/rating/recalculate', { method: 'POST' });
+          location.reload();
+        }}
+      />
 
       {/* 一覧テーブル（共通化） */}
       <DataTable

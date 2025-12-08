@@ -4,6 +4,7 @@ import styles from './Admin.module.css';
 import { AdminUser } from '@/types/admin';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
+import RegisterForm from '@/components/RegisterForm';
 
 type Props = {
   users: AdminUser[];
@@ -24,12 +25,20 @@ export default function AdminClient({ users, currentUserId }: Props) {
         }}
       />
 
-      <form action="/admin/register" method="POST" className={styles.formBar}>
-        <input name="email" type="email" placeholder="メールアドレス" required className={styles.input} />
-        <input name="name" type="text" placeholder="名前（任意）" className={styles.input} />
-        <input name="password" type="password" placeholder="パスワード" required className={styles.input} />
-        <button type="submit" className={styles.registerButton}>管理者登録</button>
-      </form>
+      <RegisterForm
+        action="/admin/register"
+        submitLabel="管理者登録"
+        classNames={{
+          formBar: styles.formBar,
+          input: styles.input,
+          submitButton: styles.registerButton,
+        }}
+        fields={[
+          { name: "email", type: "email", placeholder: "メールアドレス", required: true },
+          { name: "name", type: "text", placeholder: "名前（任意）" },
+          { name: "password", type: "password", placeholder: "パスワード", required: true },
+        ]}
+      />
 
       <main className={styles.main}>
         <DataTable
