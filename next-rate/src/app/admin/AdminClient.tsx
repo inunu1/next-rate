@@ -2,6 +2,7 @@
 
 import styles from './Admin.module.css';
 import { AdminUser } from '@/types/admin';
+import MenuBar from '@/components/MenuBar';
 
 type Props = {
   users: AdminUser[];
@@ -12,17 +13,16 @@ export default function AdminClient({ users, currentUserId }: Props) {
   return (
     <div className={styles.container}>
       {/* メニューバー */}
-      <header className={styles.menuBar}>
-        <h1 className={styles.title}>管理者管理</h1>
-        <nav className={styles.nav}>
-          <button
-            className={styles.actionButton}
-            onClick={() => location.href = 'dashboard'}
-          >
-            メニュー
-          </button>
-        </nav>
-      </header>
+      <MenuBar
+        title="管理者管理"
+        actions={[{ label: 'メニュー', href: '/dashboard' }]}
+        styles={{
+          menuBar: styles.menuBar,
+          title: styles.title,
+          nav: styles.nav,
+          actionButton: styles.actionButton,
+        }}
+      />
 
       {/* 登録フォームバー */}
       <form action="/admin/register" method="POST" className={styles.formBar}>
@@ -46,7 +46,9 @@ export default function AdminClient({ users, currentUserId }: Props) {
           required
           className={styles.input}
         />
-        <button type="submit" className={styles.registerButton}>管理者登録</button>
+        <button type="submit" className={styles.registerButton}>
+          管理者登録
+        </button>
       </form>
 
       {/* 一覧表示 */}
@@ -66,9 +68,15 @@ export default function AdminClient({ users, currentUserId }: Props) {
                 <td>{user.name ?? '未設定'}</td>
                 <td>
                   {user.id !== currentUserId && (
-                    <form action="/admin/delete" method="POST" style={{ display: 'inline' }}>
+                    <form
+                      action="/admin/delete"
+                      method="POST"
+                      style={{ display: 'inline' }}
+                    >
                       <input type="hidden" name="id" value={user.id} />
-                      <button type="submit" className={styles.actionButton}>削除</button>
+                      <button type="submit" className={styles.actionButton}>
+                        削除
+                      </button>
                     </form>
                   )}
                 </td>

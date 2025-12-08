@@ -1,6 +1,7 @@
 'use client';
 
 import styles from './Players.module.css';
+import MenuBar from '@/components/MenuBar';
 
 type Player = {
   id: string;
@@ -18,17 +19,16 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   return (
     <div className={styles.container}>
       {/* メニューバー */}
-      <header className={styles.menuBar}>
-        <h1 className={styles.title}>対局者管理</h1>
-        <nav className={styles.nav}>
-          <button
-            className={styles.actionButton}
-            onClick={() => location.href = '/dashboard'}
-          >
-            メニュー
-          </button>
-        </nav>
-      </header>
+      <MenuBar
+        title="対局者管理"
+        actions={[{ label: 'メニュー', href: '/dashboard' }]}
+        styles={{
+          menuBar: styles.menuBar,
+          title: styles.title,
+          nav: styles.nav,
+          actionButton: styles.actionButton,
+        }}
+      />
 
       {/* 登録フォームバー */}
       <form action="/players/register" method="POST" className={styles.formBar}>
@@ -48,7 +48,9 @@ export default function PlayersClient({ players, currentUserId }: Props) {
           max={9999}
           className={styles.input}
         />
-        <button type="submit" className={styles.registerButton}>対局者登録</button>
+        <button type="submit" className={styles.registerButton}>
+          対局者登録
+        </button>
       </form>
 
       {/* 一覧表示 */}
@@ -70,9 +72,15 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                 <td>{player.initialRate}</td>
                 <td>
                   {player.id !== currentUserId && (
-                    <form action="/players/delete" method="POST" style={{ display: 'inline' }}>
+                    <form
+                      action="/players/delete"
+                      method="POST"
+                      style={{ display: 'inline' }}
+                    >
                       <input type="hidden" name="id" value={player.id} />
-                      <button type="submit" className={styles.actionButton}>出禁</button>
+                      <button type="submit" className={styles.actionButton}>
+                        出禁
+                      </button>
                     </form>
                   )}
                 </td>

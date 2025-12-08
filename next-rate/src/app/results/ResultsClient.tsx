@@ -2,6 +2,7 @@
 
 import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
+import MenuBar from '@/components/MenuBar';
 
 type Props = {
   players: Player[];
@@ -27,13 +28,17 @@ export default function ResultsClient({ players, results }: Props) {
 
   return (
     <div className={styles.container}>
-      {/* タイトルバー */}
-      <div className={styles.menuBar}>
-        <h1 className={styles.title}>対局結果管理</h1>
-        <form action="/dashboard" method="get">
-          <button type="submit" className={styles.actionButton}>メニュー</button>
-        </form>
-      </div>
+      {/* タイトルバー（共通化） */}
+      <MenuBar
+        title="対局結果管理"
+        actions={[{ label: 'メニュー', href: '/dashboard' }]}
+        styles={{
+          menuBar: styles.menuBar,
+          title: styles.title,
+          nav: styles.menuBar, // nav 用のクラスがなければ menuBar を流用
+          actionButton: styles.actionButton,
+        }}
+      />
 
       {/* 登録フォーム */}
       <form
@@ -44,24 +49,34 @@ export default function ResultsClient({ players, results }: Props) {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           await fetch('/results/register', { method: 'POST', body: fd });
-          // ✅ DashboardClient と同じように再計算 API を呼ぶ
           await handleRecalculate();
         }}
       >
         <select name="winnerId" required className={styles.input}>
           <option value="">勝者を選択</option>
           {players.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </select>
         <select name="loserId" required className={styles.input}>
           <option value="">敗者を選択</option>
           {players.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </select>
-        <input type="datetime-local" name="playedAt" required className={styles.input} />
-        <button type="submit" className={styles.registerButton}>登録</button>
+        <input
+          type="datetime-local"
+          name="playedAt"
+          required
+          className={styles.input}
+        />
+        <button type="submit" className={styles.registerButton}>
+          登録
+        </button>
       </form>
 
       {/* 一覧テーブル */}
@@ -78,8 +93,12 @@ export default function ResultsClient({ players, results }: Props) {
           {results.map((r) => (
             <tr key={r.id}>
               <td>{new Date(r.playedAt).toLocaleString('ja-JP')}</td>
-              <td>{r.winnerName}（{r.winnerRate}）</td>
-              <td>{r.loserName}（{r.loserRate}）</td>
+              <td>
+                {r.winnerName}（{r.winnerRate}）
+              </td>
+              <td>
+                {r.loserName}（{r.loserRate}）
+              </td>
               <td>
                 <form
                   action="/results/delete"
@@ -88,12 +107,13 @@ export default function ResultsClient({ players, results }: Props) {
                     e.preventDefault();
                     const fd = new FormData(e.currentTarget);
                     await fetch('/results/delete', { method: 'POST', body: fd });
-                    // ✅ 削除後も再計算 API を呼ぶ
                     await handleRecalculate();
                   }}
                 >
                   <input type="hidden" name="id" value={r.id} />
-                  <button type="submit" className={styles.actionButton}>削除</button>
+                  <button type="submit" className={styles.actionButton}>
+                    削除
+                  </button>
                 </form>
               </td>
             </tr>

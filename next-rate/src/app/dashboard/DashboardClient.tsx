@@ -1,22 +1,22 @@
 'use client';
 
 import styles from './Dashboard.module.css';
+import MenuBar from '@/components/MenuBar';
 
 export default function DashboardClient() {
   return (
     <div className={styles.container}>
       {/* メニューバー */}
-      <header className={styles.menuBar}>
-        <h1 className={styles.menuTitle}>メニュー</h1>
-        <div className={styles.menuActions}>
-          <button
-            className={styles.navButton}
-            onClick={() => (location.href = '/api/auth/signout')}
-          >
-            ログアウト
-          </button>
-        </div>
-      </header>
+      <MenuBar
+        title="メニュー"
+        actions={[{ label: 'ログアウト', href: '/api/auth/signout' }]}
+        styles={{
+          menuBar: styles.menuBar,
+          title: styles.menuTitle,
+          nav: styles.menuActions,
+          actionButton: styles.navButton,
+        }}
+      />
 
       {/* メインコンテンツ */}
       <main className={styles.main}>
