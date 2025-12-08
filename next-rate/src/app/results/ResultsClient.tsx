@@ -35,7 +35,7 @@ export default function ResultsClient({ players, results }: Props) {
         styles={{
           menuBar: styles.menuBar,
           title: styles.title,
-          nav: styles.menuBar, // nav 用のクラスがなければ menuBar を流用
+          nav: styles.nav, // nav 用のクラスがなければ menuBar を流用
           actionButton: styles.actionButton,
         }}
       />
