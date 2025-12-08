@@ -36,7 +36,7 @@ export default function ResultsClient({ players, results }: Props) {
         styles={{
           menuBar: styles.menuBar,
           title: styles.title,
-          nav: styles.nav ?? styles.menuBar,
+          nav: styles.nav,
           actionButton: styles.actionButton,
         }}
       />
