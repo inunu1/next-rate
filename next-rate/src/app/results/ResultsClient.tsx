@@ -12,47 +12,22 @@ type Props = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
-  const handleRecalculate = async () => {
-    try {
-      const res = await fetch('/api/rating/recalculate', { method: 'POST' });
-      if (res.ok) {
-        alert('レーティング再計算が完了しました');
-        location.reload();
-      } else {
-        const data = await res.json();
-        alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('通信エラーが発生しました');
-    }
-  };
-
   return (
     <div className={styles.container}>
+      {/* メニューバー */}
       <MenuBar
         title="対局結果管理"
         actions={[{ label: 'メニュー', href: '/dashboard' }]}
         styles={{
           menuBar: styles.menuBar,
           title: styles.title,
-          nav: styles.nav,
+          nav: styles.nav ?? styles.menuBar,
           actionButton: styles.actionButton,
         }}
       />
 
-      {/* 登録フォーム（playersを活用） */}
-      <form
-        action="/results/register"
-        method="post"
-        className={styles.formBar}
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          await fetch('/results/register', { method: 'POST', body: fd });
-          await handleRecalculate();
-        }}
-      >
+      {/* 登録フォーム（純粋なHTML送信） */}
+      <form action="/results/register" method="POST" className={styles.formBar}>
         <select name="winnerId" required className={styles.input}>
           <option value="">勝者を選択</option>
           {players.map((p) => (
@@ -61,6 +36,7 @@ export default function ResultsClient({ players, results }: Props) {
             </option>
           ))}
         </select>
+
         <select name="loserId" required className={styles.input}>
           <option value="">敗者を選択</option>
           {players.map((p) => (
@@ -69,11 +45,20 @@ export default function ResultsClient({ players, results }: Props) {
             </option>
           ))}
         </select>
-        <input type="datetime-local" name="playedAt" required className={styles.input} />
-        <button type="submit" className={styles.registerButton}>登録</button>
+
+        <input
+          type="datetime-local"
+          name="playedAt"
+          required
+          className={styles.input}
+        />
+
+        <button type="submit" className={styles.registerButton}>
+          登録
+        </button>
       </form>
 
-      {/* 一覧テーブル（共通化＋削除フォーム利用） */}
+      {/* 一覧テーブル */}
       <DataTable
         tableClass={styles.table}
         rows={results}
@@ -98,7 +83,6 @@ export default function ResultsClient({ players, results }: Props) {
                 id={r.id}
                 buttonLabel="削除"
                 className={styles.actionButton}
-                onAfterDelete={handleRecalculate}
               />
             ),
           },

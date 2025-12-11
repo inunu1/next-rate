@@ -18,7 +18,6 @@ type Props = {
     input: string;
     submitButton: string;
   };
-  onSubmit?: (fd: FormData) => Promise<void>;
 };
 
 export default function RegisterForm({
@@ -26,21 +25,9 @@ export default function RegisterForm({
   fields,
   submitLabel,
   classNames,
-  onSubmit,
 }: Props) {
   return (
-    <form
-      action={action}
-      method="POST"
-      className={classNames.formBar}
-      onSubmit={async (e) => {
-        if (!onSubmit) return;
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        await fetch(action, { method: 'POST', body: fd });
-        await onSubmit(fd);
-      }}
-    >
+    <form action={action} method="POST" className={classNames.formBar}>
       {fields.map((f, idx) => (
         <input
           key={idx}
