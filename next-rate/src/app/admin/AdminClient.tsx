@@ -5,6 +5,7 @@ import { AdminUser } from '@/types/admin';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import RegisterForm from '@/components/RegisterForm';
+import DeleteForm from '@/components/DeleteForm';
 
 type Props = {
   users: AdminUser[];
@@ -51,10 +52,12 @@ export default function AdminClient({ users, currentUserId }: Props) {
               header: "操作",
               render: (u) =>
                 u.id !== currentUserId && (
-                  <form action="/admin/delete" method="POST">
-                    <input type="hidden" name="id" value={u.id} />
-                    <button type="submit" className={styles.actionButton}>削除</button>
-                  </form>
+                  <DeleteForm
+                    action="/admin/delete"
+                    id={u.id}
+                    buttonLabel="削除"
+                    className={styles.actionButton}
+                  />
                 ),
             },
           ]}

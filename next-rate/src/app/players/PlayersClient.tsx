@@ -4,6 +4,7 @@ import styles from './Players.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import RegisterForm from '@/components/RegisterForm';
+import DeleteForm from '@/components/DeleteForm';
 
 type Player = {
   id: string;
@@ -57,10 +58,12 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               header: "操作",
               render: (p) =>
                 p.id !== currentUserId && (
-                  <form action="/players/delete" method="POST">
-                    <input type="hidden" name="id" value={p.id} />
-                    <button type="submit" className={styles.actionButton}>出禁</button>
-                  </form>
+                  <DeleteForm
+                    action="/players/delete"
+                    id={p.id}
+                    buttonLabel="出禁"
+                    className={styles.actionButton}
+                  />
                 ),
             },
           ]}

@@ -4,6 +4,7 @@ import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
+import DeleteForm from '@/components/DeleteForm';
 
 type Props = {
   players: Player[];
@@ -29,7 +30,6 @@ export default function ResultsClient({ players, results }: Props) {
 
   return (
     <div className={styles.container}>
-      {/* 共通メニューバー */}
       <MenuBar
         title="対局結果管理"
         actions={[{ label: 'メニュー', href: '/dashboard' }]}
@@ -69,18 +69,11 @@ export default function ResultsClient({ players, results }: Props) {
             </option>
           ))}
         </select>
-        <input
-          type="datetime-local"
-          name="playedAt"
-          required
-          className={styles.input}
-        />
-        <button type="submit" className={styles.registerButton}>
-          登録
-        </button>
+        <input type="datetime-local" name="playedAt" required className={styles.input} />
+        <button type="submit" className={styles.registerButton}>登録</button>
       </form>
 
-      {/* 一覧テーブル（共通化） */}
+      {/* 一覧テーブル（共通化＋削除フォーム利用） */}
       <DataTable
         tableClass={styles.table}
         rows={results}
@@ -100,21 +93,13 @@ export default function ResultsClient({ players, results }: Props) {
           {
             header: '操作',
             render: (r) => (
-              <form
+              <DeleteForm
                 action="/results/delete"
-                method="post"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget);
-                  await fetch('/results/delete', { method: 'POST', body: fd });
-                  await handleRecalculate();
-                }}
-              >
-                <input type="hidden" name="id" value={r.id} />
-                <button type="submit" className={styles.actionButton}>
-                  削除
-                </button>
-              </form>
+                id={r.id}
+                buttonLabel="削除"
+                className={styles.actionButton}
+                onAfterDelete={handleRecalculate}
+              />
             ),
           },
         ]}
