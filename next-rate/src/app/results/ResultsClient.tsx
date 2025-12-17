@@ -4,11 +4,17 @@ import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
-import Select from 'react-select';
+import Select, { StylesConfig } from 'react-select';
 
 type Props = {
   players: Player[];
   results: Result[];
+};
+
+// react-select のオプション型
+type PlayerOption = {
+  value: string;
+  label: string;
 };
 
 export default function ResultsClient({ players, results }: Props) {
@@ -29,27 +35,27 @@ export default function ResultsClient({ players, results }: Props) {
   };
 
   // react-select 用のオプション
-  const playerOptions = players.map((p) => ({
+  const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
   // 文字色を黒にするカスタムスタイル
-  const customSelectStyles = {
-    option: (base: any, state: any) => ({
+  const customSelectStyles: StylesConfig<PlayerOption, false> = {
+    option: (base, state) => ({
       ...base,
       color: 'black', // プルダウン内の文字色
       backgroundColor: state.isFocused ? '#eee' : 'white',
     }),
-    singleValue: (base: any) => ({
+    singleValue: (base) => ({
       ...base,
       color: 'black', // 選択後の文字色
     }),
-    input: (base: any) => ({
+    input: (base) => ({
       ...base,
       color: 'black', // 入力中の文字色
     }),
-    placeholder: (base: any) => ({
+    placeholder: (base) => ({
       ...base,
       color: '#666', // プレースホルダー文字色
     }),
