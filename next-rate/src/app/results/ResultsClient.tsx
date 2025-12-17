@@ -66,6 +66,7 @@ export default function ResultsClient({ players, results }: Props) {
           options={playerOptions}
           placeholder="勝者を選択"
           className={styles.input}
+          text-color="black"
         />
 
         {/* 敗者選択 */}
