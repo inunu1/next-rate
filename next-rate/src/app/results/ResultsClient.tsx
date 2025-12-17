@@ -34,6 +34,27 @@ export default function ResultsClient({ players, results }: Props) {
     label: p.name,
   }));
 
+  // 文字色を黒にするカスタムスタイル
+  const customSelectStyles = {
+    option: (base: any, state: any) => ({
+      ...base,
+      color: 'black', // プルダウン内の文字色
+      backgroundColor: state.isFocused ? '#eee' : 'white',
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: 'black', // 選択後の文字色
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: 'black', // 入力中の文字色
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: '#666', // プレースホルダー文字色
+    }),
+  };
+
   return (
     <div className={styles.container}>
       {/* 共通メニューバー */}
@@ -65,8 +86,8 @@ export default function ResultsClient({ players, results }: Props) {
           name="winnerId"
           options={playerOptions}
           placeholder="勝者を選択"
+          styles={customSelectStyles}
           className={styles.input}
-          text-color="black"
         />
 
         {/* 敗者選択 */}
@@ -74,6 +95,7 @@ export default function ResultsClient({ players, results }: Props) {
           name="loserId"
           options={playerOptions}
           placeholder="敗者を選択"
+          styles={customSelectStyles}
           className={styles.input}
         />
 
