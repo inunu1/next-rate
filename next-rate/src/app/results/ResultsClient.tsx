@@ -4,6 +4,7 @@ import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
+import Select from 'react-select';
 
 type Props = {
   players: Player[];
@@ -27,6 +28,12 @@ export default function ResultsClient({ players, results }: Props) {
     }
   };
 
+  // react-select 用のオプション
+  const playerOptions = players.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
+
   return (
     <div className={styles.container}>
       {/* 共通メニューバー */}
@@ -41,7 +48,7 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 登録フォーム（playersを活用） */}
+      {/* 登録フォーム */}
       <form
         action="/results/register"
         method="post"
@@ -53,22 +60,22 @@ export default function ResultsClient({ players, results }: Props) {
           await handleRecalculate();
         }}
       >
-        <select name="winnerId" required className={styles.input}>
-          <option value="">勝者を選択</option>
-          {players.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select name="loserId" required className={styles.input}>
-          <option value="">敗者を選択</option>
-          {players.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        {/* 勝者選択 */}
+        <Select
+          name="winnerId"
+          options={playerOptions}
+          placeholder="勝者を選択"
+          className={styles.input}
+        />
+
+        {/* 敗者選択 */}
+        <Select
+          name="loserId"
+          options={playerOptions}
+          placeholder="敗者を選択"
+          className={styles.input}
+        />
+
         <input
           type="datetime-local"
           name="playedAt"
@@ -80,7 +87,7 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
-      {/* 一覧テーブル（共通化） */}
+      {/* 一覧テーブル */}
       <DataTable
         tableClass={styles.table}
         rows={results}
