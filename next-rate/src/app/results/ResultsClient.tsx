@@ -88,7 +88,7 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 登録フォーム */}
+      {/* 登録フォーム（勝者／敗者セレクト削除済み） */}
       <form
         action="/results/register"
         method="post"
@@ -100,20 +100,6 @@ export default function ResultsClient({ players, results }: Props) {
           await handleRecalculate();
         }}
       >
-        <Select
-          name="winnerId"
-          options={playerOptions}
-          placeholder="勝者を選択"
-          styles={customSelectStyles}
-          className={styles.input}
-        />
-        <Select
-          name="loserId"
-          options={playerOptions}
-          placeholder="敗者を選択"
-          styles={customSelectStyles}
-          className={styles.input}
-        />
         <input
           type="datetime-local"
           name="playedAt"
@@ -125,7 +111,7 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
-      {/* 検索フォーム */}
+      {/* 検索付きセレクトを登録フォームの位置に配置 */}
       <div className={styles.formBar}>
         <Select
           options={playerOptions}
