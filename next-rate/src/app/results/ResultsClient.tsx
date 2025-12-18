@@ -12,7 +12,6 @@ type Props = {
   results: Result[];
 };
 
-// react-select のオプション型
 type PlayerOption = {
   value: string;
   label: string;
@@ -39,13 +38,12 @@ export default function ResultsClient({ players, results }: Props) {
     }
   };
 
-  // react-select 用のオプション
+  // 共通のオプションとスタイル
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  // 文字色を黒にするカスタムスタイル
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
     option: (base, state) => ({
       ...base,
@@ -66,7 +64,6 @@ export default function ResultsClient({ players, results }: Props) {
     }),
   };
 
-  // 検索ボタン押下時にフィルタリング
   const handleSearch = () => {
     let filtered = results;
     if (winnerFilter) {
@@ -80,7 +77,6 @@ export default function ResultsClient({ players, results }: Props) {
 
   return (
     <div className={styles.container}>
-      {/* 共通メニューバー */}
       <MenuBar
         title="対局結果管理"
         actions={[{ label: 'メニュー', href: '/dashboard' }]}
@@ -104,7 +100,6 @@ export default function ResultsClient({ players, results }: Props) {
           await handleRecalculate();
         }}
       >
-        {/* 勝者選択 */}
         <Select
           name="winnerId"
           options={playerOptions}
@@ -112,8 +107,6 @@ export default function ResultsClient({ players, results }: Props) {
           styles={customSelectStyles}
           className={styles.input}
         />
-
-        {/* 敗者選択 */}
         <Select
           name="loserId"
           options={playerOptions}
@@ -121,7 +114,6 @@ export default function ResultsClient({ players, results }: Props) {
           styles={customSelectStyles}
           className={styles.input}
         />
-
         <input
           type="datetime-local"
           name="playedAt"
