@@ -18,6 +18,7 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+  // 検索用の選択状態
   const [winnerFilter, setWinnerFilter] = useState<PlayerOption | null>(null);
   const [loserFilter, setLoserFilter] = useState<PlayerOption | null>(null);
   const [filteredResults, setFilteredResults] = useState<Result[]>(results);
@@ -64,6 +65,7 @@ export default function ResultsClient({ players, results }: Props) {
     }),
   };
 
+  // 検索ボタン押下でフィルタ
   const handleSearch = () => {
     let filtered = results;
     if (winnerFilter) {
@@ -88,7 +90,7 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 登録フォーム（勝者・敗者・日時を必須にしつつ検索付きセレクトを利用） */}
+      {/* 登録フォーム（勝者・敗者・対局日時） */}
       <form
         action="/results/register"
         method="post"
@@ -100,6 +102,7 @@ export default function ResultsClient({ players, results }: Props) {
           await handleRecalculate();
         }}
       >
+        {/* 勝者：検索付きセレクト（共通） */}
         <Select
           name="winnerId"
           options={playerOptions}
@@ -107,6 +110,7 @@ export default function ResultsClient({ players, results }: Props) {
           styles={customSelectStyles}
           className={styles.input}
         />
+        {/* 敗者：検索付きセレクト（共通） */}
         <Select
           name="loserId"
           options={playerOptions}
@@ -114,6 +118,7 @@ export default function ResultsClient({ players, results }: Props) {
           styles={customSelectStyles}
           className={styles.input}
         />
+        {/* 対局日時 */}
         <input
           type="datetime-local"
           name="playedAt"
@@ -125,7 +130,7 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
-      {/* 検索フォーム（同じセレクトを流用） */}
+      {/* 検索（勝者・敗者）— 同じ検索付きセレクトを共通利用 */}
       <div className={styles.formBar}>
         <Select
           options={playerOptions}
