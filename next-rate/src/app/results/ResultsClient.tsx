@@ -18,9 +18,10 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
-  // 検索用の選択状態
-  const [winnerFilter, setWinnerFilter] = useState<PlayerOption | null>(null);
-  const [loserFilter, setLoserFilter] = useState<PlayerOption | null>(null);
+  // 共通セレクトの選択状態（登録／検索で共通利用）
+  const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
+  const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
+  const [playedAt, setPlayedAt] = useState<string>('');
   const [filteredResults, setFilteredResults] = useState<Result[]>(results);
 
   const handleRecalculate = async () => {
@@ -65,16 +66,32 @@ export default function ResultsClient({ players, results }: Props) {
     }),
   };
 
-  // 検索ボタン押下でフィルタ
+  // 登録ボタン: state の値を使って登録
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!winnerOpt || !loserOpt || !playedAt) {
+      alert('勝者・敗者・対局日時は必須です');
+      return;
+    }
+    if (winnerOpt.value === loserOpt.value) {
+      alert('勝者と敗者は別のプレイヤーを選んでください');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('winnerId', winnerOpt.value);
+    fd.append('loserId', loserOpt.value);
+    fd.append('playedAt', playedAt);
+
+    await fetch('/results/register', { method: 'POST', body: fd });
+    await handleRecalculate();
+  };
+
+  // 検索ボタン: 現在のセレクト値で一覧をフィルタ
   const handleSearch = () => {
-    let filtered = results;
-    if (winnerFilter) {
-      filtered = filtered.filter((r) => r.winnerId === winnerFilter.value);
-    }
-    if (loserFilter) {
-      filtered = filtered.filter((r) => r.loserId === loserFilter.value);
-    }
-    setFilteredResults(filtered);
+    let next = results;
+    if (winnerOpt) next = next.filter((r) => r.winnerId === winnerOpt.value);
+    if (loserOpt) next = next.filter((r) => r.loserId === loserOpt.value);
+    setFilteredResults(next);
   };
 
   return (
@@ -90,70 +107,45 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 登録フォーム（勝者・敗者・対局日時） */}
-      <form
-        action="/results/register"
-        method="post"
-        className={styles.formBar}
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          await fetch('/results/register', { method: 'POST', body: fd });
-          await handleRecalculate();
-        }}
-      >
-        {/* 勝者：検索付きセレクト（共通） */}
+      {/* 1行レイアウト：勝者セレクト／敗者セレクト／日時／登録／検索 */}
+      <form className={styles.formBar} onSubmit={handleRegister}>
         <Select
-          name="winnerId"
           options={playerOptions}
+          value={winnerOpt}
+          onChange={(opt) => setWinnerOpt(opt)}
           placeholder="勝者を選択"
           styles={customSelectStyles}
           className={styles.input}
+          isClearable
         />
-        {/* 敗者：検索付きセレクト（共通） */}
         <Select
-          name="loserId"
           options={playerOptions}
+          value={loserOpt}
+          onChange={(opt) => setLoserOpt(opt)}
           placeholder="敗者を選択"
           styles={customSelectStyles}
           className={styles.input}
+          isClearable
         />
-        {/* 対局日時 */}
         <input
           type="datetime-local"
           name="playedAt"
           required
+          value={playedAt}
+          onChange={(e) => setPlayedAt(e.target.value)}
           className={styles.input}
         />
         <button type="submit" className={styles.registerButton}>
           登録
         </button>
-      </form>
-
-      {/* 検索（勝者・敗者）— 同じ検索付きセレクトを共通利用 */}
-      <div className={styles.formBar}>
-        <Select
-          options={playerOptions}
-          value={winnerFilter}
-          onChange={(option) => setWinnerFilter(option)}
-          placeholder="勝者で絞り込み"
-          styles={customSelectStyles}
-          isClearable
-          className={styles.input}
-        />
-        <Select
-          options={playerOptions}
-          value={loserFilter}
-          onChange={(option) => setLoserFilter(option)}
-          placeholder="敗者で絞り込み"
-          styles={customSelectStyles}
-          isClearable
-          className={styles.input}
-        />
-        <button onClick={handleSearch} className={styles.registerButton}>
+        <button
+          type="button"
+          onClick={handleSearch}
+          className={styles.registerButton}
+        >
           検索
         </button>
-      </div>
+      </form>
 
       {/* 一覧テーブル */}
       <DataTable
