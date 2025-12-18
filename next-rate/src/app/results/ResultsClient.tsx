@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import MenuBar from '@/components/MenuBar';
@@ -18,6 +19,10 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+  const [winnerFilter, setWinnerFilter] = useState<PlayerOption | null>(null);
+  const [loserFilter, setLoserFilter] = useState<PlayerOption | null>(null);
+  const [filteredResults, setFilteredResults] = useState<Result[]>(results);
+
   const handleRecalculate = async () => {
     try {
       const res = await fetch('/api/rating/recalculate', { method: 'POST' });
@@ -44,21 +49,33 @@ export default function ResultsClient({ players, results }: Props) {
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
     option: (base, state) => ({
       ...base,
-      color: 'black', // プルダウン内の文字色
+      color: 'black',
       backgroundColor: state.isFocused ? '#eee' : 'white',
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'black', // 選択後の文字色
+      color: 'black',
     }),
     input: (base) => ({
       ...base,
-      color: 'black', // 入力中の文字色
+      color: 'black',
     }),
     placeholder: (base) => ({
       ...base,
-      color: '#666', // プレースホルダー文字色
+      color: '#666',
     }),
+  };
+
+  // 検索ボタン押下時にフィルタリング
+  const handleSearch = () => {
+    let filtered = results;
+    if (winnerFilter) {
+      filtered = filtered.filter((r) => r.winnerId === winnerFilter.value);
+    }
+    if (loserFilter) {
+      filtered = filtered.filter((r) => r.loserId === loserFilter.value);
+    }
+    setFilteredResults(filtered);
   };
 
   return (
@@ -116,10 +133,35 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
+      {/* 検索フォーム */}
+      <div className={styles.formBar}>
+        <Select
+          options={playerOptions}
+          value={winnerFilter}
+          onChange={(option) => setWinnerFilter(option)}
+          placeholder="勝者で絞り込み"
+          styles={customSelectStyles}
+          isClearable
+          className={styles.input}
+        />
+        <Select
+          options={playerOptions}
+          value={loserFilter}
+          onChange={(option) => setLoserFilter(option)}
+          placeholder="敗者で絞り込み"
+          styles={customSelectStyles}
+          isClearable
+          className={styles.input}
+        />
+        <button onClick={handleSearch} className={styles.registerButton}>
+          検索
+        </button>
+      </div>
+
       {/* 一覧テーブル */}
       <DataTable
         tableClass={styles.table}
-        rows={results}
+        rows={filteredResults}
         columns={[
           {
             header: '日時',
