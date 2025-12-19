@@ -18,11 +18,11 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
-  // 共通セレクトの選択状態（登録／検索で共通利用）
+  // 共通セレクトの選択状態（登録と検索で共通）
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
-  const [playedAt, setPlayedAt] = useState<string>('');
-  const [filteredResults, setFilteredResults] = useState<Result[]>(results);
+  const [playedAt, setPlayedAt] = useState('');
+  const [filteredResults, setFilteredResults] = useState(results);
 
   const handleRecalculate = async () => {
     try {
@@ -40,17 +40,25 @@ export default function ResultsClient({ players, results }: Props) {
     }
   };
 
-  // 共通のオプションとスタイル
+  // 共通のオプション
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
+  // react-select のスタイル（高さ42pxに統一）
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
-    option: (base, state) => ({
+    control: (base) => ({
       ...base,
-      color: 'black',
-      backgroundColor: state.isFocused ? '#eee' : 'white',
+      minHeight: 42,
+      height: 42,
+      borderRadius: 6,
+      borderColor: '#aaa',
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      height: 42,
+      padding: '0 8px',
     }),
     singleValue: (base) => ({
       ...base,
@@ -60,15 +68,22 @@ export default function ResultsClient({ players, results }: Props) {
       ...base,
       color: 'black',
     }),
+    option: (base, state) => ({
+      ...base,
+      color: 'black',
+      backgroundColor: state.isFocused ? '#eee' : 'white',
+    }),
     placeholder: (base) => ({
       ...base,
       color: '#666',
     }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 登録ボタン: state の値を使って登録
+  // 登録処理
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!winnerOpt || !loserOpt || !playedAt) {
       alert('勝者・敗者・対局日時は必須です');
       return;
@@ -77,6 +92,7 @@ export default function ResultsClient({ players, results }: Props) {
       alert('勝者と敗者は別のプレイヤーを選んでください');
       return;
     }
+
     const fd = new FormData();
     fd.append('winnerId', winnerOpt.value);
     fd.append('loserId', loserOpt.value);
@@ -86,7 +102,7 @@ export default function ResultsClient({ players, results }: Props) {
     await handleRecalculate();
   };
 
-  // 検索ボタン: 現在のセレクト値で一覧をフィルタ
+  // 検索処理
   const handleSearch = () => {
     let next = results;
     if (winnerOpt) next = next.filter((r) => r.winnerId === winnerOpt.value);
@@ -107,41 +123,47 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 1行レイアウト：勝者セレクト／敗者セレクト／日時／登録／検索 */}
+      {/* 1行にすべて並べるフォーム */}
       <form className={styles.formBar} onSubmit={handleRegister}>
-        <Select
-          options={playerOptions}
-          value={winnerOpt}
-          onChange={(opt) => setWinnerOpt(opt)}
-          placeholder="勝者を選択"
-          styles={customSelectStyles}
-          className={styles.input}
-          isClearable
-        />
-        <Select
-          options={playerOptions}
-          value={loserOpt}
-          onChange={(opt) => setLoserOpt(opt)}
-          placeholder="敗者を選択"
-          styles={customSelectStyles}
-          className={styles.input}
-          isClearable
-        />
+        <div className={styles.selectWrapper}>
+          <Select
+            options={playerOptions}
+            value={winnerOpt}
+            onChange={setWinnerOpt}
+            placeholder="勝者を選択"
+            styles={customSelectStyles}
+            isClearable
+            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          />
+        </div>
+
+        <div className={styles.selectWrapper}>
+          <Select
+            options={playerOptions}
+            value={loserOpt}
+            onChange={setLoserOpt}
+            placeholder="敗者を選択"
+            styles={customSelectStyles}
+            isClearable
+            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          />
+        </div>
+
         <input
           type="datetime-local"
-          name="playedAt"
-          required
           value={playedAt}
           onChange={(e) => setPlayedAt(e.target.value)}
           className={styles.input}
         />
+
         <button type="submit" className={styles.registerButton}>
           登録
         </button>
+
         <button
           type="button"
           onClick={handleSearch}
-          className={styles.registerButton}
+          className={styles.searchButton}
         >
           検索
         </button>
