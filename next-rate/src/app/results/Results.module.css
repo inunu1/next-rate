@@ -72,6 +72,11 @@
 }
 
 /* --- Inputs --- */
+.inputWrapper {
+  position: relative;
+  width: 200px;
+}
+
 .input {
   height: 42px;
   padding: 0 0.75rem;
@@ -81,18 +86,18 @@
   color: black;
   font-size: 14px;
   background: white;
-  position: relative;
+  width: 100%;
 }
 
-/* datetime-local の placeholder を強制表示 */
-.input:placeholder-shown::before {
-  content: attr(placeholder);
-  color: #666;
+/* スマホでも確実に placeholder を表示する */
+.fakePlaceholder {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
+  color: #666;
   pointer-events: none;
+  font-size: 14px;
 }
 
 /* react-select の高さを揃える */
