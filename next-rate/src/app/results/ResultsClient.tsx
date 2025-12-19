@@ -18,6 +18,7 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+  // 共通セレクトの選択状態（登録と検索で共通）
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
@@ -39,11 +40,13 @@ export default function ResultsClient({ players, results }: Props) {
     }
   };
 
+  // 共通のオプション
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
+  // react-select のスタイル（高さ42pxに統一）
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
     control: (base) => ({
       ...base,
@@ -77,6 +80,7 @@ export default function ResultsClient({ players, results }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
+  // 登録処理
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -98,6 +102,7 @@ export default function ResultsClient({ players, results }: Props) {
     await handleRecalculate();
   };
 
+  // 検索処理
   const handleSearch = () => {
     let next = results;
     if (winnerOpt) next = next.filter((r) => r.winnerId === winnerOpt.value);
@@ -149,7 +154,6 @@ export default function ResultsClient({ players, results }: Props) {
           value={playedAt}
           onChange={(e) => setPlayedAt(e.target.value)}
           className={styles.input}
-          placeholder="対局日時"
         />
 
         <button type="submit" className={styles.registerButton}>
@@ -165,6 +169,7 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
+      {/* 一覧テーブル */}
       <DataTable
         tableClass={styles.table}
         rows={filteredResults}

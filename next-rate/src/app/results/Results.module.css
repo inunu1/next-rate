@@ -63,12 +63,13 @@
   margin-bottom: 2rem;
   padding: 0 0.5rem;
 
+  /* スマホで横スクロール */
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .formBar > * {
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* 横スクロール時に潰れない */
 }
 
 /* --- Inputs --- */
@@ -81,21 +82,9 @@
   color: black;
   font-size: 14px;
   background: white;
-  position: relative;
 }
 
-/* datetime-local の placeholder を強制表示 */
-.input:placeholder-shown::before {
-  content: attr(placeholder);
-  color: #666;
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-/* react-select の高さを揃える */
+/* react-select の高さと揃える */
 .selectWrapper {
   min-width: 200px;
   height: 42px;
