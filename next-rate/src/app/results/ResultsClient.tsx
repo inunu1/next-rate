@@ -144,18 +144,13 @@ export default function ResultsClient({ players, results }: Props) {
           />
         </div>
 
-        <div className={styles.inputWrapper}>
-          <input
-            type="datetime-local"
-            value={playedAt}
-            onChange={(e) => setPlayedAt(e.target.value)}
-            className={styles.input}
-            placeholder=" "  /* 空白 placeholder */
-          />
-          {!playedAt && (
-            <span className={styles.fakePlaceholder}>対局日時</span>
-          )}
-        </div>
+        <input
+          type="datetime-local"
+          value={playedAt}
+          onChange={(e) => setPlayedAt(e.target.value)}
+          className={styles.input}
+          placeholder="対局日時"
+        />
 
         <button type="submit" className={styles.registerButton}>
           登録
