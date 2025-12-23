@@ -6,13 +6,17 @@
 }
 
 /* ===== Base ===== */
-html, body {
+html,
+body {
   height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* 横スクロール防止 */
-  overflow-y: hidden; /* ← これが縦スクロール問題の決定打 */
+  overflow: hidden; /* ← 縦スクロール完全封じ */
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ===== App Router 用（#__next は存在しない）===== */
+body > div {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ===== Links ===== */
