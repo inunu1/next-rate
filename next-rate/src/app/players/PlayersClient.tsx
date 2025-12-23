@@ -65,7 +65,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       ...base,
       color: '#666',
     }),
-    // ❌ menuPortalTarget を削除（これが縦スクロールの原因だった）
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
   // 新規登録
@@ -119,6 +119,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
             placeholder="プレイヤー検索 / 新規入力"
             styles={customSelectStyles}
             isClearable
+            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
           />
         </div>
 
