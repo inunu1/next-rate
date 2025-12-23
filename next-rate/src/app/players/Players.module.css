@@ -13,12 +13,16 @@
   padding: 1rem 2rem;
   border-radius: 8px;
   margin-bottom: 2rem;
+
+  /* ← これで縦スクロール完全消滅 */
+  overflow-y: hidden;
 }
 
 .title {
   font-size: 1.6rem;
   font-weight: 600;
   color: #222;
+  line-height: 1.2; /* 高さを安定させる */
 }
 
 /* --- Buttons --- */
