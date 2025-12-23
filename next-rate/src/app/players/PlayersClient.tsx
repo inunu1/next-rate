@@ -4,7 +4,6 @@ import { useState } from 'react';
 import styles from './Players.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
-import RegisterForm from '@/components/RegisterForm';
 import Select, { StylesConfig } from 'react-select';
 
 type Player = {
@@ -19,46 +18,80 @@ type Props = {
   currentUserId: string;
 };
 
-// react-select 用のオプション型
 type PlayerOption = {
   value: string;
   label: string;
 };
 
-// 黒文字スタイル
-const customSelectStyles: StylesConfig<PlayerOption, false> = {
-  option: (base, state) => ({
-    ...base,
-    color: 'black',
-    backgroundColor: state.isFocused ? '#eee' : 'white',
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: 'black',
-  }),
-  input: (base) => ({
-    ...base,
-    color: 'black',
-  }),
-  placeholder: (base) => ({
-    ...base,
-    color: '#666',
-  }),
-};
-
 export default function PlayersClient({ players, currentUserId }: Props) {
+  const [name, setName] = useState('');
+  const [initialRate, setInitialRate] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerOption | null>(null);
+  const [filteredPlayers, setFilteredPlayers] = useState(players);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  // 選択されたプレイヤーでフィルタ
-  const filteredPlayers =
-    selectedPlayer === null
-      ? players
-      : players.filter((p) => p.id === selectedPlayer.value);
+  const customSelectStyles: StylesConfig<PlayerOption, false> = {
+    control: (base) => ({
+      ...base,
+      minHeight: 42,
+      height: 42,
+      borderRadius: 6,
+      borderColor: '#aaa',
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      height: 42,
+      padding: '0 8px',
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: 'black',
+    }),
+    input: (base) => ({
+      ...base,
+      color: 'black',
+    }),
+    option: (base, state) => ({
+      ...base,
+      color: 'black',
+      backgroundColor: state.isFocused ? '#eee' : 'white',
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: '#666',
+    }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  };
+
+  // 登録処理
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!name || !initialRate) {
+      alert('ユーザー名と初期レートは必須です');
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('initialRate', initialRate);
+
+    await fetch('/players/register', { method: 'POST', body: fd });
+    location.reload();
+  };
+
+  // 検索処理
+  const handleSearch = () => {
+    if (!selectedPlayer) {
+      setFilteredPlayers(players);
+      return;
+    }
+    setFilteredPlayers(players.filter((p) => p.id === selectedPlayer.value));
+  };
 
   return (
     <div className={styles.container}>
@@ -73,39 +106,50 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         }}
       />
 
-      <RegisterForm
-        action="/players/register"
-        submitLabel="対局者登録"
-        classNames={{
-          formBar: styles.formBar,
-          input: styles.input,
-          submitButton: styles.registerButton,
-        }}
-        fields={[
-          { name: 'name', type: 'text', placeholder: 'ユーザー名', required: true },
-          {
-            name: 'initialRate',
-            type: 'number',
-            placeholder: '初期レート（4桁）',
-            required: true,
-            min: 1000,
-            max: 9999,
-          },
-        ]}
-      />
-
-      {/* 検索付きセレクト */}
-      <div className={styles.formBar}>
-        <Select
-          options={playerOptions}
-          value={selectedPlayer}
-          onChange={(option) => setSelectedPlayer(option)}
-          placeholder="プレイヤー検索"
-          styles={customSelectStyles}
-          isClearable
+      {/* 横並びフォームバー */}
+      <form className={styles.formBar} onSubmit={handleRegister}>
+        <input
+          type="text"
+          placeholder="ユーザー名"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className={styles.input}
         />
-      </div>
+
+        <input
+          type="number"
+          placeholder="初期レート（4桁）"
+          value={initialRate}
+          onChange={(e) => setInitialRate(e.target.value)}
+          min={1000}
+          max={9999}
+          className={styles.input}
+        />
+
+        <div className={styles.selectWrapper}>
+          <Select
+            options={playerOptions}
+            value={selectedPlayer}
+            onChange={(option) => setSelectedPlayer(option)}
+            placeholder="プレイヤー検索"
+            styles={customSelectStyles}
+            isClearable
+            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          />
+        </div>
+
+        <button type="submit" className={styles.registerButton}>
+          登録
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSearch}
+          className={styles.searchButton}
+        >
+          検索
+        </button>
+      </form>
 
       <main className={styles.main}>
         <DataTable
