@@ -21,13 +21,14 @@ type AdminOption = {
 
 export default function AdminClient({ users, currentUserId }: Props) {
   const [selected, setSelected] = useState<AdminOption | null>(null);
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
 
+  // 名前で検索する
   const adminOptions: AdminOption[] = users.map((u) => ({
     value: u.id,
-    label: u.email,
+    label: u.name ?? '(名前なし)',
   }));
 
   const customSelectStyles: StylesConfig<AdminOption, false> = {
@@ -66,7 +67,11 @@ export default function AdminClient({ users, currentUserId }: Props) {
   // 新規登録
   const handleRegister = async () => {
     if (!selected || !selected.__isNew__) {
-      alert('新規管理者のメールアドレスを入力してください');
+      alert('新規管理者の名前を入力してください');
+      return;
+    }
+    if (!email) {
+      alert('メールアドレスを入力してください');
       return;
     }
     if (!password) {
@@ -75,15 +80,15 @@ export default function AdminClient({ users, currentUserId }: Props) {
     }
 
     const fd = new FormData();
-    fd.append('email', selected.label);
-    fd.append('name', name);
+    fd.append('email', email);
+    fd.append('name', selected.label);
     fd.append('password', password);
 
     await fetch('/admin/register', { method: 'POST', body: fd });
     location.reload();
   };
 
-  // 検索
+  // 名前検索
   const handleSearch = () => {
     if (!selected || selected.__isNew__) {
       setFilteredUsers(users);
@@ -112,7 +117,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
             options={adminOptions}
             value={selected}
             onChange={(opt) => setSelected(opt)}
-            placeholder="メールアドレス検索 / 新規入力"
+            placeholder="名前検索 / 新規入力"
             styles={customSelectStyles}
             isClearable
             menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
@@ -120,16 +125,16 @@ export default function AdminClient({ users, currentUserId }: Props) {
         </div>
 
         <input
-          type="text"
-          placeholder="名前（任意）"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          type="email"
+          placeholder="メールアドレス（新規登録時）"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className={styles.input}
         />
 
         <input
           type="password"
-          placeholder="パスワード"
+          placeholder="パスワード（新規登録時）"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className={styles.input}
