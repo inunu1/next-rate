@@ -4,7 +4,8 @@ import { useState } from 'react';
 import styles from './Players.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
-import Select, { StylesConfig } from 'react-select';
+import CreatableSelect from 'react-select/creatable';
+import { StylesConfig } from 'react-select';
 
 type Player = {
   id: string;
@@ -21,12 +22,12 @@ type Props = {
 type PlayerOption = {
   value: string;
   label: string;
+  __isNew__?: boolean;
 };
 
 export default function PlayersClient({ players, currentUserId }: Props) {
-  const [name, setName] = useState('');
+  const [selected, setSelected] = useState<PlayerOption | null>(null);
   const [initialRate, setInitialRate] = useState('');
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerOption | null>(null);
   const [filteredPlayers, setFilteredPlayers] = useState(players);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
@@ -67,30 +68,32 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 登録処理
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!name || !initialRate) {
-      alert('ユーザー名と初期レートは必須です');
+  // 新規登録
+  const handleRegister = async () => {
+    if (!selected || !selected.__isNew__) {
+      alert('新規プレイヤー名を入力してください');
+      return;
+    }
+    if (!initialRate) {
+      alert('初期レートを入力してください');
       return;
     }
 
     const fd = new FormData();
-    fd.append('name', name);
+    fd.append('name', selected.label);
     fd.append('initialRate', initialRate);
 
     await fetch('/players/register', { method: 'POST', body: fd });
     location.reload();
   };
 
-  // 検索処理
+  // 検索
   const handleSearch = () => {
-    if (!selectedPlayer) {
+    if (!selected || selected.__isNew__) {
       setFilteredPlayers(players);
       return;
     }
-    setFilteredPlayers(players.filter((p) => p.id === selectedPlayer.value));
+    setFilteredPlayers(players.filter((p) => p.id === selected.value));
   };
 
   return (
@@ -107,14 +110,18 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       />
 
       {/* 横並びフォームバー */}
-      <form className={styles.formBar} onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="ユーザー名"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={styles.input}
-        />
+      <div className={styles.formBar}>
+        <div className={styles.selectWrapper}>
+          <CreatableSelect
+            options={playerOptions}
+            value={selected}
+            onChange={(opt) => setSelected(opt)}
+            placeholder="プレイヤー検索 / 新規入力"
+            styles={customSelectStyles}
+            isClearable
+            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          />
+        </div>
 
         <input
           type="number"
@@ -126,19 +133,11 @@ export default function PlayersClient({ players, currentUserId }: Props) {
           className={styles.input}
         />
 
-        <div className={styles.selectWrapper}>
-          <Select
-            options={playerOptions}
-            value={selectedPlayer}
-            onChange={(option) => setSelectedPlayer(option)}
-            placeholder="プレイヤー検索"
-            styles={customSelectStyles}
-            isClearable
-            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-          />
-        </div>
-
-        <button type="submit" className={styles.registerButton}>
+        <button
+          type="button"
+          onClick={handleRegister}
+          className={styles.registerButton}
+        >
           登録
         </button>
 
@@ -149,7 +148,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         >
           検索
         </button>
-      </form>
+      </div>
 
       <main className={styles.main}>
         <DataTable
