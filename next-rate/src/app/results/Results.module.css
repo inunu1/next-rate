@@ -1,11 +1,12 @@
 .container {
   padding: 2rem;
   background-color: white;
-  min-height: calc(100vh - 4rem); /* padding分を差し引いてスクロール防止 */
+  min-height: 100vh;
   box-sizing: border-box;
+  overflow-y: hidden;
 }
 
-/* MenuBar */
+/* --- MenuBar --- */
 .menuBar {
   display: flex;
   justify-content: space-between;
@@ -14,20 +15,24 @@
   padding: 1rem 2rem;
   border-radius: 8px;
   margin-bottom: 2rem;
+
+  /* ← これで縦スクロール完全消滅 */
+  overflow-y: hidden;
 }
 
 .title {
   font-size: 1.6rem;
   font-weight: 600;
   color: #222;
-  line-height: 1.2;
+  line-height: 1.2; /* 高さを安定させる */
 }
 
-/* Buttons */
-.registerButton,
-.searchButton {
+/* --- Buttons --- */
+.registerButton {
   height: 42px;
   padding: 0 1.2rem;
+  background-color: #3182ce;
+  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -36,39 +41,44 @@
   font-weight: 500;
 }
 
-.registerButton {
-  background-color: #3182ce;
-  color: white;
-}
-
 .registerButton:hover {
   background-color: #2b6cb0;
 }
 
 .searchButton {
+  height: 42px;
+  padding: 0 1.2rem;
   background-color: #e5e7eb;
   color: #111;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .searchButton:hover {
   background-color: #d1d5db;
 }
 
-/* FormBar */
+/* --- FormBar: 横並び + スマホ対応 --- */
 .formBar {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 0 0.5rem;
+
+  /* スマホで横スクロール */
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .formBar > * {
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* 横スクロール時に潰れない */
 }
 
-/* Inputs */
+/* --- Inputs --- */
 .input {
   height: 42px;
   padding: 0 0.75rem;
@@ -80,20 +90,21 @@
   background: white;
 }
 
+/* react-select の高さと揃える */
 .selectWrapper {
   min-width: 200px;
   height: 42px;
 }
 
-/* Table */
+/* --- Table --- */
 .table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  color: black;
   background: white;
   border-radius: 6px;
   overflow: hidden;
-  color: black;
 }
 
 .table th,
@@ -109,7 +120,7 @@
   font-weight: 600;
 }
 
-/* Action Button */
+/* --- Action Button --- */
 .actionButton {
   padding: 0.4rem 0.8rem;
   background-color: #3182ce;
