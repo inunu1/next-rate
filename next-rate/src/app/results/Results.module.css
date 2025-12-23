@@ -2,8 +2,6 @@
   padding: 2rem;
   background-color: white;
   min-height: 100vh;
-  box-sizing: border-box;
-  overflow-y: hidden;
 }
 
 /* --- MenuBar --- */
