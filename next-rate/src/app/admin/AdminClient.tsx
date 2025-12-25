@@ -2,11 +2,17 @@
 
 import { useState } from 'react';
 import styles from './Admin.module.css';
-import { AdminUser } from '@/types/admin';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import CreatableSelect from 'react-select/creatable';
 import { StylesConfig } from 'react-select';
+
+// ★★★ ここで AdminUser 型を定義（types/admin.ts は削除済み）★★★
+type AdminUser = {
+  id: string;
+  name: string | null;
+  email: string;
+};
 
 type Props = {
   users: AdminUser[];
