@@ -1,14 +1,13 @@
 import { prisma } from '@/lib/prisma';
 
-export async function GET(req: Request, context: unknown) {
-  // ここで型を絞る（TS も ESLint も Next.js も OK）
-  const { id } = (context as { params: { id: string } }).params;
+export async function GET(req: Request, context: any) {
+  const playerId = context.params.id;
 
   const results = await prisma.result.findMany({
     where: {
       OR: [
-        { winnerId: id },
-        { loserId: id },
+        { winnerId: playerId },
+        { loserId: playerId },
       ],
     },
     orderBy: { playedAt: 'asc' },
@@ -16,7 +15,7 @@ export async function GET(req: Request, context: unknown) {
 
   const history = results.map((r) => ({
     date: r.playedAt.toISOString().slice(0, 10),
-    rate: r.winnerId === id ? r.winnerRate : r.loserRate,
+    rate: r.winnerId === playerId ? r.winnerRate : r.loserRate,
   }));
 
   return Response.json(history);
