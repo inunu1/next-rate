@@ -4,7 +4,6 @@ import { useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import RateChart from './RateChart';
 import { SingleValue } from 'react-select';
-import styles from './Trend.module.css';
 
 type Player = {
   id: string;
@@ -41,15 +40,11 @@ export default function TrendClient({ players }: Props) {
   };
 
   return (
-    <div className={styles.container}>
-      {/* --- MenuBar（PlayersClient と統一） --- */}
-      <div className={styles.menuBar}>
-        <h1 className={styles.title}>レート推移</h1>
-      </div>
+    <div className="flex flex-col gap-6 px-6 py-4">
+      <h1 className="text-xl font-bold">レート推移</h1>
 
-      {/* --- FormBar（横並び + スマホ横スクロール） --- */}
-      <div className={styles.formBar}>
-        <div className={styles.selectWrapper}>
+      <div className="flex items-center gap-4">
+        <div className="w-64">
           <CreatableSelect
             options={options}
             value={selected}
@@ -63,7 +58,6 @@ export default function TrendClient({ players }: Props) {
         </div>
       </div>
 
-      {/* --- グラフ --- */}
       {history.length > 0 && <RateChart data={history} />}
     </div>
   );
