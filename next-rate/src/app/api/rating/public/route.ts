@@ -3,27 +3,33 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const keyword = searchParams.get("keyword");
+
+  // keyword が無い場合は全件返さず、空配列を返す（安全）
+  if (!keyword || keyword.trim() === "") {
+    return NextResponse.json([], {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
+  }
+
   const players = await prisma.player.findMany({
     where: {
-      deletedAt: null, // 論理削除されていないプレイヤーのみ
-    },
-    orderBy: {
-      createdAt: "asc", // 並び順は必要に応じて変更
+      name: {
+        contains: keyword,
+      },
     },
     select: {
       id: true,
       name: true,
-      initialRate: true,
       currentRate: true,
-      createdAt: true,
+      initialRate: true,
     },
+    orderBy: { currentRate: "desc" },
   });
 
-  return new NextResponse(JSON.stringify(players), {
-    headers: {
-      "Access-Control-Allow-Origin": "*", // 必要なら GitHub Pages の URL に限定
-      "Access-Control-Allow-Methods": "GET",
-    },
+  return NextResponse.json(players, {
+    headers: { "Access-Control-Allow-Origin": "*" },
   });
 }
