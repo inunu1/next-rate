@@ -1,10 +1,7 @@
 import { prisma } from '@/lib/prisma';
 
-export async function GET(
-  req: Request,
-  context: { params: { id: string } }
-) {
-  const playerId = context.params.id;
+export async function GET(_: Request, { params }: { params: { id: string } }) {
+  const playerId = params.id;
 
   const results = await prisma.result.findMany({
     where: {
