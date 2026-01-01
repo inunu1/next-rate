@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 
-export async function GET(req: Request, context: any) {
+export async function GET(
+  req: Request,
+  context: { params: Record<string, string> }
+) {
   const playerId = context.params.id;
 
   const results = await prisma.result.findMany({
