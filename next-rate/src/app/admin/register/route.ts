@@ -3,10 +3,10 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcrypt';
 
 export async function POST(req: Request) {
-  const form = await req.formData();
-  const email = form.get('email') as string | null;
-  const name = form.get('name') as string | null;
-  const password = form.get('password') as string | null;
+  const formData = await req.formData();
+  const email = formData.get('email') as string | null;
+  const name = formData.get('name') as string | null;
+  const password = formData.get('password') as string | null;
 
   // 入力チェック
   if (!email || !password || !name) {
