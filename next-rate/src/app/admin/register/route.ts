@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   // 入力チェック
   if (!email || !password || !name) {
-    return redirect('/admin?error=missing');
+    return redirect('https://next-rate.vercel.app/admin?error=missing');
   }
 
   // email 重複チェック
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   });
 
   if (existing) {
-    return redirect('/admin?error=duplicate');
+    return redirect('https://next-rate.vercel.app/admin?error=duplicate');
   }
 
   // パスワードハッシュ化
@@ -34,5 +34,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return redirect('/admin?success=1');
+  return redirect('https://next-rate.vercel.app/admin?success=1');
 }
