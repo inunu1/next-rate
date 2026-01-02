@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './Admin.module.css';
 import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import CreatableSelect from 'react-select/creatable';
 import { StylesConfig } from 'react-select';
 
-// ★★★ ここで AdminUser 型を定義（types/admin.ts は削除済み）★★★
 type AdminUser = {
   id: string;
   name: string | null;
@@ -26,12 +26,15 @@ type AdminOption = {
 };
 
 export default function AdminClient({ users, currentUserId }: Props) {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  const success = searchParams.get("success");
+
   const [selected, setSelected] = useState<AdminOption | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
 
-  // 名前で検索する
   const adminOptions: AdminOption[] = users.map((u) => ({
     value: u.id,
     label: u.name ?? '(名前なし)',
@@ -70,7 +73,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 新規登録
   const handleRegister = async () => {
     if (!selected || !selected.__isNew__) {
       alert('新規管理者の名前を入力してください');
@@ -94,7 +96,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
     location.reload();
   };
 
-  // 名前検索
   const handleSearch = () => {
     if (!selected || selected.__isNew__) {
       setFilteredUsers(users);
@@ -116,7 +117,17 @@ export default function AdminClient({ users, currentUserId }: Props) {
         }}
       />
 
-      {/* 横並びフォームバー */}
+      {/* ★ メッセージ表示 ★ */}
+      {error === "missing" && (
+        <div className={styles.error}>入力が不足しています。</div>
+      )}
+      {error === "duplicate" && (
+        <div className={styles.error}>このメールアドレスは既に登録されています。</div>
+      )}
+      {success === "1" && (
+        <div className={styles.success}>管理者を登録しました。</div>
+      )}
+
       <div className={styles.formBar}>
         <div className={styles.selectWrapper}>
           <CreatableSelect
