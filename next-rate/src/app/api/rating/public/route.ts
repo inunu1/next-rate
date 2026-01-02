@@ -7,7 +7,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const keyword = searchParams.get("keyword");
 
-  // keyword が無い場合は空配列（安全）
   if (!keyword || keyword.trim() === "") {
     return NextResponse.json([], {
       headers: { "Access-Control-Allow-Origin": "*" },
@@ -30,28 +29,30 @@ export async function GET(req: Request) {
     orderBy: { currentRate: "desc" },
   });
 
-  // 各プレイヤーの過去10局のレート履歴を取得
   const playersWithHistory = await Promise.all(
     players.map(async (p) => {
       const results = await prisma.result.findMany({
         where: {
-          OR: [
-            { winnerId: p.id },
-            { loserId: p.id }
-          ]
+          OR: [{ winnerId: p.id }, { loserId: p.id }],
         },
         orderBy: { playedAt: "desc" },
-        take: 10,
+        take: 9, // 最新レートと合わせて10件にする
       });
 
-      // レート履歴を整形
-      const history = results.map((r) => {
-        const rate = r.winnerId === p.id ? r.winnerRate : r.loserRate;
-        return {
-          rate,
-          playedAt: r.playedAt,
-        };
-      });
+      // 最新レートを先頭に置く
+      const history = [
+        {
+          rate: p.currentRate,
+          playedAt: null, // 最新レートは対局に紐づかない
+        },
+        ...results.map((r) => {
+          const rate = r.winnerId === p.id ? r.winnerRate : r.loserRate;
+          return {
+            rate,
+            playedAt: r.playedAt,
+          };
+        }),
+      ];
 
       return {
         ...p,
