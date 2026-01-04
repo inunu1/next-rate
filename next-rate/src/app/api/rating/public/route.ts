@@ -44,25 +44,18 @@ export async function GET(req: Request) {
           rate: p.currentRate,
           playedAt: null,
           opponent: null,
+          opponentRate: null,
           result: null,
-          rateDiff: null,
         },
         ...results.map((r) => {
           const isWinner = r.winnerId === p.id;
 
-          const rate = isWinner ? r.winnerRate : r.loserRate;
-          const opponent = isWinner ? r.loserName : r.winnerName;
-
-          const rateDiff = isWinner
-            ? r.winnerRate - r.loserRate
-            : r.loserRate - r.winnerRate;
-
           return {
-            rate,
+            rate: isWinner ? r.winnerRate : r.loserRate,
             playedAt: r.playedAt,
-            opponent,
+            opponent: isWinner ? r.loserName : r.winnerName,
+            opponentRate: isWinner ? r.loserRate : r.winnerRate,
             result: isWinner ? "○" : "●",
-            rateDiff,
           };
         }),
       ];
