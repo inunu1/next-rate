@@ -36,20 +36,33 @@ export async function GET(req: Request) {
           OR: [{ winnerId: p.id }, { loserId: p.id }],
         },
         orderBy: { playedAt: "desc" },
-        take: 9, // 最新レートと合わせて10件にする
+        take: 9, // 最新レートと合わせて10件
       });
 
-      // 最新レートを先頭に置く
       const history = [
         {
           rate: p.currentRate,
-          playedAt: null, // 最新レートは対局に紐づかない
+          playedAt: null,
+          opponent: null,
+          result: null,
+          rateDiff: null,
         },
         ...results.map((r) => {
-          const rate = r.winnerId === p.id ? r.winnerRate : r.loserRate;
+          const isWinner = r.winnerId === p.id;
+
+          const rate = isWinner ? r.winnerRate : r.loserRate;
+          const opponent = isWinner ? r.loserName : r.winnerName;
+
+          const rateDiff = isWinner
+            ? r.winnerRate - r.loserRate
+            : r.loserRate - r.winnerRate;
+
           return {
             rate,
             playedAt: r.playedAt,
+            opponent,
+            result: isWinner ? "○" : "●",
+            rateDiff,
           };
         }),
       ];
