@@ -83,7 +83,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     fd.append('name', selected.label);
     fd.append('initialRate', initialRate);
 
-    await fetch('/api/players/register', { method: 'POST', body: fd });
+    await fetch('/api/player/register', { method: 'POST', body: fd });
     location.reload();
   };
 
@@ -162,7 +162,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               header: '操作',
               render: (p) =>
                 p.id !== currentUserId && (
-                  <form action="/api/players/delete" method="POST">
+                  <form action="/api/player/delete" method="POST">
                     <input type="hidden" name="id" value={p.id} />
                     <button type="submit" className={styles.actionButton}>
                       出禁
