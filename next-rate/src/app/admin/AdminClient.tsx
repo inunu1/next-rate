@@ -90,7 +90,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
     fd.append('name', selected.label);
     fd.append('password', password);
 
-    await fetch('/admin/register', { method: 'POST', body: fd });
+    await fetch('/api/admin/register', { method: 'POST', body: fd });
     location.reload();
   };
 
@@ -174,7 +174,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
               header: '操作',
               render: (u) =>
                 u.id !== currentUserId && (
-                  <form action="/admin/delete" method="POST">
+                  <form action="/api/admin/delete" method="POST">
                     <input type="hidden" name="id" value={u.id} />
                     <button type="submit" className={styles.actionButton}>
                       削除
