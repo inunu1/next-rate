@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// DELETE /api/players/:id
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
+
   await prisma.player.delete({
-    where: { id: params.id },
+    where: { id },
   });
 
   return NextResponse.json({ success: true });
@@ -15,14 +16,16 @@ export async function DELETE(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
   const form = await req.formData();
+
   const name = form.get("name")?.toString() ?? "";
   const initialRate = Number(form.get("initialRate"));
 
   const player = await prisma.player.update({
-    where: { id: params.id },
+    where: { id },
     data: { name, initialRate },
   });
 
