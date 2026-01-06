@@ -98,7 +98,7 @@ export default function ResultsClient({ players, results }: Props) {
     fd.append('loserId', loserOpt.value);
     fd.append('playedAt', playedAt);
 
-    await fetch('/results/register', { method: 'POST', body: fd });
+    await fetch('/api/result/register', { method: 'POST', body: fd });
     await handleRecalculate();
   };
 
@@ -190,12 +190,12 @@ export default function ResultsClient({ players, results }: Props) {
             header: '操作',
             render: (r) => (
               <form
-                action="/results/delete"
+                action="/api/result/delete"
                 method="post"
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const fd = new FormData(e.currentTarget);
-                  await fetch('/results/delete', { method: 'POST', body: fd });
+                  await fetch('/api/result/delete', { method: 'POST', body: fd });
                   await handleRecalculate();
                 }}
               >
