@@ -68,7 +68,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 新規登録
+  // 新規登録（REST: POST /api/players）
   const handleRegister = async () => {
     if (!selected || !selected.__isNew__) {
       alert('新規プレイヤー名を入力してください');
@@ -83,7 +83,11 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     fd.append('name', selected.label);
     fd.append('initialRate', initialRate);
 
-    await fetch('/api/player/register', { method: 'POST', body: fd });
+    await fetch('/api/players', {
+      method: 'POST',
+      body: fd,
+    });
+
     location.reload();
   };
 
@@ -162,12 +166,18 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               header: '操作',
               render: (p) =>
                 p.id !== currentUserId && (
-                  <form action="/api/player/delete" method="POST">
-                    <input type="hidden" name="id" value={p.id} />
-                    <button type="submit" className={styles.actionButton}>
-                      出禁
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={async () => {
+                      await fetch(`/api/players/${p.id}`, {
+                        method: 'DELETE',
+                      });
+                      location.reload();
+                    }}
+                  >
+                    出禁
+                  </button>
                 ),
             },
           ]}
