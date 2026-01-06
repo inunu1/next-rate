@@ -170,8 +170,10 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                     type="button"
                     className={styles.actionButton}
                     onClick={async () => {
-                      await fetch(`/api/players/${p.id}/deactivate`, {
-                        method: 'PATCH',
+                      await fetch(`/api/players/${p.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deleted: true }),
                       });
                       location.reload();
                     }}

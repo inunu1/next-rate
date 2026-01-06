@@ -1,39 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// DELETE /api/players/:id
-export async function DELETE(req: Request) {
-  const url = new URL(req.url);
-  const id = url.pathname.split("/").pop(); // /api/players/123 → "123"
-
-  if (!id) {
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-  }
-
-  await prisma.player.delete({
-    where: { id },
-  });
-
-  return NextResponse.json({ success: true });
-}
-
-// PUT /api/players/:id
+// PUT /api/players/:id → 論理削除にも使う
 export async function PUT(req: Request) {
   const url = new URL(req.url);
-  const id = url.pathname.split("/").pop();
+  const id = url.pathname.split("/").pop(); // /players/123 → 123
 
   if (!id) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
 
-  const form = await req.formData();
-  const name = form.get("name")?.toString() ?? "";
-  const initialRate = Number(form.get("initialRate"));
+  const body = await req.json().catch(() => null);
 
-  const player = await prisma.player.update({
-    where: { id },
-    data: { name, initialRate },
-  });
+  // 論理削除
+  if (body?.deleted === true) {
+    const player = await prisma.player.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
-  return NextResponse.json(player);
+    return NextResponse.json({ success: true, player });
+  }
+
+  return NextResponse.json(
+    { error: "Unsupported PUT operation" },
+    { status: 400 }
+  );
 }
