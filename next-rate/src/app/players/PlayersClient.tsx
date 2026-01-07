@@ -25,6 +25,15 @@ type PlayerOption = {
   __isNew__?: boolean;
 };
 
+// API に送る型
+type ApiBody = {
+  action: 'create' | 'update' | 'delete' | 'list' | 'get';
+  table: 'player';
+  id?: string;
+  data?: Record<string, unknown>;
+  select?: Record<string, boolean>;
+};
+
 export default function PlayersClient({ players, currentUserId }: Props) {
   const [selected, setSelected] = useState<PlayerOption | null>(null);
   const [initialRate, setInitialRate] = useState('');
@@ -71,7 +80,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   // ---------------------------------------------------------
   // 共通 API 呼び出し
   // ---------------------------------------------------------
-  async function callApi(body: any) {
+  async function callApi(body: ApiBody) {
     const res = await fetch('/api/private', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -125,7 +134,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       action: 'update',
       table: 'player',
       id,
-      data: { deletedAt: new Date() },
+      data: { deletedAt: new Date().toISOString() },
     });
 
     location.reload();

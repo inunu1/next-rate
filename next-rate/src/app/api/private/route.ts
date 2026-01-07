@@ -1,59 +1,50 @@
-// Next.js のレスポンスユーティリティ
 import { NextResponse } from "next/server";
-
-// NextAuth のセッション取得
 import { getServerSession } from "next-auth";
-
-// Prisma クライアント
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
-// -------------------------------------------------------------
-// Prisma モデルを動的に取得する関数
-// 例: table = "player" → prisma.player を返す
-// -------------------------------------------------------------
-const getModel = (table: string) => {
-  const model = (prisma as any)[table]; // Prisma のモデル名を動的に参照
-  if (!model) throw new Error(`Unknown table: ${table}`); // モデルが存在しない場合はエラー
-  return model;
+// Prisma モデル名の union 型（必要に応じて追加）
+type TableName = keyof typeof prisma;
+
+// select の型
+type SelectFields = Record<string, boolean> | undefined;
+
+// update/create の data 型
+type DataFields = Record<string, unknown>;
+
+// API リクエストの型
+type ApiRequest = {
+  action: "list" | "get" | "create" | "update" | "delete";
+  table: TableName;
+  id?: string;
+  data?: DataFields;
+  select?: SelectFields;
 };
 
+// Prisma モデルを動的に取得
+const getModel = (table: TableName) => {
+  const model = prisma[table];
+  return model as any; // Prisma が動的アクセスを許容していないためここだけ any 許容
+};
 
-// -------------------------------------------------------------
-// CRUD 実装（論理削除は update、物理削除は delete）
-// -------------------------------------------------------------
+// CRUD 実装
 const crud = {
-  // ---------------------------------------------------------
-  // 一覧取得（findMany）
-  // select が指定されていれば必要な列だけ返す
-  // ---------------------------------------------------------
-  async list(table: string, select?: any) {
-    const model = getModel(table); // モデル取得
-    return model.findMany({ select }); // 全件取得
+  async list(table: TableName, select?: SelectFields) {
+    const model = getModel(table);
+    return model.findMany({ select });
   },
 
-  // ---------------------------------------------------------
-  // 単一取得（findUnique）
-  // id と select を指定可能
-  // ---------------------------------------------------------
-  async get(table: string, id: string, select?: any) {
+  async get(table: TableName, id: string, select?: SelectFields) {
     const model = getModel(table);
     return model.findUnique({ where: { id }, select });
   },
 
-  // ---------------------------------------------------------
-  // 新規作成（create）
-  // data に渡された内容をそのまま登録
-  // ---------------------------------------------------------
-  async create(table: string, data: any) {
+  async create(table: TableName, data: DataFields) {
     const model = getModel(table);
     return model.create({ data });
   },
 
-  // ---------------------------------------------------------
-  // 更新（update）
-  // 論理削除もここで扱う（deletedAt を渡せば OK）
-  // ---------------------------------------------------------
-  async update(table: string, id: string, data: any) {
+  async update(table: TableName, id: string, data: DataFields) {
     const model = getModel(table);
     return model.update({
       where: { id },
@@ -61,76 +52,54 @@ const crud = {
     });
   },
 
-  // ---------------------------------------------------------
-  // 物理削除（delete）
-  // 対局結果管理などで使用
-  // ---------------------------------------------------------
-  async delete(table: string, id: string) {
+  async delete(table: TableName, id: string) {
     const model = getModel(table);
     return model.delete({
       where: { id },
     });
-  }
+  },
 };
 
-
-// -------------------------------------------------------------
-// API 本体（POST 1 本で全ドメインを扱う）
-// -------------------------------------------------------------
+// API 本体
 export async function POST(req: Request) {
-  // ---------------------------------------------------------
-  // NextAuth のセッションチェック
-  // 未ログインなら 401 を返す
-  // ---------------------------------------------------------
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // -------------------------------------------------------
-    // クライアントから送られた JSON を取得
-    // action: CRUD の種類
-    // table: Prisma モデル名
-    // id: 対象レコード
-    // data: 更新・作成データ
-    // select: 取得する列
-    // -------------------------------------------------------
-    const { action, table, id, data, select } = await req.json();
+    const body = (await req.json()) as ApiRequest;
+    const { action, table, id, data, select } = body;
 
-    // -------------------------------------------------------
-    // action に応じて処理を振り分ける
-    // -------------------------------------------------------
     switch (action) {
       case "list":
         return NextResponse.json(await crud.list(table, select));
 
       case "get":
+        if (!id) throw new Error("Missing id");
         return NextResponse.json(await crud.get(table, id, select));
 
       case "create":
+        if (!data) throw new Error("Missing data");
         return NextResponse.json(await crud.create(table, data));
 
-      case "update": // ★ 論理削除もここで扱う
+      case "update":
+        if (!id || !data) throw new Error("Missing id or data");
         return NextResponse.json(await crud.update(table, id, data));
 
-      case "delete": // ★ 物理削除
+      case "delete":
+        if (!id) throw new Error("Missing id");
         return NextResponse.json(await crud.delete(table, id));
 
       default:
-        // 未定義の action が来た場合
         return NextResponse.json(
           { error: `Unknown action: ${action}` },
           { status: 400 }
         );
     }
-
-  } catch (err: any) {
-    // -------------------------------------------------------
-    // 予期せぬエラーは 500 として返す
-    // -------------------------------------------------------
+  } catch (err) {
     return NextResponse.json(
-      { error: err.message ?? "Internal Server Error" },
+      { error: err instanceof Error ? err.message : "Internal Server Error" },
       { status: 500 }
     );
   }
