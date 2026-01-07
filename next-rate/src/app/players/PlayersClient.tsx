@@ -68,7 +68,21 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 新規登録（REST: POST /api/players）
+  // ---------------------------------------------------------
+  // 共通 API 呼び出し
+  // ---------------------------------------------------------
+  async function callApi(body: any) {
+    const res = await fetch('/api/private', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  // ---------------------------------------------------------
+  // 新規登録（create）
+  // ---------------------------------------------------------
   const handleRegister = async () => {
     if (!selected || !selected.__isNew__) {
       alert('新規プレイヤー名を入力してください');
@@ -79,25 +93,42 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       return;
     }
 
-    const fd = new FormData();
-    fd.append('name', selected.label);
-    fd.append('initialRate', initialRate);
-
-    await fetch('/api/players', {
-      method: 'POST',
-      body: fd,
+    await callApi({
+      action: 'create',
+      table: 'player',
+      data: {
+        name: selected.label,
+        initialRate: Number(initialRate),
+        currentRate: Number(initialRate),
+      },
     });
 
     location.reload();
   };
 
-  // 検索
+  // ---------------------------------------------------------
+  // 検索（クライアント側フィルタ）
+  // ---------------------------------------------------------
   const handleSearch = () => {
     if (!selected || selected.__isNew__) {
       setFilteredPlayers(players);
       return;
     }
     setFilteredPlayers(players.filter((p) => p.id === selected.value));
+  };
+
+  // ---------------------------------------------------------
+  // 出禁（論理削除 → update）
+  // ---------------------------------------------------------
+  const handleSoftDelete = async (id: string) => {
+    await callApi({
+      action: 'update',
+      table: 'player',
+      id,
+      data: { deletedAt: new Date() },
+    });
+
+    location.reload();
   };
 
   return (
@@ -169,14 +200,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                   <button
                     type="button"
                     className={styles.actionButton}
-                    onClick={async () => {
-                      await fetch(`/api/players/${p.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ deleted: true }),
-                      });
-                      location.reload();
-                    }}
+                    onClick={() => handleSoftDelete(p.id)}
                   >
                     出禁
                   </button>
