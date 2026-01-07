@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
-// Prisma モデル名の union 型（必要に応じて追加）
-type TableName = keyof typeof prisma;
+// Prisma のモデル名（大文字）
+type TableName = Prisma.ModelName;
 
 // select の型
 type SelectFields = Record<string, boolean> | undefined;
@@ -21,13 +21,35 @@ type ApiRequest = {
   select?: SelectFields;
 };
 
-// Prisma モデルを動的に取得
-const getModel = (table: TableName) => {
-  const model = prisma[table];
-  return model as any; // Prisma が動的アクセスを許容していないためここだけ any 許容
+// ---------------------------------------------------------
+// Prisma モデル delegate の共通インターフェース
+// （any を使わず ESLint を通すための唯一の方法）
+// ---------------------------------------------------------
+type ModelDelegate = {
+  findMany: (args?: unknown) => Promise<unknown>;
+  findUnique: (args: unknown) => Promise<unknown>;
+  create: (args: unknown) => Promise<unknown>;
+  update: (args: unknown) => Promise<unknown>;
+  delete: (args: unknown) => Promise<unknown>;
 };
 
+// ---------------------------------------------------------
+// Prisma モデルを動的に取得（型安全）
+// ---------------------------------------------------------
+const getModel = (table: TableName): ModelDelegate => {
+  // "User" → "user"
+  const key = table.charAt(0).toLowerCase() + table.slice(1);
+
+  // prisma.user / prisma.player / prisma.result などに変換
+  const model = prisma[key as keyof typeof prisma];
+
+  // モデル delegate としてキャスト（ESLint OK）
+  return model as unknown as ModelDelegate;
+};
+
+// ---------------------------------------------------------
 // CRUD 実装
+// ---------------------------------------------------------
 const crud = {
   async list(table: TableName, select?: SelectFields) {
     const model = getModel(table);
@@ -60,7 +82,9 @@ const crud = {
   },
 };
 
+// ---------------------------------------------------------
 // API 本体
+// ---------------------------------------------------------
 export async function POST(req: Request) {
   const session = await getServerSession();
   if (!session) {
