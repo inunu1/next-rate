@@ -1,10 +1,12 @@
-// src/app/api/rating/recalculate/route.ts
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const K = 32;
 const expectedScore = (a: number, b: number) =>
   1 / (1 + Math.pow(10, (b - a) / 400));
+
 const calcNext = (w: number, l: number) => {
   const ew = expectedScore(w, l);
   const el = expectedScore(l, w);
@@ -15,6 +17,12 @@ const calcNext = (w: number, l: number) => {
 };
 
 export async function POST() {
+  // 🔒 認証チェック（privert API の必須条件）
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // 1) 全員を初期レートへリセット（メモリ上）
   const players = await prisma.player.findMany();
   const playerMap = new Map(
@@ -26,7 +34,6 @@ export async function POST() {
     orderBy: { playedAt: 'asc' },
   });
 
-  // 更新内容をメモリに蓄積
   const resultUpdates: { id: string; winnerRate: number; loserRate: number }[] =
     [];
 
@@ -41,28 +48,24 @@ export async function POST() {
 
     const { winnerNext, loserNext } = calcNext(winnerStart, loserStart);
 
-    // 開始時レートを記録
     resultUpdates.push({
       id: r.id,
       winnerRate: winnerStart,
       loserRate: loserStart,
     });
 
-    // 適用後レートを更新（メモリ上）
     winner.currentRate = winnerNext;
     loser.currentRate = loserNext;
   }
 
   // 4) 一括更新（トランザクション）
   await prisma.$transaction([
-    // results の開始時レート更新
     ...resultUpdates.map((u) =>
       prisma.result.update({
         where: { id: u.id },
         data: { winnerRate: u.winnerRate, loserRate: u.loserRate },
       })
     ),
-    // players の最終レート更新
     ...Array.from(playerMap.values()).map((p) =>
       prisma.player.update({
         where: { id: p.id },
@@ -72,6 +75,6 @@ export async function POST() {
   ]);
 
   return NextResponse.json({
-    message: 'レーティング再計算完了（高速化版）',
+    message: 'レーティング計算完了',
   });
 }
