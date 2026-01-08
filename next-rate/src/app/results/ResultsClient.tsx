@@ -18,35 +18,16 @@ type PlayerOption = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
-  // 共通セレクトの選択状態（登録と検索で共通）
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
   const [filteredResults, setFilteredResults] = useState(results);
 
-  const handleRecalculate = async () => {
-    try {
-      const res = await fetch('/api/rating/recalculate', { method: 'POST' });
-      if (res.ok) {
-        alert('レーティング再計算が完了しました');
-        location.reload();
-      } else {
-        const data = await res.json();
-        alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('通信エラーが発生しました');
-    }
-  };
-
-  // 共通のオプション
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  // react-select のスタイル（高さ42pxに統一）
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
     control: (base) => ({
       ...base,
@@ -60,24 +41,37 @@ export default function ResultsClient({ players, results }: Props) {
       height: 42,
       padding: '0 8px',
     }),
-    singleValue: (base) => ({
-      ...base,
-      color: 'black',
-    }),
-    input: (base) => ({
-      ...base,
-      color: 'black',
-    }),
+    singleValue: (base) => ({ ...base, color: 'black' }),
+    input: (base) => ({ ...base, color: 'black' }),
     option: (base, state) => ({
       ...base,
       color: 'black',
       backgroundColor: state.isFocused ? '#eee' : 'white',
     }),
-    placeholder: (base) => ({
-      ...base,
-      color: '#666',
-    }),
+    placeholder: (base) => ({ ...base, color: '#666' }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  };
+
+  // 共通 API 呼び出し
+  async function callApi(body: any) {
+    const res = await fetch('/api/private', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  // レーティング再計算
+  const handleRecalculate = async () => {
+    const res = await fetch('/api/rating/recalculate', { method: 'POST' });
+    if (res.ok) {
+      alert('レーティング再計算が完了しました');
+      location.reload();
+    } else {
+      const data = await res.json();
+      alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
+    }
   };
 
   // 登録処理
@@ -93,12 +87,23 @@ export default function ResultsClient({ players, results }: Props) {
       return;
     }
 
-    const fd = new FormData();
-    fd.append('winnerId', winnerOpt.value);
-    fd.append('loserId', loserOpt.value);
-    fd.append('playedAt', playedAt);
+    const winner = players.find((p) => p.id === winnerOpt.value)!;
+    const loser = players.find((p) => p.id === loserOpt.value)!;
 
-    await fetch('/api/result/register', { method: 'POST', body: fd });
+    await callApi({
+      action: 'create',
+      table: 'Result',
+      data: {
+        winnerId: winner.id,
+        winnerName: winner.name,
+        winnerRate: winner.currentRate,
+        loserId: loser.id,
+        loserName: loser.name,
+        loserRate: loser.currentRate,
+        playedAt,
+      },
+    });
+
     await handleRecalculate();
   };
 
@@ -108,6 +113,17 @@ export default function ResultsClient({ players, results }: Props) {
     if (winnerOpt) next = next.filter((r) => r.winnerId === winnerOpt.value);
     if (loserOpt) next = next.filter((r) => r.loserId === loserOpt.value);
     setFilteredResults(next);
+  };
+
+  // 削除処理
+  const handleDelete = async (id: string) => {
+    await callApi({
+      action: 'delete',
+      table: 'Result',
+      id,
+    });
+
+    await handleRecalculate();
   };
 
   return (
@@ -123,7 +139,6 @@ export default function ResultsClient({ players, results }: Props) {
         }}
       />
 
-      {/* 1行にすべて並べるフォーム */}
       <form className={styles.formBar} onSubmit={handleRegister}>
         <div className={styles.selectWrapper}>
           <Select
@@ -169,7 +184,6 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
-      {/* 一覧テーブル */}
       <DataTable
         tableClass={styles.table}
         rows={filteredResults}
@@ -189,21 +203,13 @@ export default function ResultsClient({ players, results }: Props) {
           {
             header: '操作',
             render: (r) => (
-              <form
-                action="/api/result/delete"
-                method="post"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget);
-                  await fetch('/api/result/delete', { method: 'POST', body: fd });
-                  await handleRecalculate();
-                }}
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => handleDelete(r.id)}
               >
-                <input type="hidden" name="id" value={r.id} />
-                <button type="submit" className={styles.actionButton}>
-                  削除
-                </button>
-              </form>
+                削除
+              </button>
             ),
           },
         ]}
