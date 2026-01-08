@@ -72,7 +72,7 @@ export default function ResultsClient({ players, results }: Props) {
 
   // レーティング再計算
   const handleRecalculate = async () => {
-    const res = await fetch('/api/rating/recalculate', { method: 'POST' });
+    const res = await fetch('/api/private/calculate', { method: 'POST' });
     if (res.ok) {
       alert('レーティング再計算が完了しました');
       location.reload();
