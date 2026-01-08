@@ -7,7 +7,6 @@ import DataTable from '@/components/DataTable';
 import CreatableSelect from 'react-select/creatable';
 import { StylesConfig } from 'react-select';
 
-// ★★★ ここで AdminUser 型を定義（types/admin.ts は削除済み）★★★
 type AdminUser = {
   id: string;
   name: string | null;
@@ -25,13 +24,21 @@ type AdminOption = {
   __isNew__?: boolean;
 };
 
+// /api/private 用の型
+type ApiBody = {
+  action: 'create' | 'update' | 'delete' | 'list' | 'get';
+  table: 'admin';
+  id?: string;
+  data?: Record<string, unknown>;
+  select?: Record<string, boolean>;
+};
+
 export default function AdminClient({ users, currentUserId }: Props) {
   const [selected, setSelected] = useState<AdminOption | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
 
-  // 名前で検索する
   const adminOptions: AdminOption[] = users.map((u) => ({
     value: u.id,
     label: u.name ?? '(名前なし)',
@@ -70,6 +77,16 @@ export default function AdminClient({ users, currentUserId }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
+  // 共通 API 呼び出し
+  async function callApi(body: ApiBody) {
+    const res = await fetch('/api/private', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
   // 新規登録
   const handleRegister = async () => {
     if (!selected || !selected.__isNew__) {
@@ -85,12 +102,16 @@ export default function AdminClient({ users, currentUserId }: Props) {
       return;
     }
 
-    const fd = new FormData();
-    fd.append('email', email);
-    fd.append('name', selected.label);
-    fd.append('password', password);
+    await callApi({
+      action: 'create',
+      table: 'admin',
+      data: {
+        name: selected.label,
+        email,
+        password,
+      },
+    });
 
-    await fetch('/api/admin/register', { method: 'POST', body: fd });
     location.reload();
   };
 
@@ -101,6 +122,17 @@ export default function AdminClient({ users, currentUserId }: Props) {
       return;
     }
     setFilteredUsers(users.filter((u) => u.id === selected.value));
+  };
+
+  // 削除（物理削除）
+  const handleDelete = async (id: string) => {
+    await callApi({
+      action: 'delete',
+      table: 'admin',
+      id,
+    });
+
+    location.reload();
   };
 
   return (
@@ -116,7 +148,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
         }}
       />
 
-      {/* 横並びフォームバー */}
       <div className={styles.formBar}>
         <div className={styles.selectWrapper}>
           <CreatableSelect
@@ -174,12 +205,13 @@ export default function AdminClient({ users, currentUserId }: Props) {
               header: '操作',
               render: (u) =>
                 u.id !== currentUserId && (
-                  <form action="/api/admin/delete" method="POST">
-                    <input type="hidden" name="id" value={u.id} />
-                    <button type="submit" className={styles.actionButton}>
-                      削除
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => handleDelete(u.id)}
+                  >
+                    削除
+                  </button>
                 ),
             },
           ]}
