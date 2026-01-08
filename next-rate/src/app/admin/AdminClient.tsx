@@ -27,7 +27,7 @@ type AdminOption = {
 // /api/private 用の型
 type ApiBody = {
   action: 'create' | 'update' | 'delete' | 'list' | 'get';
-  table: 'admin';
+  table: 'user';
   id?: string;
   data?: Record<string, unknown>;
   select?: Record<string, boolean>;
@@ -104,7 +104,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
     await callApi({
       action: 'create',
-      table: 'admin',
+      table: 'user',
       data: {
         name: selected.label,
         email,
@@ -128,7 +128,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
   const handleDelete = async (id: string) => {
     await callApi({
       action: 'delete',
-      table: 'admin',
+      table: 'user',
       id,
     });
 
