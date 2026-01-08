@@ -17,7 +17,7 @@ type PlayerOption = {
   label: string;
 };
 
-// /api/private 用の型
+// /api/private/common 用の型
 type ApiBody = {
   action: 'create' | 'delete';
   table: 'Result';
@@ -62,7 +62,7 @@ export default function ResultsClient({ players, results }: Props) {
 
   // 共通 API 呼び出し（any 完全排除）
   async function callApi(body: ApiBody) {
-    const res = await fetch('/api/private', {
+    const res = await fetch('/api/private/common', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

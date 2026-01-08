@@ -24,7 +24,7 @@ type AdminOption = {
   __isNew__?: boolean;
 };
 
-// /api/private 用の型
+// /api/private/common 用の型
 type ApiBody = {
   action: 'create' | 'update' | 'delete' | 'list' | 'get';
   table: 'User';
@@ -79,7 +79,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
   // 共通 API 呼び出し
   async function callApi(body: ApiBody) {
-    const res = await fetch('/api/private', {
+    const res = await fetch('/api/private/common', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

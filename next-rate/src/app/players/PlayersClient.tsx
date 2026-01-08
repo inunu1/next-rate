@@ -81,7 +81,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   // 共通 API 呼び出し
   // ---------------------------------------------------------
   async function callApi(body: ApiBody) {
-    const res = await fetch('/api/private', {
+    const res = await fetch('/api/private/common', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
