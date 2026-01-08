@@ -108,7 +108,7 @@ export default function ResultsClient({ players, results }: Props) {
         loserId: loser.id,
         loserName: loser.name,
         loserRate: loser.currentRate,
-        playedAt,
+        playedAt: new Date(playedAt).toISOString(),
       },
     });
 
