@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 // Prisma のモデル名（大文字）
 type TableName = Prisma.ModelName;
@@ -23,7 +24,6 @@ type ApiRequest = {
 
 // ---------------------------------------------------------
 // Prisma モデル delegate の共通インターフェース
-// （any を使わず ESLint を通すための唯一の方法）
 // ---------------------------------------------------------
 type ModelDelegate = {
   findMany: (args?: unknown) => Promise<unknown>;
@@ -40,10 +40,8 @@ const getModel = (table: TableName): ModelDelegate => {
   // "User" → "user"
   const key = table.charAt(0).toLowerCase() + table.slice(1);
 
-  // prisma.user / prisma.player / prisma.result などに変換
   const model = prisma[key as keyof typeof prisma];
 
-  // モデル delegate としてキャスト（ESLint OK）
   return model as unknown as ModelDelegate;
 };
 
@@ -105,6 +103,21 @@ export async function POST(req: Request) {
 
       case "create":
         if (!data) throw new Error("Missing data");
+
+        // ★★★ User のときだけパスワードをハッシュ化 ★★★
+        if (table === "User") {
+          const hashed = await bcrypt.hash(data.password as string, 10);
+
+          const userData = {
+            name: data.name,
+            email: data.email,
+            hashedPassword: hashed,
+          };
+
+          return NextResponse.json(await crud.create(table, userData));
+        }
+
+        // Player / Result はそのまま
         return NextResponse.json(await crud.create(table, data));
 
       case "update":

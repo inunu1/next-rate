@@ -27,7 +27,7 @@ type AdminOption = {
 // /api/private 用の型
 type ApiBody = {
   action: 'create' | 'update' | 'delete' | 'list' | 'get';
-  table: 'user';
+  table: 'User';
   id?: string;
   data?: Record<string, unknown>;
   select?: Record<string, boolean>;
@@ -104,11 +104,11 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
     await callApi({
       action: 'create',
-      table: 'user',
+      table: 'User',
       data: {
         name: selected.label,
         email,
-        password,
+        password, // ハッシュ化は API 側で行う
       },
     });
 
@@ -124,11 +124,11 @@ export default function AdminClient({ users, currentUserId }: Props) {
     setFilteredUsers(users.filter((u) => u.id === selected.value));
   };
 
-  // 削除（物理削除）
+  // 削除
   const handleDelete = async (id: string) => {
     await callApi({
       action: 'delete',
-      table: 'user',
+      table: 'User',
       id,
     });
 
