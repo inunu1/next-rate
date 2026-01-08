@@ -3,17 +3,13 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { authOptions } from "@/lib/auth";
 
-// Prisma のモデル名（大文字）
 type TableName = Prisma.ModelName;
 
-// select の型
 type SelectFields = Record<string, boolean> | undefined;
-
-// update/create の data 型
 type DataFields = Record<string, unknown>;
 
-// API リクエストの型
 type ApiRequest = {
   action: "list" | "get" | "create" | "update" | "delete";
   table: TableName;
@@ -22,9 +18,6 @@ type ApiRequest = {
   select?: SelectFields;
 };
 
-// ---------------------------------------------------------
-// Prisma モデル delegate の共通インターフェース
-// ---------------------------------------------------------
 type ModelDelegate = {
   findMany: (args?: unknown) => Promise<unknown>;
   findUnique: (args: unknown) => Promise<unknown>;
@@ -33,21 +26,12 @@ type ModelDelegate = {
   delete: (args: unknown) => Promise<unknown>;
 };
 
-// ---------------------------------------------------------
-// Prisma モデルを動的に取得（型安全）
-// ---------------------------------------------------------
 const getModel = (table: TableName): ModelDelegate => {
-  // "User" → "user"
   const key = table.charAt(0).toLowerCase() + table.slice(1);
-
   const model = prisma[key as keyof typeof prisma];
-
   return model as unknown as ModelDelegate;
 };
 
-// ---------------------------------------------------------
-// CRUD 実装
-// ---------------------------------------------------------
 const crud = {
   async list(table: TableName, select?: SelectFields) {
     const model = getModel(table);
@@ -80,12 +64,9 @@ const crud = {
   },
 };
 
-// ---------------------------------------------------------
-// API 本体
-// ---------------------------------------------------------
 export async function POST(req: Request) {
-  const session = await getServerSession();
-  if (!session) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -104,20 +85,16 @@ export async function POST(req: Request) {
       case "create":
         if (!data) throw new Error("Missing data");
 
-        // ★★★ User のときだけパスワードをハッシュ化 ★★★
         if (table === "User") {
           const hashed = await bcrypt.hash(data.password as string, 10);
-
           const userData = {
             name: data.name,
             email: data.email,
             hashedPassword: hashed,
           };
-
           return NextResponse.json(await crud.create(table, userData));
         }
 
-        // Player / Result はそのまま
         return NextResponse.json(await crud.create(table, data));
 
       case "update":
