@@ -17,6 +17,14 @@ type PlayerOption = {
   label: string;
 };
 
+// /api/private 用の型
+type ApiBody = {
+  action: 'create' | 'delete';
+  table: 'Result';
+  id?: string;
+  data?: Record<string, unknown>;
+};
+
 export default function ResultsClient({ players, results }: Props) {
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
@@ -52,8 +60,8 @@ export default function ResultsClient({ players, results }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 共通 API 呼び出し
-  async function callApi(body: any) {
+  // 共通 API 呼び出し（any 完全排除）
+  async function callApi(body: ApiBody) {
     const res = await fetch('/api/private', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
