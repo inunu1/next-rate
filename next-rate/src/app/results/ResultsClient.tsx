@@ -70,15 +70,15 @@ export default function ResultsClient({ players, results }: Props) {
     return res.json();
   }
 
-  // レーティング再計算
+  // レーティング計算
   const handleRecalculate = async () => {
     const res = await fetch('/api/private/calculate', { method: 'POST' });
     if (res.ok) {
-      alert('レーティング再計算が完了しました');
+      alert('レーティング計算が完了しました');
       location.reload();
     } else {
       const data = await res.json();
-      alert(`エラー: ${data.error ?? '再計算に失敗しました'}`);
+      alert(`エラー: ${data.error ?? '計算に失敗しました'}`);
     }
   };
 
