@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
-import { crud } from "./crud";
+import { crud, DataFields } from "./crud";
 
-export async function createUser(data: any) {
+export async function createUser(data: DataFields) {
   const hashed = await bcrypt.hash(data.password as string, 10);
 
   return crud.create("User", {
