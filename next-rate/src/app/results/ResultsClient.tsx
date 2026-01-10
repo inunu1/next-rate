@@ -60,7 +60,7 @@ export default function ResultsClient({ players, results }: Props) {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  // 共通 API 呼び出し（any 完全排除）
+  // 共通 API 呼び出し
   async function callApi(body: ApiBody) {
     const res = await fetch('/api/private/common', {
       method: 'POST',
@@ -192,36 +192,39 @@ export default function ResultsClient({ players, results }: Props) {
         </button>
       </form>
 
-      <DataTable
-        tableClass={styles.table}
-        rows={filteredResults}
-        columns={[
-          {
-            header: '日時',
-            render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
-          },
-          {
-            header: '勝者（開始時）',
-            render: (r) => `${r.winnerName}（${r.winnerRate}）`,
-          },
-          {
-            header: '敗者（開始時）',
-            render: (r) => `${r.loserName}（${r.loserRate}）`,
-          },
-          {
-            header: '操作',
-            render: (r) => (
-              <button
-                type="button"
-                className={styles.actionButton}
-                onClick={() => handleDelete(r.id)}
-              >
-                削除
-              </button>
-            ),
-          },
-        ]}
-      />
+      {/* ★ 横スクロール対応 wrapper を追加 ★ */}
+      <div className={styles.tableWrapper}>
+        <DataTable
+          tableClass={styles.table}
+          rows={filteredResults}
+          columns={[
+            {
+              header: '日時',
+              render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
+            },
+            {
+              header: '勝者（開始時）',
+              render: (r) => `${r.winnerName}（${r.winnerRate}）`,
+            },
+            {
+              header: '敗者（開始時）',
+              render: (r) => `${r.loserName}（${r.loserRate}）`,
+            },
+            {
+              header: '操作',
+              render: (r) => (
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => handleDelete(r.id)}
+                >
+                  削除
+                </button>
+              ),
+            },
+          ]}
+        />
+      </div>
     </div>
   );
 }

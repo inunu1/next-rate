@@ -69,7 +69,7 @@
 }
 
 .formBar > * {
-  flex: 0 0 auto; /* 横スクロール時に潰れない */
+  flex: 0 0 auto;
 }
 
 /* --- Inputs --- */
@@ -90,9 +90,17 @@
   height: 42px;
 }
 
+/* --- Table Wrapper（横スクロール対応） --- */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* --- Table --- */
 .table {
   width: 100%;
+  min-width: 600px; /* スマホで潰れないように最低幅を設定 */
   border-collapse: collapse;
   margin-top: 1rem;
   color: black;
