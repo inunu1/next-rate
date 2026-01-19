@@ -17,22 +17,34 @@ model User {
 }
 
 model Player {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  initialRate Int
-  currentRate Int
-  createdAt   DateTime @default(now())
-  deletedAt   DateTime? // ← 論理削除用フィールド
+  id             String   @id @default(uuid())
+  name           String
+  initialRate    Int
+  currentRate    Int
+  createdAt      DateTime @default(now())
+  deletedAt      DateTime?
 }
 
 model Result {
-  id          String   @id @default(uuid())
-  winnerId    String
-  winnerName  String
-  winnerRate  Int
-  loserId     String
-  loserName   String
-  loserRate   Int
-  playedAt    DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  winnerId       String
+  winnerName     String
+  winnerRate     Int
+  loserId        String
+  loserName      String
+  loserRate      Int
+  playedAt       DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model History {
+  id             String   @id @default(uuid())
+  winnerId       String
+  winnerName     String
+  winnerRate     Int
+  loserId        String
+  loserName      String
+  loserRate      Int
+  playedAt       DateTime
+  archivedAt     DateTime @default(now()) // ← アーカイブした日時
 }
