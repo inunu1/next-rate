@@ -35,16 +35,5 @@ model Result {
   loserRate      Int
   playedAt       DateTime @default(now())
   updatedAt      DateTime @updatedAt
-}
-
-model History {
-  id             String   @id @default(uuid())
-  winnerId       String
-  winnerName     String
-  winnerRate     Int
-  loserId        String
-  loserName      String
-  loserRate      Int
-  playedAt       DateTime
-  archivedAt     DateTime @default(now()) // ← アーカイブした日時
+  archivedAt     DateTime?
 }
