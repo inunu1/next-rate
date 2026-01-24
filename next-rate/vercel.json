@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/private/archive",
-      "schedule": "10 23 * * 5"
+      "path": "/api/private/archive?key=sk_3f9a8f9a8f9a8f9a8f9a8f9",
+      "schedule": "15 23 * * 5"
     }
   ]
 }

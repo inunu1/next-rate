@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 
 export async function GET(req: Request) {
-  // Cron 用の秘密キー
-  const cronKey = req.headers.get("x-cron-key")
+  // Cron 用の秘密キー（クエリパラメータから取得）
+  const { searchParams } = new URL(req.url)
+  const key = searchParams.get("key")
 
   // ① Cron の場合（秘密キー一致）
-  if (cronKey === process.env.CRON_SECRET_KEY) {
+  if (key === process.env.CRON_SECRET_KEY) {
     return runArchive()
   }
 
