@@ -2,8 +2,7 @@
   "crons": [
     {
       "path": "/api/private/archive",
-      "schedule": "10 23 * * 5",
-      "method": "POST"
+      "schedule": "10 23 * * 5"
     }
   ]
 }

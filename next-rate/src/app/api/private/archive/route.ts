@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   // Cron 用の秘密キー
   const cronKey = req.headers.get("x-cron-key")
 
