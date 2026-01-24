@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/private/archive?key=sk_3f9a8f9a8f9a8f9a8f9a8f9",
-      "schedule": "2 1 * * 0"
+      "schedule": "6 1 * * 0"
     }
   ]
 }
