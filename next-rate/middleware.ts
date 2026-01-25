@@ -17,9 +17,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * ログインページ以外すべてのページで認証を要求する
-     */
+    // ページだけを保護する（API は除外）
     '/((?!api|_next/static|_next/image|favicon.ico|login).*)',
   ],
 };
