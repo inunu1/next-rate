@@ -134,6 +134,19 @@ export default function ResultsClient({ players, results }: Props) {
     await handleRecalculate();
   };
 
+  // ★ アーカイブ処理（POST）
+  const handleArchive = async () => {
+    const res = await fetch('/api/private/archive', { method: 'POST' });
+
+    if (res.ok) {
+      alert('アーカイブが完了しました');
+      window.location.href = '/results'; // リダイレクト
+    } else {
+      const data = await res.json();
+      alert(`エラー: ${data.error ?? 'アーカイブに失敗しました'}`);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <MenuBar
@@ -190,9 +203,18 @@ export default function ResultsClient({ players, results }: Props) {
         >
           検索
         </button>
+
+        {/* ★ アーカイブボタン追加 ★ */}
+        <button
+          type="button"
+          onClick={handleArchive}
+          className={styles.searchButton}
+        >
+          アーカイブ
+        </button>
       </form>
 
-      {/* ★ 横スクロール対応 wrapper を追加 ★ */}
+      {/* ★ 横スクロール対応 wrapper */}
       <div className={styles.tableWrapper}>
         <DataTable
           tableClass={styles.table}
