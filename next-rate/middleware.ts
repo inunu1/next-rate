@@ -18,7 +18,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // ページだけを保護する（API は完全除外）
-    '/((?!api|_next/static|_next/image|favicon.ico|login).*)',
+    // API を完全除外し、ページだけ保護する
+    '/((?!api/).*)',
   ],
 }
