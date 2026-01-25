@@ -8,7 +8,6 @@ export async function middleware(req: NextRequest) {
   const isAuth = !!token
   const isLoginPage = req.nextUrl.pathname === '/login'
 
-  // 未ログインで login 以外のページに来たらリダイレクト
   if (!isAuth && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
@@ -18,7 +17,11 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // API を完全除外し、ページだけ保護する
-    '/((?!api/).*)',
+    // ページだけを保護する（API は完全除外）
+    '/dashboard/:path*',
+    '/players/:path*',
+    '/results/:path*',
+    '/settings/:path*',
+    '/login',
   ],
 }
