@@ -16,6 +16,7 @@ export default async function ResultsPage() {
 
   // リレーションは使わず、Result のみ取得
   const results: Result[] = await prisma.result.findMany({
+    where: { archivedAt: null },
     orderBy: { playedAt: 'desc' },
   });
 
