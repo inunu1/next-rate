@@ -29,16 +29,20 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>ログイン画面</h1>
+        <div className={styles.header}>
+          <h1 className={styles.title}>next-rate Login</h1>
+          <p className={styles.subtitle}>管理アカウントでログインしてください</p>
+        </div>
 
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Email</label>
+            <label className={styles.label}>Email Address</label>
             <input
               type="email"
               className={styles.input}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
               required
             />
           </div>
@@ -50,12 +54,13 @@ export default function LoginPage() {
               className={styles.input}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
               required
             />
           </div>
 
           <button type="submit" className={styles.button}>
-            ログイン
+            Login
           </button>
         </form>
       </div>

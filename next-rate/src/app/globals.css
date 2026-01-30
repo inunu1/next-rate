@@ -1,45 +1,76 @@
-/* ============================
-   共通変数（カスタムプロパティ）
-============================ */
+/* =========================================
+   Modern Design System & Variables
+   ========================================= */
 :root {
-  --color-text-dark: #1f2937;
-  --color-text-light: #ffffff;
-  --color-blue: #3b82f6;
-  --color-blue-hover: #2563eb;
-  --color-green: #10b981;
-  --color-green-hover: #059669;
-  --color-yellow: #facc15;
-  --color-yellow-hover: #fbbf24;
-  --color-header-bg: gainsboro;
-  --color-overlay: rgba(0, 0, 0, 0.4);
+  /* Color Palette (HSL for easier manipulation) */
+  --primary-h: 221;
+  --primary-s: 83%;
+  --primary-l: 53%;
+  --color-primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  --color-primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
+
+  --color-success: hsl(142, 71%, 45%);
+  --color-warning: hsl(45, 93%, 47%);
+  --color-danger: hsl(0, 84%, 60%);
+
+  /* Neutrals */
+  --color-bg-app: hsl(210, 40%, 98%);     /* Slightly cool gray background */
+  --color-bg-surface: #ffffff;
+  --color-text-main: hsl(215, 25%, 27%);
+  --color-text-muted: hsl(215, 16%, 47%);
+  --color-border: hsl(214, 32%, 91%);
+
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Spacing & Sizing */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --container-max-width: 1200px;
+  --header-height: 70px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-bg-app: hsl(220, 20%, 14%);
+    --color-bg-surface: hsl(220, 20%, 18%);
+    --color-text-main: hsl(220, 20%, 94%);
+    --color-text-muted: hsl(220, 10%, 70%);
+    --color-border: hsl(220, 20%, 26%);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  background-color: #ffffff;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
+/* =========================================
+   Reset & Base Styles
+   ========================================= */
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family-base);
+  background-color: var(--color-bg-app);
+  color: var(--color-text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -47,8 +78,18 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+/* =========================================
+   Global Utilities (Optional helpers)
+   ========================================= */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
 }

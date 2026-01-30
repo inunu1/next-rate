@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
-import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import Select, { StylesConfig } from 'react-select';
 
@@ -26,37 +26,64 @@ type ApiBody = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+  const [mounted, setMounted] = useState(false);
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
   const [filteredResults, setFilteredResults] = useState(results);
+
+  // Hydration Error回避のため、マウント後に描画
+  useEffect(() => {
+     setMounted(true);
+  }, []);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
+  // ... (options definition) ...
+
+  if (!mounted) return null; // Prevent SSR mismatch
+
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
-    control: (base) => ({
+    control: (base, state) => ({
       ...base,
       minHeight: 42,
       height: 42,
       borderRadius: 6,
-      borderColor: '#aaa',
+      borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
+      backgroundColor: 'var(--color-bg-surface)',
+      '&:hover': {
+        borderColor: 'var(--color-text-muted)',
+      },
     }),
     valueContainer: (base) => ({
       ...base,
       height: 42,
       padding: '0 8px',
     }),
-    singleValue: (base) => ({ ...base, color: 'black' }),
-    input: (base) => ({ ...base, color: 'black' }),
+    singleValue: (base) => ({ ...base, color: 'var(--color-text-main)' }),
+    input: (base) => ({ ...base, color: 'var(--color-text-main)' }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: 6,
+      border: '1px solid var(--color-border)',
+      boxShadow: 'var(--shadow-md)',
+      zIndex: 9999,
+    }),
     option: (base, state) => ({
       ...base,
-      color: 'black',
-      backgroundColor: state.isFocused ? '#eee' : 'white',
+      color: 'var(--color-text-main)',
+      backgroundColor: state.isFocused ? 'var(--color-bg-app)' : 'var(--color-bg-surface)',
+      cursor: 'pointer',
+      '&:active': {
+        backgroundColor: 'var(--color-primary)',
+        color: 'white',
+      }
     }),
-    placeholder: (base) => ({ ...base, color: '#666' }),
+    placeholder: (base) => ({ ...base, color: 'var(--color-text-muted)' }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
@@ -125,6 +152,7 @@ export default function ResultsClient({ players, results }: Props) {
 
   // 削除処理
   const handleDelete = async (id: string) => {
+    if (!confirm('この対局結果を削除しますか？')) return;
     await callApi({
       action: 'delete',
       table: 'Result',
@@ -149,104 +177,106 @@ export default function ResultsClient({ players, results }: Props) {
 
   return (
     <div className={styles.container}>
-      <MenuBar
-        title="対局結果管理"
-        actions={[{ label: 'メニュー', href: '/dashboard' }]}
-        styles={{
-          menuBar: styles.menuBar,
-          title: styles.title,
-          nav: styles.nav,
-          actionButton: styles.actionButton,
-        }}
-      />
+      {/* Header */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>対局結果管理</h1>
+        <Link href="/dashboard" className={styles.backLink}>
+          ← ダッシュボードへ戻る
+        </Link>
+      </header>
 
-      <form className={styles.formBar} onSubmit={handleRegister}>
-        <div className={styles.selectWrapper}>
-          <Select
-            options={playerOptions}
-            value={winnerOpt}
-            onChange={setWinnerOpt}
-            placeholder="勝者を選択"
-            styles={customSelectStyles}
-            isClearable
-            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+      {/* Form Area */}
+      <div className={styles.formCard}>
+        <form className={styles.formBar} onSubmit={handleRegister}>
+          <div className={styles.selectWrapper}>
+            <Select
+              options={playerOptions}
+              value={winnerOpt}
+              onChange={setWinnerOpt}
+              placeholder="勝者を選択"
+              styles={customSelectStyles}
+              isClearable
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+            />
+          </div>
+
+          <div className={styles.selectWrapper}>
+            <Select
+              options={playerOptions}
+              value={loserOpt}
+              onChange={setLoserOpt}
+              placeholder="敗者を選択"
+              styles={customSelectStyles}
+              isClearable
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+            />
+          </div>
+
+          <input
+            type="datetime-local"
+            value={playedAt}
+            onChange={(e) => setPlayedAt(e.target.value)}
+            className={styles.input}
           />
-        </div>
 
-        <div className={styles.selectWrapper}>
-          <Select
-            options={playerOptions}
-            value={loserOpt}
-            onChange={setLoserOpt}
-            placeholder="敗者を選択"
-            styles={customSelectStyles}
-            isClearable
-            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-          />
-        </div>
+          <button type="submit" className={styles.registerButton}>
+            登録
+          </button>
 
-        <input
-          type="datetime-local"
-          value={playedAt}
-          onChange={(e) => setPlayedAt(e.target.value)}
-          className={styles.input}
-        />
+          <button
+            type="button"
+            onClick={handleSearch}
+            className={styles.searchButton}
+          >
+            検索
+          </button>
 
-        <button type="submit" className={styles.registerButton}>
-          登録
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSearch}
-          className={styles.searchButton}
-        >
-          検索
-        </button>
-
-        {/* ★ アーカイブボタン追加 ★ */}
-        <button
-          type="button"
-          onClick={handleArchive}
-          className={styles.searchButton}
-        >
-          アーカイブ
-        </button>
-      </form>
+          {/* ★ アーカイブボタン追加 ★ */}
+          <button
+            type="button"
+            onClick={handleArchive}
+            className={styles.searchButton}
+          >
+            アーカイブ
+          </button>
+        </form>
+      </div>
 
       {/* ★ 横スクロール対応 wrapper */}
-      <div className={styles.tableWrapper}>
-        <DataTable
-          tableClass={styles.table}
-          rows={filteredResults}
-          columns={[
-            {
-              header: '日時',
-              render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
-            },
-            {
-              header: '勝者（開始時）',
-              render: (r) => `${r.winnerName}（${r.winnerRate}）`,
-            },
-            {
-              header: '敗者（開始時）',
-              render: (r) => `${r.loserName}（${r.loserRate}）`,
-            },
-            {
-              header: '操作',
-              render: (r) => (
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  onClick={() => handleDelete(r.id)}
-                >
-                  削除
-                </button>
-              ),
-            },
-          ]}
-        />
-      </div>
+      <main className={styles.main}>
+        <div className={styles.tableWrapper}>
+          <DataTable
+            tableClass={styles.table}
+            rows={filteredResults}
+            columns={[
+              {
+                header: '日時',
+                render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
+              },
+              {
+                header: '勝者（開始時）',
+                render: (r) => `${r.winnerName}（${r.winnerRate}）`,
+              },
+              {
+                header: '敗者（開始時）',
+                render: (r) => `${r.loserName}（${r.loserRate}）`,
+              },
+              {
+                header: '操作',
+                render: (r) => (
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={() => handleDelete(r.id)}
+                  >
+                    削除
+                  </button>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </main>
     </div>
   );
 }

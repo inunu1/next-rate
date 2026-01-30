@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './Admin.module.css';
-import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import CreatableSelect from 'react-select/creatable';
 import { StylesConfig } from 'react-select';
@@ -45,12 +45,17 @@ export default function AdminClient({ users, currentUserId }: Props) {
   }));
 
   const customSelectStyles: StylesConfig<AdminOption, false> = {
-    control: (base) => ({
+    control: (base, state) => ({
       ...base,
       minHeight: 42,
       height: 42,
       borderRadius: 6,
-      borderColor: '#aaa',
+      borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
+      backgroundColor: 'var(--color-bg-surface)',
+      '&:hover': {
+        borderColor: 'var(--color-text-muted)',
+      },
     }),
     valueContainer: (base) => ({
       ...base,
@@ -59,20 +64,32 @@ export default function AdminClient({ users, currentUserId }: Props) {
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'black',
+      color: 'var(--color-text-main)',
     }),
     input: (base) => ({
       ...base,
-      color: 'black',
+      color: 'var(--color-text-main)',
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: 6,
+      border: '1px solid var(--color-border)',
+      boxShadow: 'var(--shadow-md)',
+      zIndex: 9999,
     }),
     option: (base, state) => ({
       ...base,
-      color: 'black',
-      backgroundColor: state.isFocused ? '#eee' : 'white',
+      color: 'var(--color-text-main)',
+      backgroundColor: state.isFocused ? 'var(--color-bg-app)' : 'var(--color-bg-surface)',
+      cursor: 'pointer',
+      '&:active': {
+        backgroundColor: 'var(--color-primary)',
+        color: 'white',
+      }
     }),
     placeholder: (base) => ({
       ...base,
-      color: '#666',
+      color: 'var(--color-text-muted)',
     }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
@@ -126,6 +143,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
   // 削除
   const handleDelete = async (id: string) => {
+    if (!confirm('この管理者を削除しますか？')) return;
     await callApi({
       action: 'delete',
       table: 'User',
@@ -137,85 +155,86 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
   return (
     <div className={styles.container}>
-      <MenuBar
-        title="管理者管理"
-        actions={[{ label: 'メニュー', href: '/dashboard' }]}
-        styles={{
-          menuBar: styles.menuBar,
-          title: styles.title,
-          nav: styles.nav,
-          actionButton: styles.actionButton,
-        }}
-      />
+      {/* Header */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>管理者管理</h1>
+        <Link href="/dashboard" className={styles.backLink}>
+          ← ダッシュボードへ戻る
+        </Link>
+      </header>
 
-      <div className={styles.formBar}>
-        <div className={styles.selectWrapper}>
-          <CreatableSelect
-            options={adminOptions}
-            value={selected}
-            onChange={(opt) => setSelected(opt)}
-            placeholder="名前検索 / 新規入力"
-            styles={customSelectStyles}
-            isClearable
-            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+      <div className={styles.formCard}>
+        <div className={styles.formBar}>
+          <div className={styles.selectWrapper}>
+            <CreatableSelect
+              options={adminOptions}
+              value={selected}
+              onChange={(opt) => setSelected(opt)}
+              placeholder="名前検索 / 新規入力"
+              styles={customSelectStyles}
+              isClearable
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+            />
+          </div>
+
+          <input
+            type="email"
+            placeholder="メールアドレス（新規登録時）"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={styles.input}
           />
+
+          <input
+            type="password"
+            placeholder="パスワード（新規登録時）"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={styles.input}
+          />
+
+          <button
+            type="button"
+            onClick={handleRegister}
+            className={styles.registerButton}
+          >
+            新規登録
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSearch}
+            className={styles.searchButton}
+          >
+            検索
+          </button>
         </div>
-
-        <input
-          type="email"
-          placeholder="メールアドレス（新規登録時）"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={styles.input}
-        />
-
-        <input
-          type="password"
-          placeholder="パスワード（新規登録時）"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={styles.input}
-        />
-
-        <button
-          type="button"
-          onClick={handleRegister}
-          className={styles.registerButton}
-        >
-          登録
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSearch}
-          className={styles.searchButton}
-        >
-          検索
-        </button>
       </div>
 
       <main className={styles.main}>
-        <DataTable
-          tableClass={styles.table}
-          rows={filteredUsers}
-          columns={[
-            { header: 'Email', render: (u) => u.email },
-            { header: 'Name', render: (u) => u.name ?? '未設定' },
-            {
-              header: '操作',
-              render: (u) =>
-                u.id !== currentUserId && (
-                  <button
-                    type="button"
-                    className={styles.actionButton}
-                    onClick={() => handleDelete(u.id)}
-                  >
-                    削除
-                  </button>
-                ),
-            },
-          ]}
-        />
+        <div className={styles.tableWrapper}>
+          <DataTable
+            tableClass={styles.table}
+            rows={filteredUsers}
+            columns={[
+              { header: 'Email', render: (u) => u.email },
+              { header: 'Name', render: (u) => u.name ?? '未設定' },
+              {
+                header: '操作',
+                render: (u) =>
+                  u.id !== currentUserId && (
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => handleDelete(u.id)}
+                    >
+                      削除
+                    </button>
+                  ),
+              },
+            ]}
+          />
+        </div>
       </main>
     </div>
   );

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './Players.module.css';
-import MenuBar from '@/components/MenuBar';
 import DataTable from '@/components/DataTable';
 import CreatableSelect from 'react-select/creatable';
 import { StylesConfig } from 'react-select';
@@ -45,12 +45,17 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   }));
 
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
-    control: (base) => ({
+    control: (base, state) => ({
       ...base,
       minHeight: 42,
       height: 42,
       borderRadius: 6,
-      borderColor: '#aaa',
+      borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
+      backgroundColor: 'var(--color-bg-surface)',
+      '&:hover': {
+        borderColor: 'var(--color-text-muted)',
+      },
     }),
     valueContainer: (base) => ({
       ...base,
@@ -59,20 +64,32 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'black',
+      color: 'var(--color-text-main)',
     }),
     input: (base) => ({
       ...base,
-      color: 'black',
+      color: 'var(--color-text-main)',
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: 6,
+      border: '1px solid var(--color-border)',
+      boxShadow: 'var(--shadow-md)',
+      zIndex: 9999,
     }),
     option: (base, state) => ({
       ...base,
-      color: 'black',
-      backgroundColor: state.isFocused ? '#eee' : 'white',
+      color: 'var(--color-text-main)',
+      backgroundColor: state.isFocused ? 'var(--color-bg-app)' : 'var(--color-bg-surface)',
+      cursor: 'pointer',
+      '&:active': {
+        backgroundColor: 'var(--color-primary)',
+        color: 'white',
+      }
     }),
     placeholder: (base) => ({
       ...base,
-      color: '#666',
+      color: 'var(--color-text-muted)',
     }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
@@ -130,6 +147,8 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   // 出禁（論理削除 → update）
   // ---------------------------------------------------------
   const handleSoftDelete = async (id: string) => {
+    if (!confirm('このプレイヤーを出禁にしますか？')) return;
+    
     await callApi({
       action: 'update',
       table: 'player',
@@ -142,81 +161,82 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
   return (
     <div className={styles.container}>
-      <MenuBar
-        title="対局者管理"
-        actions={[{ label: 'メニュー', href: '/dashboard' }]}
-        styles={{
-          menuBar: styles.menuBar,
-          title: styles.title,
-          nav: styles.nav,
-          actionButton: styles.actionButton,
-        }}
-      />
+      {/* Header */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>対局者管理</h1>
+        <Link href="/dashboard" className={styles.backLink}>
+          ← ダッシュボードへ戻る
+        </Link>
+      </header>
 
-      {/* 横並びフォームバー */}
-      <div className={styles.formBar}>
-        <div className={styles.selectWrapper}>
-          <CreatableSelect
-            options={playerOptions}
-            value={selected}
-            onChange={(opt) => setSelected(opt)}
-            placeholder="プレイヤー検索 / 新規入力"
-            styles={customSelectStyles}
-            isClearable
-            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+      {/* Form Area */}
+      <div className={styles.formCard}>
+        <div className={styles.formBar}>
+          <div className={styles.selectWrapper}>
+            <CreatableSelect
+              options={playerOptions}
+              value={selected}
+              onChange={(opt) => setSelected(opt)}
+              placeholder="プレイヤー検索 / 新規入力"
+              styles={customSelectStyles}
+              isClearable
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+            />
+          </div>
+
+          <input
+            type="number"
+            placeholder="初期レート (例: 1500)"
+            value={initialRate}
+            onChange={(e) => setInitialRate(e.target.value)}
+            min={1000}
+            max={9999}
+            className={styles.input}
           />
+
+          <button
+            type="button"
+            onClick={handleRegister}
+            className={styles.registerButton}
+          >
+            新規登録
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSearch}
+            className={styles.searchButton}
+          >
+            検索
+          </button>
         </div>
-
-        <input
-          type="number"
-          placeholder="初期レート（4桁）"
-          value={initialRate}
-          onChange={(e) => setInitialRate(e.target.value)}
-          min={1000}
-          max={9999}
-          className={styles.input}
-        />
-
-        <button
-          type="button"
-          onClick={handleRegister}
-          className={styles.registerButton}
-        >
-          登録
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSearch}
-          className={styles.searchButton}
-        >
-          検索
-        </button>
       </div>
 
       <main className={styles.main}>
-        <DataTable
-          tableClass={styles.table}
-          rows={filteredPlayers}
-          columns={[
-            { header: 'プレイヤー名', render: (p) => p.name },
-            { header: '現在レート', render: (p) => p.currentRate },
-            { header: '初期レート', render: (p) => p.initialRate },
-            {
-              header: '操作',
-              render: (p) =>
-                p.id !== currentUserId && (
-                  <button
-                    type="button"
-                    className={styles.actionButton}
-                    onClick={() => handleSoftDelete(p.id)}
-                  >
-                    出禁
-                  </button>
-                ),
-            },
-          ]}
-        />
+        <div className={styles.tableWrapper}>
+          <DataTable
+            tableClass={styles.table}
+            rows={filteredPlayers}
+            columns={[
+              { header: 'プレイヤー名', render: (p) => p.name },
+              { header: '現在レート', render: (p) => p.currentRate },
+              { header: '初期レート', render: (p) => p.initialRate },
+              {
+                header: '操作',
+                render: (p) =>
+                  p.id !== currentUserId && (
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => handleSoftDelete(p.id)}
+                    >
+                      出禁
+                    </button>
+                  ),
+              },
+            ]}
+          />
+        </div>
       </main>
     </div>
   );

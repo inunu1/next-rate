@@ -1,69 +1,99 @@
+/* Login.module.css */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: var(--color-bg-app);
   padding: 1rem;
 }
 
 .card {
   width: 100%;
   max-width: 400px;
-  padding: 2rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  background-color: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
 .label {
   font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  color: black;
+  font-weight: 600;
+  color: var(--color-text-main);
 }
 
 .input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
-  color: black;
-  background-color: whitesmoke;
+  color: var(--color-text-main);
+  background-color: var(--color-bg-surface);
+  transition: all var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
 }
 
 .button {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  background-color: #3b82f6;
+  padding: 0.875rem;
+  background-color: var(--color-primary);
   color: white;
   font-weight: 600;
+  font-size: 1rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-fast);
+  margin-top: 1rem;
 }
 
 .button:hover {
-  background-color: #2563eb;
+  background-color: var(--color-primary-hover);
+}
+
+.errorMessage {
+  background-color: hsla(0, 84%, 60%, 0.1);
+  color: var(--color-danger);
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 1rem;
 }

@@ -1,65 +1,113 @@
+/* Dashboard.module.css */
 .container {
-  background-color: white; /* ✅ 背景を白に変更 */
-  padding: 2rem;
   min-height: 100vh;
+  /* Background is inherited from global body style */
+  padding-bottom: 4rem;
 }
 
-.menuBar {
+.header {
+  height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f0f0f0; /* ✅ グレー背景 */
-  padding: 1rem 2rem;
-  border-radius: 6px;
+  padding: 0 2rem;
+  background-color: transparent;
   margin-bottom: 2rem;
 }
 
-.menuTitle {
+.title {
   font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
 }
 
-.menuActions {
-  display: flex;
-  gap: 1rem;
-}
-
-.navButton {
+.logoutButton {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
   padding: 0.5rem 1rem;
-  background-color: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 }
 
-.navButton:hover {
-  background-color: #2b6cb0;
+.logoutButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--color-danger);
 }
 
 .main {
-  text-align: center;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.welcomeSection {
+  text-align: left;
+  margin-bottom: 3rem;
+}
+
+.welcomeTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcomeSubtitle {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  padding: 1rem;
+  align-items: flex-start;
+  padding: 2rem;
+  height: 180px;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  text-decoration: none; /* for Next.js Link */
+  position: relative;
+  overflow: hidden;
 }
 
-.gridButton {
-  padding: 1rem;
-  background-color: #3182ce;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
-.gridButton:hover {
-  background-color: #2b6cb0;
+.cardIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  background-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin-bottom: 0.25rem;
+}
+
+.cardDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
