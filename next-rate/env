@@ -1,5 +1,0 @@
-DATABASE_URL="postgresql://next-rate-DB_owner:npg_GXRVp1u5CQoM@ep-autumn-grass-a4apigsm-pooler.us-east-1.aws.neon.tech/next-rate-DB?sslmode=require&channel_binding=require"
-
-NEXTAUTH_SECRET=tPs9+hwzCmgJE0BRmps2P79AVky/r/qk9Hia1oEihMk=
-
-CRON_SECRET_KEY=sk_3f9a8f9a8f9a8f9a8f9a8f9
