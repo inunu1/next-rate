@@ -2,17 +2,35 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Follow these steps to set up and run the project locally.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Set up environment variables**
+
+   Copy the example environment file:
+
+   ```bash
+   cp env .env
+   ```
+
+3. **Generate Prisma Client**
+
+   Initialize the database client:
+
+   ```bash
+   npx prisma generate
+   ```
+
+4. **Run the development server**
+
+   ```bash
+   npm run dev
+   ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
