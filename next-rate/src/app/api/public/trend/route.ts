@@ -6,14 +6,35 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const keyword = searchParams.get("keyword");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
 
+  // ▼ 日付検索モード（keyword が空でも OK）
+  if ((!keyword || keyword.trim() === "") && (from || to)) {
+    const dateFilter: any = {};
+    if (from) dateFilter.gte = new Date(from);
+    if (to) dateFilter.lte = new Date(to);
+
+    const results = await prisma.result.findMany({
+      where: {
+        playedAt: dateFilter,
+      },
+      orderBy: { playedAt: "desc" },
+    });
+
+    return NextResponse.json(results, {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
+  }
+
+  // ▼ keyword も日付も空 → 空配列
   if (!keyword || keyword.trim() === "") {
     return NextResponse.json([], {
       headers: { "Access-Control-Allow-Origin": "*" },
     });
   }
 
-  // プレイヤー検索
+  // ▼ プレイヤー検索（従来通り）
   const players = await prisma.player.findMany({
     where: {
       deletedAt: null,
@@ -31,12 +52,17 @@ export async function GET(req: Request) {
 
   const playersWithHistory = await Promise.all(
     players.map(async (p) => {
+      const dateFilter: any = {};
+      if (from) dateFilter.gte = new Date(from);
+      if (to) dateFilter.lte = new Date(to);
+
       const results = await prisma.result.findMany({
         where: {
           OR: [{ winnerId: p.id }, { loserId: p.id }],
+          ...(from || to ? { playedAt: dateFilter } : {}),
         },
         orderBy: { playedAt: "desc" },
-        take: 9, // 最新レートと合わせて10件
+        take: from || to ? undefined : 9,
       });
 
       const history = [
@@ -49,7 +75,6 @@ export async function GET(req: Request) {
         },
         ...results.map((r) => {
           const isWinner = r.winnerId === p.id;
-
           return {
             rate: isWinner ? r.winnerRate : r.loserRate,
             playedAt: r.playedAt,
