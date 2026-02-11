@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   // ▼ 日付検索モード（keyword が空でも OK）
   if ((!keyword || keyword.trim() === "") && (from || to)) {
-    const dateFilter: any = {};
+    const dateFilter: { gte?: Date; lte?: Date } = {};
     if (from) dateFilter.gte = new Date(from);
     if (to) dateFilter.lte = new Date(to);
 
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     });
   }
 
-  // ▼ プレイヤー検索（従来通り）
+  // ▼ プレイヤー検索
   const players = await prisma.player.findMany({
     where: {
       deletedAt: null,
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
   const playersWithHistory = await Promise.all(
     players.map(async (p) => {
-      const dateFilter: any = {};
+      const dateFilter: { gte?: Date; lte?: Date } = {};
       if (from) dateFilter.gte = new Date(from);
       if (to) dateFilter.lte = new Date(to);
 
