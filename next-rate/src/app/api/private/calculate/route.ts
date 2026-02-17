@@ -48,9 +48,8 @@ export async function POST() {
       players.map((p) => [p.id, { id: p.id, initialRate: p.initialRate, currentRate: p.initialRate }])
     );
 
-    // --- 2) 全試合を日時昇順で取得（未アーカイブのみ） ---
+    // --- 2) 全試合を日時昇順で取得 ---
     const results = await prisma.result.findMany({
-      where: { archivedAt: null },
       orderBy: { playedAt: 'asc' },
     });
 
