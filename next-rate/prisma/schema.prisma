@@ -21,6 +21,7 @@ model Player {
   name           String
   initialRate    Int
   currentRate    Int
+  archivedRate   Int      @default(0) // シーズン切替時のレート保存用
   createdAt      DateTime @default(now())
   deletedAt      DateTime?
 }

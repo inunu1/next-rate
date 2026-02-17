@@ -13,9 +13,20 @@ export async function POST() {
       )
     }
 
+    // 1. 全てのResultをアーカイブ
     await prisma.result.updateMany({
       data: { archivedAt: new Date() }
     })
+
+    // 2. 全プレイヤーのcurrentRateをarchivedRateにコピー
+    const players = await prisma.player.findMany({ select: { id: true, currentRate: true } })
+    const updatePromises = players.map(player =>
+      prisma.player.update({
+        where: { id: player.id },
+        data: { archivedRate: player.currentRate }
+      })
+    )
+    await Promise.all(updatePromises)
 
     return NextResponse.json({
       success: true,

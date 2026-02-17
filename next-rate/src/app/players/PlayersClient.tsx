@@ -126,6 +126,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         name: selected.label,
         initialRate: Number(initialRate),
         currentRate: Number(initialRate),
+        archivedRate: Number(initialRate),
       },
     });
 
