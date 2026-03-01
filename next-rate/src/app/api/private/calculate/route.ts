@@ -1,12 +1,3 @@
-/**
- * 差分レート計算API（開始レート復元あり）
- * 要件：
- *  - isCalculated=false の最初の対局（境界）以降のみ再計算する
- *  - 境界プレイヤーの開始レートは「直前の対局の終了レート」
- *  - 直前の対局が存在しない場合は Player.initialRate を使用する
- *  - 終了レートはDBに保存されていないため、直前の対局を1件だけ再計算して復元する
- */
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -54,23 +45,23 @@ export async function POST() {
       .find((m) => m.winnerId === pid || m.loserId === pid);
 
     if (!prevMatch) {
-      // ④-2: 直前の対局が存在しない場合 → 初期レートを使用
+      // 直前の対局が無い場合 → 初期レート
       const player = players.find((p) => p.id === pid);
       rateMap.set(pid, player!.initialRate);
       continue;
     }
 
-    // ④-3: 直前の対局の開始レートを取得
+    // ④-2: 直前の対局の開始レート
     const winnerStart = prevMatch.winnerRate;
     const loserStart = prevMatch.loserRate;
 
-    // ④-4: 直前の対局を1件だけ再計算し終了レートを復元
+    // ④-3: 直前の対局を1件だけ再計算し終了レートを復元
     const { newWinnerRate, newLoserRate } = calculateElo(
       winnerStart,
       loserStart
     );
 
-    // ④-5: 対象プレイヤーの開始レートとして反映
+    // ④-4: 対象プレイヤーの開始レートとして反映
     if (prevMatch.winnerId === pid) {
       rateMap.set(pid, newWinnerRate);
     } else {
@@ -106,7 +97,7 @@ export async function POST() {
     playerUpdates.set(match.loserId, newLoserRate);
   }
 
-  // ⑥ DB 更新（バルク更新）
+  // ⑥ DB 更新（VALUES 句のカラム名を "..." で囲む → PostgreSQL 42703 回避）
   await prisma.$transaction([
     prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
@@ -121,8 +112,8 @@ export async function POST() {
               `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
           )
           .join(",")}
-      ) AS v(id, winnerRate, loserRate)
-      WHERE r.id = v.id;
+      ) AS v("id", "winnerRate", "loserRate")
+      WHERE r.id = v."id";
     `),
 
     prisma.$executeRawUnsafe(`
@@ -132,8 +123,8 @@ export async function POST() {
         ${Array.from(playerUpdates.entries())
           .map(([id, rate]) => `('${id}', ${rate})`)
           .join(",")}
-      ) AS v(id, currentRate)
-      WHERE p.id = v.id;
+      ) AS v("id", "currentRate")
+      WHERE p.id = v."id";
     `),
   ]);
 
