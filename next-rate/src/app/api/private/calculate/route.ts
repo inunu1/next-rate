@@ -14,45 +14,55 @@ function calculateElo(winnerRate: number, loserRate: number) {
 }
 
 export async function POST() {
+  // ① 全対局を playedAt 昇順で取得
   const allResults = await prisma.result.findMany({
     orderBy: { playedAt: "asc" },
   });
 
+  // ② 未計算の最初の対局（境界）を特定
   const startIndex = allResults.findIndex((r) => !r.isCalculated);
   if (startIndex === -1) {
     return NextResponse.json({ message: "全て計算済み" });
   }
 
-  const firstUncalculated = allResults[startIndex];
+  const targets = allResults.slice(startIndex);
 
+  // ③ プレイヤー初期レートを取得（currentRate は使わない）
   const players = await prisma.player.findMany();
   const initialRateMap = new Map(players.map((p) => [p.id, p.initialRate]));
 
+  // ④ 未計算の対局に登場するプレーヤー全員を抽出
+  const playerIds = new Set<string>();
+  for (const m of targets) {
+    playerIds.add(m.winnerId);
+    playerIds.add(m.loserId);
+  }
+
+  // ⑤ 各プレーヤーの開始レート復元
   const rateMap = new Map<string, number>();
 
-  const involvedPlayers = [
-    firstUncalculated.winnerId,
-    firstUncalculated.loserId,
-  ];
-
-  for (const pid of involvedPlayers) {
+  for (const pid of playerIds) {
     const prevMatch = [...allResults.slice(0, startIndex)]
       .reverse()
       .find((m) => m.winnerId === pid || m.loserId === pid);
 
     if (!prevMatch) {
+      // 直前の対局が無い → initialRate
       rateMap.set(pid, initialRateMap.get(pid)!);
       continue;
     }
 
+    // 直前の対局の開始レート
     const winnerStart = prevMatch.winnerRate;
     const loserStart = prevMatch.loserRate;
 
+    // 直前の対局を1件だけ再計算し終了レートを復元
     const { newWinnerRate, newLoserRate } = calculateElo(
       winnerStart,
       loserStart
     );
 
+    // 終了レートを開始レートとして採用
     if (prevMatch.winnerId === pid) {
       rateMap.set(pid, newWinnerRate);
     } else {
@@ -60,35 +70,37 @@ export async function POST() {
     }
   }
 
-  const targets = allResults.slice(startIndex);
-
-  const resultUpdates = [];
+  // ⑥ 未計算の対局を順次 Elo 計算
+  const resultUpdates: { id: string; winnerRate: number; loserRate: number }[] =
+    [];
   const playerUpdates = new Map<string, number>();
 
   for (const match of targets) {
-    const winnerStartRate =
-      rateMap.get(match.winnerId) ?? match.winnerRate;
-    const loserStartRate =
-      rateMap.get(match.loserId) ?? match.loserRate;
+    const winnerStartRate = rateMap.get(match.winnerId)!;
+    const loserStartRate = rateMap.get(match.loserId)!;
 
     const { newWinnerRate, newLoserRate } = calculateElo(
       winnerStartRate,
       loserStartRate
     );
 
+    // 次の対局に伝播させる（終了レート）
     rateMap.set(match.winnerId, newWinnerRate);
     rateMap.set(match.loserId, newLoserRate);
 
+    // Result には開始レートを保存
     resultUpdates.push({
       id: match.id,
       winnerRate: winnerStartRate,
       loserRate: loserStartRate,
     });
 
+    // Player.currentRate は終了レートで更新
     playerUpdates.set(match.winnerId, newWinnerRate);
     playerUpdates.set(match.loserId, newLoserRate);
   }
 
+  // ⑦ DB 更新
   await prisma.$transaction([
     prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
@@ -120,7 +132,7 @@ export async function POST() {
   ]);
 
   return NextResponse.json({
-    message: "差分計算完了（開始レート保存方式）",
+    message: "差分計算完了（全プレーヤー開始レート復元済み）",
     startIndex,
     updatedMatches: targets.length,
   });
