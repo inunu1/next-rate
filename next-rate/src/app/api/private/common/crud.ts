@@ -1,5 +1,7 @@
 import { getModel, TableName } from "./model";
 import { createUser } from "./user";
+import { prisma } from "@/lib/prisma";
+import type { Result } from "@prisma/client";
 
 export type SelectFields = Record<string, boolean> | undefined;
 export type DataFields = Record<string, unknown>;
@@ -34,6 +36,21 @@ export const crud = {
   },
 };
 
+/**
+ * 対局登録・削除後に、その対局以降の isCalculated を false に戻す。
+ * 差分計算の境界を作る業務ロジック。
+ */
+async function invalidateAfter(playedAt: Date) {
+  await prisma.result.updateMany({
+    where: {
+      playedAt: { gte: playedAt },
+    },
+    data: {
+      isCalculated: false,
+    },
+  });
+}
+
 export async function handleRequest(body: ApiRequest) {
   const { action, table, id, data, select } = body;
 
@@ -48,7 +65,16 @@ export async function handleRequest(body: ApiRequest) {
     case "create":
       if (!data) throw new Error("Missing data");
       if (table === "User") return createUser(data);
-      return crud.create(table, data);
+
+      const created = await crud.create(table, data);
+
+      // ★ Result のときだけ型を絞り込む（any 不使用）
+      if (table === "Result") {
+        const result = created as Result;
+        await invalidateAfter(result.playedAt);
+      }
+
+      return created;
 
     case "update":
       if (!id || !data) throw new Error("Missing id or data");
@@ -56,7 +82,16 @@ export async function handleRequest(body: ApiRequest) {
 
     case "delete":
       if (!id) throw new Error("Missing id");
-      return crud.delete(table, id);
+
+      const deleted = await crud.delete(table, id);
+
+      // ★ Result のときだけ型を絞り込む（any 不使用）
+      if (table === "Result") {
+        const result = deleted as Result;
+        await invalidateAfter(result.playedAt);
+      }
+
+      return deleted;
 
     default:
       throw new Error(`Unknown action: ${action}`);

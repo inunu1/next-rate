@@ -1,166 +1,145 @@
-import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+/**
+ * 差分レート計算API（開始レート復元あり）
+ * 要件：
+ *  - isCalculated=false の最初の対局（境界）以降のみ再計算する
+ *  - 境界プレイヤーの開始レートは「直前の対局の終了レート」
+ *  - 直前の対局が存在しない場合は Player.initialRate を使用する
+ *  - 終了レートはDBに保存されていないため、直前の対局を1件だけ再計算して復元する
+ */
+
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 const K_FACTOR = 32;
 
-// メモリ上で扱うプレイヤーの状態
-interface PlayerState {
-  id: string;
-  initialRate: number;
-  currentRate: number;
-}
+/** Eloレート計算 */
+function calculateElo(winnerRate: number, loserRate: number) {
+  const expectedWin = 1 / (1 + Math.pow(10, (loserRate - winnerRate) / 400));
+  const expectedLose = 1 - expectedWin;
 
-// Result テーブルに書き戻すためのレート履歴
-interface ResultUpdate {
-  id: string;
-  winnerRate: number;
-  loserRate: number;
-}
-
-// 期待勝率の計算（Elo の基本式）
-function expectedScore(a: number, b: number): number {
-  return 1 / (1 + Math.pow(10, (b - a) / 400));
-}
-
-// 勝者・敗者の次のレートを計算
-function calcNext(winnerRate: number, loserRate: number) {
-  const ew = expectedScore(winnerRate, loserRate);
-  const el = expectedScore(loserRate, winnerRate);
   return {
-    winnerNext: Math.round(winnerRate + K_FACTOR * (1 - ew)),
-    loserNext: Math.round(loserRate + K_FACTOR * (0 - el)),
+    newWinnerRate: Math.round(winnerRate + K_FACTOR * (1 - expectedWin)),
+    newLoserRate: Math.round(loserRate + K_FACTOR * (0 - expectedLose)),
   };
 }
 
 export async function POST() {
-  // 認証チェック（NextAuth）
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // ① 全対局を playedAt 昇順で取得
+  const allResults = await prisma.result.findMany({
+    orderBy: { playedAt: "asc" },
+  });
+
+  // ② 未計算の最初の対局（境界）を特定
+  const startIndex = allResults.findIndex((r) => !r.isCalculated);
+  if (startIndex === -1) {
+    return NextResponse.json({ message: "全て計算済み", mode: "noop" });
   }
 
-  try {
-    // ------------------------------------------------------------
-    // 1) プレイヤーをメモリ上にロードし、全員を初期レートにリセット
-    // ------------------------------------------------------------
-    const players = await prisma.player.findMany();
+  const firstUncalculated = allResults[startIndex];
 
-    // Map にして O(1) でアクセスできるようにする
-    const playerMap = new Map<string, PlayerState>(
-      players.map((p) => [
-        p.id,
-        { id: p.id, initialRate: p.initialRate, currentRate: p.initialRate },
-      ])
+  // ③ 全プレイヤーの currentRate を初期値として読み込み
+  const players = await prisma.player.findMany();
+  const rateMap = new Map(players.map((p) => [p.id, p.currentRate]));
+
+  // ④ 境界プレイヤーの開始レート復元
+  const involvedPlayers = [
+    firstUncalculated.winnerId,
+    firstUncalculated.loserId,
+  ];
+
+  for (const pid of involvedPlayers) {
+    // ④-1: 直前の対局を検索
+    const prevMatch = [...allResults.slice(0, startIndex)]
+      .reverse()
+      .find((m) => m.winnerId === pid || m.loserId === pid);
+
+    if (!prevMatch) {
+      // ④-2: 直前の対局が存在しない場合 → 初期レートを使用
+      const player = players.find((p) => p.id === pid);
+      rateMap.set(pid, player!.initialRate);
+      continue;
+    }
+
+    // ④-3: 直前の対局の開始レートを取得
+    const winnerStart = prevMatch.winnerRate;
+    const loserStart = prevMatch.loserRate;
+
+    // ④-4: 直前の対局を1件だけ再計算し終了レートを復元
+    const { newWinnerRate, newLoserRate } = calculateElo(
+      winnerStart,
+      loserStart
     );
 
-    // ------------------------------------------------------------
-    // 2) 全試合を playedAt 昇順で取得（Elo は時系列依存）
-    // ------------------------------------------------------------
-    const results = await prisma.result.findMany({
-      orderBy: { playedAt: 'asc' },
-    });
-
-    // Result に書き戻す winnerRate / loserRate の履歴
-    const resultUpdates: ResultUpdate[] = [];
-
-    // 今回の計算でレートが変わったプレイヤーだけを記録（差分更新用）
-    const touchedPlayers = new Set<string>();
-
-    // ------------------------------------------------------------
-    // 3) 全試合を順番に処理してレートを再計算
-    // ------------------------------------------------------------
-    for (const r of results) {
-      const winner = playerMap.get(r.winnerId);
-      const loser = playerMap.get(r.loserId);
-
-      // ありえないが念のため
-      if (!winner || !loser) continue;
-
-      // 対局前のレート（Result に保存するため）
-      const winnerStart = winner.currentRate;
-      const loserStart = loser.currentRate;
-
-      // 次のレートを計算
-      const { winnerNext, loserNext } = calcNext(winnerStart, loserStart);
-
-      // Result テーブルに書き戻すための履歴を保存
-      resultUpdates.push({
-        id: r.id,
-        winnerRate: winnerStart,
-        loserRate: loserStart,
-      });
-
-      // メモリ上のレートを更新
-      winner.currentRate = winnerNext;
-      loser.currentRate = loserNext;
-
-      // 差分更新対象として記録
-      touchedPlayers.add(winner.id);
-      touchedPlayers.add(loser.id);
+    // ④-5: 対象プレイヤーの開始レートとして反映
+    if (prevMatch.winnerId === pid) {
+      rateMap.set(pid, newWinnerRate);
+    } else {
+      rateMap.set(pid, newLoserRate);
     }
-
-    // 対局が 0 件なら何もしない
-    if (resultUpdates.length === 0) {
-      return NextResponse.json({
-        message: '対局が存在しないため、レーティング計算はスキップされました。',
-      });
-    }
-
-    // ------------------------------------------------------------
-    // 4) バルク UPDATE 用の VALUES を生成
-    //    ※ここが I/O 最適化の本丸
-    // ------------------------------------------------------------
-
-    // Result の winnerRate / loserRate を全件更新する VALUES
-    const resultValues = resultUpdates
-      .map(
-        (u) =>
-          `('${u.id}', ${u.winnerRate}, ${u.loserRate})`
-      )
-      .join(',');
-
-    // ★差分更新：レートが変わったプレイヤーだけ VALUES に含める
-    const playerValues = Array.from(touchedPlayers)
-      .map((id) => {
-        const p = playerMap.get(id)!;
-        return `('${p.id}', ${p.currentRate})`;
-      })
-      .join(',');
-
-    // ------------------------------------------------------------
-    // 5) Prisma のトランザクションで 2 クエリだけ実行
-    //    - Result のバルク UPDATE（10000 行でも 1 クエリ）
-    //    - Player の差分バルク UPDATE（必要な行だけ）
-    // ------------------------------------------------------------
-    await prisma.$transaction([
-      // Result の winnerRate / loserRate を一括更新
-      prisma.$executeRawUnsafe(`
-        UPDATE "Result" AS r
-        SET "winnerRate" = c."winnerRate",
-            "loserRate" = c."loserRate"
-        FROM (VALUES ${resultValues}) AS c(id, "winnerRate", "loserRate")
-        WHERE r.id = c.id;
-      `),
-
-      // Player の currentRate を差分だけ一括更新
-      prisma.$executeRawUnsafe(`
-        UPDATE "Player" AS p
-        SET "currentRate" = c."currentRate"
-        FROM (VALUES ${playerValues}) AS c(id, "currentRate")
-        WHERE p.id = c.id;
-      `),
-    ]);
-
-    // ------------------------------------------------------------
-    // 6) 完了レスポンス
-    // ------------------------------------------------------------
-    return NextResponse.json({
-      message: 'レーティング計算完了（差分更新＋バルクUPDATE版）',
-    });
-  } catch (error) {
-    console.error('レーティング計算エラー:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+
+  // ⑤ 差分計算本体
+  const targets = allResults.slice(startIndex);
+
+  const resultUpdates = [];
+  const playerUpdates = new Map<string, number>();
+
+  for (const match of targets) {
+    const winnerRate = rateMap.get(match.winnerId)!;
+    const loserRate = rateMap.get(match.loserId)!;
+
+    const { newWinnerRate, newLoserRate } = calculateElo(
+      winnerRate,
+      loserRate
+    );
+
+    rateMap.set(match.winnerId, newWinnerRate);
+    rateMap.set(match.loserId, newLoserRate);
+
+    resultUpdates.push({
+      id: match.id,
+      winnerRate: newWinnerRate,
+      loserRate: newLoserRate,
+    });
+
+    playerUpdates.set(match.winnerId, newWinnerRate);
+    playerUpdates.set(match.loserId, newLoserRate);
+  }
+
+  // ⑥ DB 更新（バルク更新）
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe(`
+      UPDATE "Result" AS r
+      SET 
+        "winnerRate" = v."winnerRate",
+        "loserRate" = v."loserRate",
+        "isCalculated" = true
+      FROM (VALUES
+        ${resultUpdates
+          .map(
+            (r) =>
+              `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
+          )
+          .join(",")}
+      ) AS v(id, winnerRate, loserRate)
+      WHERE r.id = v.id;
+    `),
+
+    prisma.$executeRawUnsafe(`
+      UPDATE "Player" AS p
+      SET "currentRate" = v."currentRate"
+      FROM (VALUES
+        ${Array.from(playerUpdates.entries())
+          .map(([id, rate]) => `('${id}', ${rate})`)
+          .join(",")}
+      ) AS v(id, currentRate)
+      WHERE p.id = v.id;
+    `),
+  ]);
+
+  return NextResponse.json({
+    message: "差分計算完了（開始レート復元あり）",
+    startIndex,
+    updatedMatches: targets.length,
+  });
 }
