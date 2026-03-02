@@ -26,6 +26,8 @@ type ApiBody = {
 };
 
 export default function ResultsClient({ players, results }: Props) {
+    // ページネーション用日付インデックス
+    const [currentDateIdx, setCurrentDateIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
@@ -146,6 +148,7 @@ export default function ResultsClient({ players, results }: Props) {
     if (winnerOpt) next = next.filter((r) => r.winnerId === winnerOpt.value);
     if (loserOpt) next = next.filter((r) => r.loserId === loserOpt.value);
     setFilteredResults(next);
+    setCurrentDateIdx(0); // 検索時に日付インデックスをリセット
   };
 
   // 削除処理
@@ -159,6 +162,25 @@ export default function ResultsClient({ players, results }: Props) {
     });
 
     await handleRecalculate();
+  };
+
+  // 日付ごとにグループ化
+  const groupedResults: { [date: string]: Result[] } = {};
+  filteredResults.forEach((r) => {
+    const date = new Date(r.playedAt).toLocaleDateString('ja-JP');
+    if (!groupedResults[date]) groupedResults[date] = [];
+    groupedResults[date].push(r);
+  });
+
+  // 日付リスト（降順）
+  const dateList = Object.keys(groupedResults).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  const currentDate = dateList[currentDateIdx] || '';
+
+  const handlePrevDate = () => {
+    setCurrentDateIdx((idx) => Math.max(0, idx - 1));
+  };
+  const handleNextDate = () => {
+    setCurrentDateIdx((idx) => Math.min(dateList.length - 1, idx + 1));
   };
 
   return (
@@ -219,39 +241,56 @@ export default function ResultsClient({ players, results }: Props) {
         </form>
       </div>
 
-      {/* Table */}
+      {/* Table + ページネーション */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <DataTable
-            tableClass={styles.table}
-            rows={filteredResults}
-            columns={[
-              {
-                header: '日時',
-                render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
-              },
-              {
-                header: '勝者（開始時）',
-                render: (r) => `${r.winnerName}（${r.winnerRate}）`,
-              },
-              {
-                header: '敗者（開始時）',
-                render: (r) => `${r.loserName}（${r.loserRate}）`,
-              },
-              {
-                header: '操作',
-                render: (r) => (
-                  <button
-                    type="button"
-                    className={styles.deleteButton}
-                    onClick={() => handleDelete(r.id)}
-                  >
-                    削除
-                  </button>
-                ),
-              },
-            ]}
-          />
+          <div className={styles.paginationBar}>
+            <button
+              type="button"
+              onClick={handlePrevDate}
+              disabled={currentDateIdx === 0}
+              className={styles.pageButton}
+            >前の日</button>
+            <span className={styles.pageDate}>{currentDate || 'データなし'}</span>
+            <button
+              type="button"
+              onClick={handleNextDate}
+              disabled={currentDateIdx === dateList.length - 1}
+              className={styles.pageButton}
+            >次の日</button>
+          </div>
+          {currentDate && (
+            <DataTable
+              tableClass={styles.table}
+              rows={groupedResults[currentDate]}
+              columns={[
+                {
+                  header: '日時',
+                  render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
+                },
+                {
+                  header: '勝者（開始時）',
+                  render: (r) => `${r.winnerName}（${r.winnerRate}）`,
+                },
+                {
+                  header: '敗者（開始時）',
+                  render: (r) => `${r.loserName}（${r.loserRate}）`,
+                },
+                {
+                  header: '操作',
+                  render: (r) => (
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => handleDelete(r.id)}
+                    >
+                      削除
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          )}
         </div>
       </main>
     </div>
