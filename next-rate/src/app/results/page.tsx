@@ -9,14 +9,14 @@ export default async function ResultsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login');
 
+  // プレイヤー一覧（削除されていないもの）
   const players: Player[] = await prisma.player.findMany({
     where: { deletedAt: null },
     orderBy: { name: 'asc' },
   });
 
-  // リレーションは使わず、Result のみ取得
+  // ★ アーカイブ機能廃止 → archivedAt 条件を削除
   const results: Result[] = await prisma.result.findMany({
-    where: { archivedAt: null },
     orderBy: { playedAt: 'desc' },
   });
 

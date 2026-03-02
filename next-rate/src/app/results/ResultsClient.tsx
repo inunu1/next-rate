@@ -32,9 +32,9 @@ export default function ResultsClient({ players, results }: Props) {
   const [playedAt, setPlayedAt] = useState('');
   const [filteredResults, setFilteredResults] = useState(results);
 
-  // Hydration Error回避のため、マウント後に描画
+  // Hydration Error回避
   useEffect(() => {
-     setMounted(true);
+    setMounted(true);
   }, []);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
@@ -42,9 +42,7 @@ export default function ResultsClient({ players, results }: Props) {
     label: p.name,
   }));
 
-  // ... (options definition) ...
-
-  if (!mounted) return null; // Prevent SSR mismatch
+  if (!mounted) return null;
 
   const customSelectStyles: StylesConfig<PlayerOption, false> = {
     control: (base, state) => ({
@@ -53,11 +51,11 @@ export default function ResultsClient({ players, results }: Props) {
       height: 42,
       borderRadius: 6,
       borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
-      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
+      boxShadow: state.isFocused
+        ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)'
+        : 'none',
       backgroundColor: 'var(--color-bg-surface)',
-      '&:hover': {
-        borderColor: 'var(--color-text-muted)',
-      },
+      '&:hover': { borderColor: 'var(--color-text-muted)' },
     }),
     valueContainer: (base) => ({
       ...base,
@@ -81,7 +79,7 @@ export default function ResultsClient({ players, results }: Props) {
       '&:active': {
         backgroundColor: 'var(--color-primary)',
         color: 'white',
-      }
+      },
     }),
     placeholder: (base) => ({ ...base, color: 'var(--color-text-muted)' }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
@@ -153,6 +151,7 @@ export default function ResultsClient({ players, results }: Props) {
   // 削除処理
   const handleDelete = async (id: string) => {
     if (!confirm('この対局結果を削除しますか？')) return;
+
     await callApi({
       action: 'delete',
       table: 'Result',
@@ -160,19 +159,6 @@ export default function ResultsClient({ players, results }: Props) {
     });
 
     await handleRecalculate();
-  };
-
-  // ★ アーカイブ処理（POST）
-  const handleArchive = async () => {
-    const res = await fetch('/api/private/archive', { method: 'POST' });
-
-    if (res.ok) {
-      alert('アーカイブが完了しました');
-      window.location.href = '/results'; // リダイレクト
-    } else {
-      const data = await res.json();
-      alert(`エラー: ${data.error ?? 'アーカイブに失敗しました'}`);
-    }
   };
 
   return (
@@ -230,19 +216,10 @@ export default function ResultsClient({ players, results }: Props) {
           >
             検索
           </button>
-
-          {/* ★ アーカイブボタン追加 ★ */}
-          <button
-            type="button"
-            onClick={handleArchive}
-            className={styles.searchButton}
-          >
-            アーカイブ
-          </button>
         </form>
       </div>
 
-      {/* ★ 横スクロール対応 wrapper */}
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
