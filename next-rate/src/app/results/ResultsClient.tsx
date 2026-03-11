@@ -156,16 +156,16 @@ export default function ResultsClient({ players }: Props) {
             className={styles.input}
           />
 
-          <button type="submit" className={styles.registerButton}>
-            登録
-          </button>
-
           <button
             type="button"
             onClick={handleSearch}
             className={styles.searchButton}
           >
             検索
+          </button>
+
+          <button type="submit" className={styles.registerButton}>
+            登録
           </button>
         </form>
       </div>
