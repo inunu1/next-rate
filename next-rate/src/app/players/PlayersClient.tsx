@@ -51,45 +51,32 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       height: 42,
       borderRadius: 6,
       borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
-      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
+      boxShadow: state.isFocused
+        ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)'
+        : 'none',
       backgroundColor: 'var(--color-bg-surface)',
-      '&:hover': {
-        borderColor: 'var(--color-text-muted)',
-      },
-    }),
-    valueContainer: (base) => ({
-      ...base,
-      height: 42,
-      padding: '0 8px',
+      '&:hover': { borderColor: 'var(--color-text-muted)' },
     }),
     singleValue: (base) => ({
       ...base,
-      color: 'var(--color-text-main)',
+      color: 'black',
     }),
     input: (base) => ({
       ...base,
-      color: 'var(--color-text-main)',
+      color: 'black',
     }),
     menu: (base) => ({
       ...base,
-      borderRadius: 6,
-      border: '1px solid var(--color-border)',
-      boxShadow: 'var(--shadow-md)',
-      zIndex: 9999,
+      backgroundColor: '#f5f5f5',
     }),
     option: (base, state) => ({
       ...base,
-      color: 'var(--color-text-main)',
-      backgroundColor: state.isFocused ? 'var(--color-bg-app)' : 'var(--color-bg-surface)',
-      cursor: 'pointer',
-      '&:active': {
-        backgroundColor: 'var(--color-primary)',
-        color: 'white',
-      }
-    }),
-    placeholder: (base) => ({
-      ...base,
-      color: 'var(--color-text-muted)',
+      backgroundColor: state.isSelected
+        ? '#333'
+        : state.isFocused
+        ? '#eeeeee'
+        : '#f5f5f5',
+      color: '#333',
     }),
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
