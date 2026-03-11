@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import styles from './PlayerSelect.module.css';
+import { createPortal } from 'react-dom';
 
 export type PlayerOption = {
   value: string;
@@ -21,7 +21,10 @@ export default function PlayerSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
   const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
 
   const filtered =
     query === ''
@@ -41,40 +44,95 @@ export default function PlayerSelect({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const openDropdown = () => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+    setOpen(true);
+  };
+
   return (
-    <div className={styles.wrapper} ref={ref}>
-      <input
-        className={styles.input}
-        placeholder={placeholder}
-        value={open ? query : value?.label ?? ''}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-      />
+    <>
+      <div ref={ref} style={{ width: '260px' }}>
+        <input
+          placeholder={placeholder}
+          value={open ? query : value?.label ?? ''}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            openDropdown();
+          }}
+          onFocus={openDropdown}
+          style={{
+            width: '100%',
+            height: '40px',
+            padding: '0 12px',
+            borderRadius: '6px',
+            border: '1px solid #d1d5db',
+            fontSize: '14px',
+            backgroundColor: 'var(--color-bg-surface)',
+            color: 'var(--color-text-main)',
+          }}
+        />
+      </div>
 
-      {open && (
-        <ul className={styles.list}>
-          {filtered.map((opt) => (
-            <li
-              key={opt.value}
-              className={styles.item}
-              onMouseDown={() => {
-                onChange(opt);
-                setQuery('');
-                setOpen(false);
-              }}
-            >
-              {opt.label}
-            </li>
-          ))}
+      {open &&
+        createPortal(
+                    <ul
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              maxHeight: '220px',
+              overflowY: 'auto',
+              background: 'var(--color-bg-surface)',        // ★ 入力欄と統一
+              border: '1px solid #4b5563',                  // ★ ダークテーマ向け
+              borderRadius: '6px',
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              zIndex: 9999,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',      // ★ ダークテーマ向け
+            }}
+          >
+            {filtered.map((opt, i) => {
+              const isHover = hoverIndex === i;
 
-          {filtered.length === 0 && (
-            <li className={styles.noItem}>該当なし</li>
-          )}
-        </ul>
-      )}
-    </div>
+              return (
+                <li
+                  key={opt.value}
+                  onMouseDown={() => {
+                    onChange(opt);
+                    setQuery('');
+                    setOpen(false);
+                  }}
+                  onMouseEnter={() => setHoverIndex(i)}
+                  onMouseLeave={() => setHoverIndex(null)}
+                  style={{
+                    height: '36px',
+                    padding: '0 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: 'var(--color-text-main)',                 // ★ 入力欄と統一
+                    background: isHover
+                      ? 'var(--color-bg-hover)'                     // ★ hover も統一
+                      : 'var(--color-bg-surface)',                  // ★ 入力欄と統一
+                  }}
+                >
+                  {opt.label}
+                </li>
+              );
+            })}
+          </ul>,
+          document.body
+        )}
+    </>
   );
 }
