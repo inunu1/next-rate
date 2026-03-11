@@ -41,7 +41,11 @@ export async function GET(req: Request) {
      * 1. 検索モード
      * -------------------------------------------------------------------- */
     if (hasSearch) {
-      const where: any = {};
+      const where: {
+        winnerName?: { contains: string };
+        loserName?: { contains: string };
+        playedAt?: {gte?: Date;lte?: Date;};
+      } = {};
 
       if (winner) where.winnerName = { contains: winner };
       if (loser) where.loserName = { contains: loser };
