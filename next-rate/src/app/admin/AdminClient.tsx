@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import styles from './Admin.module.css';
 import DataTable from '@/components/DataTable';
-import CreatableSelect from 'react-select/creatable';
-import { StylesConfig } from 'react-select';
+import PlayerSelect from '@/components/PlayerSelect';
 
 type AdminUser = {
   id: string;
@@ -44,55 +43,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
     label: u.name ?? '(名前なし)',
   }));
 
-  const customSelectStyles: StylesConfig<AdminOption, false> = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: 42,
-      height: 42,
-      borderRadius: 6,
-      borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
-      boxShadow: state.isFocused ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)' : 'none',
-      backgroundColor: 'var(--color-bg-surface)',
-      '&:hover': {
-        borderColor: 'var(--color-text-muted)',
-      },
-    }),
-    valueContainer: (base) => ({
-      ...base,
-      height: 42,
-      padding: '0 8px',
-    }),
-    singleValue: (base) => ({
-      ...base,
-      color: 'var(--color-text-main)',
-    }),
-    input: (base) => ({
-      ...base,
-      color: 'var(--color-text-main)',
-    }),
-    menu: (base) => ({
-      ...base,
-      borderRadius: 6,
-      border: '1px solid var(--color-border)',
-      boxShadow: 'var(--shadow-md)',
-      zIndex: 9999,
-    }),
-    option: (base, state) => ({
-      ...base,
-      color: 'var(--color-text-main)',
-      backgroundColor: state.isFocused ? 'var(--color-bg-app)' : 'var(--color-bg-surface)',
-      cursor: 'pointer',
-      '&:active': {
-        backgroundColor: 'var(--color-primary)',
-        color: 'white',
-      }
-    }),
-    placeholder: (base) => ({
-      ...base,
-      color: 'var(--color-text-muted)',
-    }),
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  };
 
   // 共通 API 呼び出し
   async function callApi(body: ApiBody) {
@@ -166,14 +116,12 @@ export default function AdminClient({ users, currentUserId }: Props) {
       <div className={styles.formCard}>
         <div className={styles.formBar}>
           <div className={styles.selectWrapper}>
-            <CreatableSelect
+            <PlayerSelect
               options={adminOptions}
               value={selected}
-              onChange={(opt) => setSelected(opt)}
+              onChange={setSelected}
               placeholder="名前検索 / 新規入力"
-              styles={customSelectStyles}
-              isClearable
-              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+              width="260px"
             />
           </div>
 
@@ -195,18 +143,18 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
           <button
             type="button"
-            onClick={handleRegister}
-            className={styles.registerButton}
-          >
-            新規登録
-          </button>
-
-          <button
-            type="button"
             onClick={handleSearch}
             className={styles.searchButton}
           >
             検索
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRegister}
+            className={styles.registerButton}
+          >
+            新規登録
           </button>
         </div>
       </div>

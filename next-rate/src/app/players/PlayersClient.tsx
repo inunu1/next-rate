@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import styles from './Players.module.css';
 import DataTable from '@/components/DataTable';
-import CreatableSelect from 'react-select/creatable';
-import { StylesConfig } from 'react-select';
+import PlayerSelect from '@/components/PlayerSelect';
 
 type Player = {
   id: string;
@@ -44,42 +43,6 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     label: p.name,
   }));
 
-  const customSelectStyles: StylesConfig<PlayerOption, false> = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: 42,
-      height: 42,
-      borderRadius: 6,
-      borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
-      boxShadow: state.isFocused
-        ? '0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1)'
-        : 'none',
-      backgroundColor: 'var(--color-bg-surface)',
-      '&:hover': { borderColor: 'var(--color-text-muted)' },
-    }),
-    singleValue: (base) => ({
-      ...base,
-      color: 'black',
-    }),
-    input: (base) => ({
-      ...base,
-      color: 'black',
-    }),
-    menu: (base) => ({
-      ...base,
-      backgroundColor: '#f5f5f5',
-    }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? '#333'
-        : state.isFocused
-        ? '#eeeeee'
-        : '#f5f5f5',
-      color: '#333',
-    }),
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  };
 
   // ---------------------------------------------------------
   // 共通 API 呼び出し
@@ -160,14 +123,12 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       <div className={styles.formCard}>
         <div className={styles.formBar}>
           <div className={styles.selectWrapper}>
-            <CreatableSelect
+            <PlayerSelect
               options={playerOptions}
               value={selected}
-              onChange={(opt) => setSelected(opt)}
+              onChange={setSelected}
               placeholder="プレイヤー検索 / 新規入力"
-              styles={customSelectStyles}
-              isClearable
-              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+              width="260px"
             />
           </div>
 
@@ -183,18 +144,18 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
           <button
             type="button"
-            onClick={handleRegister}
-            className={styles.registerButton}
-          >
-            新規登録
-          </button>
-
-          <button
-            type="button"
             onClick={handleSearch}
             className={styles.searchButton}
           >
             検索
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRegister}
+            className={styles.registerButton}
+          >
+            新規登録
           </button>
         </div>
       </div>
