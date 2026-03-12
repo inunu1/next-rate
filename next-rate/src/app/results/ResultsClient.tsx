@@ -143,19 +143,22 @@ export default function ResultsClient({ players }: Props) {
       {/* Form */}
       <div className={styles.formCard}>
         <form className={styles.formBar} onSubmit={handleRegister}>
-          <PlayerSelect
-            value={winnerOpt}
-            onChange={setWinnerOpt}
-            options={playerOptions}
-            placeholder="勝者を選択"
-          />
-
-          <PlayerSelect
-            value={loserOpt}
-            onChange={setLoserOpt}
-            options={playerOptions}
-            placeholder="敗者を選択"
-          />
+          <div style={{ minWidth: 250 }}>
+            <PlayerSelect
+              value={winnerOpt}
+              onChange={setWinnerOpt}
+              options={playerOptions}
+              placeholder="勝者を選択"
+            />
+          </div>
+          <div style={{ minWidth: 250 }}>
+            <PlayerSelect
+              value={loserOpt}
+              onChange={setLoserOpt}
+              options={playerOptions}
+              placeholder="敗者を選択"
+            />
+          </div>
 
           <input
             type="datetime-local"
