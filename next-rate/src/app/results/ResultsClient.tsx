@@ -84,6 +84,9 @@ export default function ResultsClient({ players }: Props) {
       }),
     });
 
+    // レート計算API呼び出し
+    await fetch('/api/private/calculate', { method: 'POST' });
+
     fetchResults();
   };
 
@@ -94,6 +97,9 @@ export default function ResultsClient({ players }: Props) {
     if (!confirm('この対局結果を削除しますか？')) return;
 
     await fetch(`/api/result?id=${id}`, { method: 'DELETE' });
+
+    // レート計算API呼び出し
+    await fetch('/api/private/calculate', { method: 'POST' });
 
     if (date) fetchResults({ date });
     else fetchResults();
