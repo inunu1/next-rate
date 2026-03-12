@@ -158,7 +158,7 @@ export default function ResultsClient({ players }: Props) {
               onChange={setLoserOpt}
               options={playerOptions}
               placeholder="敗者を選択"
-              mode="creatable"   // ★ 新規入力を許可
+              mode="select"   // ★ 新規入力を許可しない
             />
           </div>
 
