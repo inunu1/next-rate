@@ -174,6 +174,10 @@ export async function POST(req: Request) {
       data: { isCalculated: false },
     });
 
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/private/calculate`, {
+      method: 'POST',
+    });
+
     return NextResponse.json(created);
   } catch (err) {
     console.error('POST /api/result error:', err);
@@ -212,6 +216,9 @@ export async function DELETE(req: Request) {
     await prisma.result.updateMany({
       where: { playedAt: { gte: target.playedAt } },
       data: { isCalculated: false },
+    });
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/private/calculate`, {
+      method: 'POST',
     });
 
     return NextResponse.json({ ok: true });
