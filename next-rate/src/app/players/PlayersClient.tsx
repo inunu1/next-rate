@@ -129,6 +129,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               onChange={setSelected}
               placeholder="プレイヤー検索 / 新規入力"
               width="260px"
+              mode="creatable"   // ★ 新規入力を許可
             />
           </div>
 

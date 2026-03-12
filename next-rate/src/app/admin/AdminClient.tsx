@@ -122,6 +122,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
               onChange={setSelected}
               placeholder="名前検索 / 新規入力"
               width="260px"
+              mode="creatable"   // ★ 新規入力を許可
             />
           </div>
 
