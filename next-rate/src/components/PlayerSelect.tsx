@@ -3,7 +3,6 @@
 import Select, {
   StylesConfig,
   ControlProps,
-  OptionProps,
   CSSObjectWithLabel,
 } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
