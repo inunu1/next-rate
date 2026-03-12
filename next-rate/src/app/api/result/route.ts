@@ -174,7 +174,7 @@ export async function POST(req: Request) {
       data: { isCalculated: false },
     });
 
-    await fetch(`${process.env.BASE_URL}/api/private/calculate`, {
+    await fetch('/api/private/calculate', {
       method: 'POST',
     });
 
@@ -218,7 +218,7 @@ export async function DELETE(req: Request) {
       data: { isCalculated: false },
     });
 
-    await fetch(`${process.env.BASE_URL}/api/private/calculate`, {
+    await fetch('/api/private/calculate', {
       method: 'POST',
     });
 
