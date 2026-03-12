@@ -84,6 +84,10 @@ export default function ResultsClient({ players }: Props) {
       }),
     });
 
+    // レート計算API呼び出し
+    await fetch('/api/private/calculate', { method: 'POST' });
+
+    alert('登録が完了しました');
     fetchResults();
   };
 
@@ -95,6 +99,10 @@ export default function ResultsClient({ players }: Props) {
 
     await fetch(`/api/result?id=${id}`, { method: 'DELETE' });
 
+    // レート計算API呼び出し
+    await fetch('/api/private/calculate', { method: 'POST' });
+
+    alert('削除が完了しました');
     if (date) fetchResults({ date });
     else fetchResults();
   };

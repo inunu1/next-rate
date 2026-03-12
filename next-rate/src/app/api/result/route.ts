@@ -174,9 +174,7 @@ export async function POST(req: Request) {
       data: { isCalculated: false },
     });
 
-    await fetch('/api/private/calculate', {
-      method: 'POST',
-    });
+    // レート計算APIの呼び出しはクライアント側で行う
 
     return NextResponse.json(created);
   } catch (err) {
@@ -218,9 +216,7 @@ export async function DELETE(req: Request) {
       data: { isCalculated: false },
     });
 
-    await fetch('/api/private/calculate', {
-      method: 'POST',
-    });
+    // レート計算APIの呼び出しはクライアント側で行う
 
     return NextResponse.json({ ok: true });
   } catch (err) {
