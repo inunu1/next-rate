@@ -174,7 +174,7 @@ export async function POST(req: Request) {
       data: { isCalculated: false },
     });
 
-    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/private/calculate`, {
+    await fetch(`${process.env.BASE_URL}/api/private/calculate`, {
       method: 'POST',
     });
 
@@ -217,7 +217,8 @@ export async function DELETE(req: Request) {
       where: { playedAt: { gte: target.playedAt } },
       data: { isCalculated: false },
     });
-    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/private/calculate`, {
+
+    await fetch(`${process.env.BASE_URL}/api/private/calculate`, {
       method: 'POST',
     });
 
