@@ -1,16 +1,38 @@
+/**
+ * ============================================================================
+ * API 名：/api/result
+ * 概要　：対局結果の取得・登録・削除を行う REST API
+ * 層区分：Controller（業務ロジックは最小限）
+ *
+ * 【役割】
+ * ・GET：検索モード／日付ページネーションモードの結果取得
+ * ・POST：対局結果の登録（レート再計算フラグの更新含む）
+ * ・DELETE：対局結果の削除（レート再計算フラグの更新含む）
+ *
+ * 【注意事項】
+ * ・日付はローカル日付として扱い、UTC 変換によるズレを防止する
+ * ・レート再計算は別 API（/api/calculate）で行うため本 API では実施しない
+ * ・Controller としての責務に留め、複雑なロジックは lib へ移譲可能
+ * ============================================================================
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/* ローカル日付としてパースする（UTCズレ防止） */
+/* ---------------------------------------------------------------------------
+ * ローカル日付としてパース（UTCズレ防止）
+ * --------------------------------------------------------------------------- */
 function parseLocalDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-/* ローカル日付 YYYY-MM-DD を生成 */
+/* ---------------------------------------------------------------------------
+ * ローカル日付 YYYY-MM-DD を生成
+ * --------------------------------------------------------------------------- */
 function formatLocalDate(date: Date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -18,9 +40,11 @@ function formatLocalDate(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
-/* ========================================================================
+/* ============================================================================
  * GET /api/result
- * ======================================================================== */
+ * 機能：検索モード／日付ページネーションモードの結果取得
+ * ============================================================================
+ */
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -37,14 +61,14 @@ export async function GET(req: Request) {
       from ||
       to;
 
-    /* --------------------------------------------------------------------
+    /* ------------------------------------------------------------------------
      * 1. 検索モード
-     * -------------------------------------------------------------------- */
+     * ------------------------------------------------------------------------ */
     if (hasSearch) {
       const where: {
         winnerName?: { contains: string };
         loserName?: { contains: string };
-        playedAt?: {gte?: Date;lte?: Date;};
+        playedAt?: { gte?: Date; lte?: Date };
       } = {};
 
       if (winner) where.winnerName = { contains: winner };
@@ -67,10 +91,9 @@ export async function GET(req: Request) {
       });
     }
 
-    /* --------------------------------------------------------------------
+    /* ------------------------------------------------------------------------
      * 2. 日付ページネーションモード
-     * -------------------------------------------------------------------- */
-
+     * ------------------------------------------------------------------------ */
     const latest = await prisma.result.findFirst({
       orderBy: { playedAt: 'desc' },
     });
@@ -85,10 +108,8 @@ export async function GET(req: Request) {
       });
     }
 
-    // ★ latest.playedAt をローカル日付に変換
     const latestLocalDate = formatLocalDate(latest.playedAt);
 
-    // ★ dateParam もローカル日付として扱う
     const targetDate = dateParam
       ? parseLocalDate(dateParam)
       : parseLocalDate(latestLocalDate);
@@ -121,7 +142,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       mode: 'date',
-      date: formatLocalDate(start), // ★ UTC を使わない
+      date: formatLocalDate(start),
       results,
       prevDate: prev ? formatLocalDate(prev.playedAt) : null,
       nextDate: next ? formatLocalDate(next.playedAt) : null,
@@ -135,15 +156,18 @@ export async function GET(req: Request) {
   }
 }
 
-/* ========================================================================
+/* ============================================================================
  * POST /api/result
- * ======================================================================== */
+ * 機能：対局結果の登録（レート再計算フラグ更新含む）
+ * ============================================================================
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
+    // 必須項目チェック
     if (
-      !body.winnerId ||
+      !body.wwinnerId ||
       !body.winnerName ||
       !body.loserId ||
       !body.loserName ||
@@ -169,12 +193,11 @@ export async function POST(req: Request) {
       },
     });
 
+    // レート再計算フラグ更新
     await prisma.result.updateMany({
       where: { playedAt: { gte: playedAt } },
       data: { isCalculated: false },
     });
-
-    // レート計算APIの呼び出しはクライアント側で行う
 
     return NextResponse.json(created);
   } catch (err) {
@@ -186,9 +209,11 @@ export async function POST(req: Request) {
   }
 }
 
-/* ========================================================================
+/* ============================================================================
  * DELETE /api/result?id=xxxx
- * ======================================================================== */
+ * 機能：対局結果の削除（レート再計算フラグ更新含む）
+ * ============================================================================
+ */
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -215,8 +240,6 @@ export async function DELETE(req: Request) {
       where: { playedAt: { gte: target.playedAt } },
       data: { isCalculated: false },
     });
-
-    // レート計算APIの呼び出しはクライアント側で行う
 
     return NextResponse.json({ ok: true });
   } catch (err) {
