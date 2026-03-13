@@ -23,39 +23,47 @@ type AdminOption = {
   __isNew__?: boolean;
 };
 
-// /api/private/common 用の型
-type ApiBody = {
-  action: 'create' | 'update' | 'delete' | 'list' | 'get';
-  table: 'User';
-  id?: string;
-  data?: Record<string, unknown>;
-  select?: Record<string, boolean>;
-};
-
 export default function AdminClient({ users, currentUserId }: Props) {
+  /* ------------------------------------------------------------
+   * 状態管理
+   * ------------------------------------------------------------ */
   const [selected, setSelected] = useState<AdminOption | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
 
+  // セレクトボックス用オプション
   const adminOptions: AdminOption[] = users.map((u) => ({
     value: u.id,
     label: u.name ?? '(名前なし)',
   }));
 
-
-  // 共通 API 呼び出し
-  async function callApi(body: ApiBody) {
-    const res = await fetch('/api/private/common', {
+  /* ------------------------------------------------------------
+   * REST API 呼び出し（共通化）
+   * ------------------------------------------------------------ */
+  async function postAdmin(data: { name: string; email: string; password: string }) {
+    const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     });
     return res.json();
   }
 
-  // 新規登録
+  async function deleteAdmin(id: string) {
+    const res = await fetch('/api/admin', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    return res.json();
+  }
+
+  /* ------------------------------------------------------------
+   * 新規登録処理
+   * ------------------------------------------------------------ */
   const handleRegister = async () => {
+    // ▼ 入力チェック（SIer では必須）
     if (!selected || !selected.__isNew__) {
       alert('新規管理者の名前を入力してください');
       return;
@@ -69,20 +77,18 @@ export default function AdminClient({ users, currentUserId }: Props) {
       return;
     }
 
-    await callApi({
-      action: 'create',
-      table: 'User',
-      data: {
-        name: selected.label,
-        email,
-        password, // ハッシュ化は API 側で行う
-      },
+    await postAdmin({
+      name: selected.label,
+      email,
+      password,
     });
 
     location.reload();
   };
 
-  // 名前検索
+  /* ------------------------------------------------------------
+   * 名前検索（クライアント側フィルタ）
+   * ------------------------------------------------------------ */
   const handleSearch = () => {
     if (!selected || selected.__isNew__) {
       setFilteredUsers(users);
@@ -91,18 +97,20 @@ export default function AdminClient({ users, currentUserId }: Props) {
     setFilteredUsers(users.filter((u) => u.id === selected.value));
   };
 
-  // 削除
+  /* ------------------------------------------------------------
+   * 削除処理（物理削除）
+   * ------------------------------------------------------------ */
   const handleDelete = async (id: string) => {
     if (!confirm('この管理者を削除しますか？')) return;
-    await callApi({
-      action: 'delete',
-      table: 'User',
-      id,
-    });
+
+    await deleteAdmin(id);
 
     location.reload();
   };
 
+  /* ------------------------------------------------------------
+   * 画面描画
+   * ------------------------------------------------------------ */
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -113,6 +121,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
         </Link>
       </header>
 
+      {/* 入力フォーム */}
       <div className={styles.formCard}>
         <div className={styles.formBar}>
           <div className={styles.selectWrapper}>
@@ -122,7 +131,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
               onChange={setSelected}
               placeholder="名前検索 / 新規入力"
               width="260px"
-              mode="creatable"   // ★ 新規入力を許可
+              mode="creatable" // ★ 新規入力を許可
             />
           </div>
 
@@ -142,24 +151,17 @@ export default function AdminClient({ users, currentUserId }: Props) {
             className={styles.input}
           />
 
-          <button
-            type="button"
-            onClick={handleSearch}
-            className={styles.searchButton}
-          >
+          <button type="button" onClick={handleSearch} className={styles.searchButton}>
             検索
           </button>
 
-          <button
-            type="button"
-            onClick={handleRegister}
-            className={styles.registerButton}
-          >
+          <button type="button" onClick={handleRegister} className={styles.registerButton}>
             新規登録
           </button>
         </div>
       </div>
 
+      {/* 一覧表示 */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable

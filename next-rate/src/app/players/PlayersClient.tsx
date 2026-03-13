@@ -24,16 +24,10 @@ type PlayerOption = {
   __isNew__?: boolean;
 };
 
-// API に送る型
-type ApiBody = {
-  action: 'create' | 'update' | 'delete' | 'list' | 'get';
-  table: 'player';
-  id?: string;
-  data?: Record<string, unknown>;
-  select?: Record<string, boolean>;
-};
-
 export default function PlayersClient({ players, currentUserId }: Props) {
+  /* ------------------------------------------------------------
+   * 状態管理
+   * ------------------------------------------------------------ */
   const [selected, setSelected] = useState<PlayerOption | null>(null);
   const [initialRate, setInitialRate] = useState('');
   const [filteredPlayers, setFilteredPlayers] = useState(players);
@@ -43,23 +37,35 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     label: p.name,
   }));
 
+  /* ------------------------------------------------------------
+   * REST API 呼び出し（共通化）
+   * ------------------------------------------------------------ */
 
-  // ---------------------------------------------------------
-  // 共通 API 呼び出し
-  // ---------------------------------------------------------
-  async function callApi(body: ApiBody) {
-    const res = await fetch('/api/private/common', {
+  // 新規登録（POST）
+  async function postPlayer(data: { name: string; initialRate: number }) {
+    const res = await fetch('/api/player', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     });
     return res.json();
   }
 
-  // ---------------------------------------------------------
-  // 新規登録（create）
-  // ---------------------------------------------------------
+  // 論理削除（DELETE）
+  async function deletePlayer(id: string) {
+    const res = await fetch('/api/player', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    return res.json();
+  }
+
+  /* ------------------------------------------------------------
+   * 新規登録処理
+   * ------------------------------------------------------------ */
   const handleRegister = async () => {
+    // ▼ 入力チェック（SIer では必須）
     if (!selected || !selected.__isNew__) {
       alert('新規プレイヤー名を入力してください');
       return;
@@ -69,22 +75,17 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       return;
     }
 
-    await callApi({
-      action: 'create',
-      table: 'player',
-      data: {
-        name: selected.label,
-        initialRate: Number(initialRate),
-        currentRate: Number(initialRate),
-      },
+    await postPlayer({
+      name: selected.label,
+      initialRate: Number(initialRate),
     });
 
     location.reload();
   };
 
-  // ---------------------------------------------------------
-  // 検索（クライアント側フィルタ）
-  // ---------------------------------------------------------
+  /* ------------------------------------------------------------
+   * 検索（クライアント側フィルタ）
+   * ------------------------------------------------------------ */
   const handleSearch = () => {
     if (!selected || selected.__isNew__) {
       setFilteredPlayers(players);
@@ -93,22 +94,20 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     setFilteredPlayers(players.filter((p) => p.id === selected.value));
   };
 
-  // ---------------------------------------------------------
-  // 出禁（論理削除 → update）
-  // ---------------------------------------------------------
+  /* ------------------------------------------------------------
+   * 出禁（論理削除）
+   * ------------------------------------------------------------ */
   const handleSoftDelete = async (id: string) => {
     if (!confirm('このプレイヤーを出禁にしますか？')) return;
-    
-    await callApi({
-      action: 'update',
-      table: 'player',
-      id,
-      data: { deletedAt: new Date().toISOString() },
-    });
+
+    await deletePlayer(id);
 
     location.reload();
   };
 
+  /* ------------------------------------------------------------
+   * 画面描画
+   * ------------------------------------------------------------ */
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -129,7 +128,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
               onChange={setSelected}
               placeholder="プレイヤー検索 / 新規入力"
               width="260px"
-              mode="creatable"   // ★ 新規入力を許可
+              mode="creatable" // ★ 新規入力を許可
             />
           </div>
 
@@ -143,24 +142,17 @@ export default function PlayersClient({ players, currentUserId }: Props) {
             className={styles.input}
           />
 
-          <button
-            type="button"
-            onClick={handleSearch}
-            className={styles.searchButton}
-          >
+          <button type="button" onClick={handleSearch} className={styles.searchButton}>
             検索
           </button>
 
-          <button
-            type="button"
-            onClick={handleRegister}
-            className={styles.registerButton}
-          >
+          <button type="button" onClick={handleRegister} className={styles.registerButton}>
             新規登録
           </button>
         </div>
       </div>
 
+      {/* 一覧表示 */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
