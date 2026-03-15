@@ -21,11 +21,7 @@
  * ⑤ 境界より前の対局のうち、関係プレイヤーが登場する対局のみ再計算
  * ⑥ 境界以降（未計算）の対局を順次再計算
  * ⑦ Result / Player を一括更新（トランザクション）
- *
- * 【注意事項】
- * ・Result.winnerRate / loserRate は「開始レート」を保存する
- * ・Player.currentRate は「終了レート」を保存する
- * ・大量更新のため VALUES 句による一括更新を採用
+ * ⑧ ★対局ゼロのプレイヤーを初期レートに戻す（今回追加）
  * ============================================================================
  */
 
@@ -52,18 +48,12 @@ function calculateElo(winnerRate: number, loserRate: number) {
  * ============================================================================
  */
 export async function POST() {
-  /* ------------------------------------------------------------------------
-   * ① 全対局を playedAt 昇順で取得
-   *    → 削除後の整合性確保のため、必ず昇順で処理する
-   * ------------------------------------------------------------------------ */
+  // ① 全対局を昇順で取得
   const allResults = await prisma.result.findMany({
     orderBy: { playedAt: "asc" },
   });
 
-  /* ------------------------------------------------------------------------
-   * ② 未計算の最初の対局（境界）を特定
-   *    → startIndex 以降が再計算対象
-   * ------------------------------------------------------------------------ */
+  // ② 未計算の最初の対局（境界）
   const startIndex = allResults.findIndex((r) => !r.isCalculated);
   if (startIndex === -1) {
     return NextResponse.json({ message: "全て計算済み" });
@@ -71,40 +61,26 @@ export async function POST() {
 
   const targets = allResults.slice(startIndex);
 
-  /* ------------------------------------------------------------------------
-   * ③ 全プレイヤーの初期レートを取得
-   *    → currentRate は使用しない（差分再計算のため）
-   * ------------------------------------------------------------------------ */
+  // ③ 全プレイヤーの初期レート
   const players = await prisma.player.findMany();
   const initialRateMap = new Map(players.map((p) => [p.id, p.initialRate]));
 
-  /* ------------------------------------------------------------------------
-   * ④ 未計算対局に登場するプレイヤー（関係プレイヤー）を抽出
-   *    → 削除の影響を受けるのはこのプレイヤー群のみ
-   * ------------------------------------------------------------------------ */
+  // ④ 関係プレイヤー抽出
   const targetPlayerIds = new Set<string>();
   for (const m of targets) {
     targetPlayerIds.add(m.winnerId);
     targetPlayerIds.add(m.loserId);
   }
 
-  /* ------------------------------------------------------------------------
-   * ⑤ 関係プレイヤーの開始レート復元
-   *    → 境界より前の対局のうち、関係プレイヤーが登場する対局のみ再計算
-   *    → 全件再計算は不要（差分再計算のメリットを維持）
-   * ------------------------------------------------------------------------ */
+  // ⑤ 境界より前の開始レート復元
   const rateMap = new Map<string, number>();
-
-  // 関係プレイヤーを初期レートで初期化
   for (const pid of targetPlayerIds) {
     rateMap.set(pid, initialRateMap.get(pid)!);
   }
 
-  // 境界より前の対局を昇順で再計算
   for (const match of allResults.slice(0, startIndex)) {
     const { winnerId, loserId } = match;
 
-    // 関係ないプレイヤーはスキップ
     if (!rateMap.has(winnerId) && !rateMap.has(loserId)) continue;
 
     const winnerRate = rateMap.get(winnerId) ?? initialRateMap.get(winnerId)!;
@@ -119,11 +95,7 @@ export async function POST() {
     rateMap.set(loserId, newLoserRate);
   }
 
-  /* ------------------------------------------------------------------------
-   * ⑥ 未計算対局を順次 Elo 計算
-   *    → Result には開始レートを保存
-   *    → Player には終了レートを保存
-   * ------------------------------------------------------------------------ */
+  // ⑥ 未計算対局の Elo 計算
   const resultUpdates: { id: string; winnerRate: number; loserRate: number }[] =
     [];
   const playerUpdates = new Map<string, number>();
@@ -137,27 +109,20 @@ export async function POST() {
       loserStartRate
     );
 
-    // 次の対局に伝播
     rateMap.set(match.winnerId, newWinnerRate);
     rateMap.set(match.loserId, newLoserRate);
 
-    // Result（開始レート）を更新バッファに追加
     resultUpdates.push({
       id: match.id,
       winnerRate: winnerStartRate,
       loserRate: loserStartRate,
     });
 
-    // Player（終了レート）を更新バッファに追加
     playerUpdates.set(match.winnerId, newWinnerRate);
     playerUpdates.set(match.loserId, newLoserRate);
   }
 
-  /* ------------------------------------------------------------------------
-   * ⑦ DB 更新（Result / Player を一括更新）
-   *    → VALUES 句で高速に更新
-   *    → トランザクションで整合性を担保
-   * ------------------------------------------------------------------------ */
+  // ⑦ DB 更新（Result / Player）
   await prisma.$transaction([
     prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
@@ -188,8 +153,21 @@ export async function POST() {
     `),
   ]);
 
+  /* ------------------------------------------------------------------------
+   * ⑧ ★対局ゼロのプレイヤーを初期レートに戻す（今回追加）
+   * ------------------------------------------------------------------------ */
+  await prisma.$executeRawUnsafe(`
+    UPDATE "Player"
+    SET "currentRate" = "initialRate"
+    WHERE id NOT IN (
+      SELECT DISTINCT "winnerId" FROM "Result"
+      UNION
+      SELECT DISTINCT "loserId" FROM "Result"
+    );
+  `);
+
   return NextResponse.json({
-    message: "差分計算完了（削除対応・開始レート完全復元）",
+    message: "差分計算完了（削除対応・開始レート完全復元・対局ゼロ初期化）",
     startIndex,
     updatedMatches: targets.length,
   });
