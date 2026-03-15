@@ -157,14 +157,16 @@ export async function POST() {
    * ⑧ ★対局ゼロのプレイヤーを初期レートに戻す（今回追加）
    * ------------------------------------------------------------------------ */
   await prisma.$executeRawUnsafe(`
-    UPDATE "Player"
+    UPDATE "Player" p
     SET "currentRate" = "initialRate"
-    WHERE id NOT IN (
-      SELECT DISTINCT "winnerId" FROM "Result"
-      UNION
-      SELECT DISTINCT "loserId" FROM "Result"
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM "Result" r
+      WHERE r."winnerId" = p.id
+        OR r."loserId" = p.id
     );
   `);
+
 
   return NextResponse.json({
     message: "差分計算完了（削除対応・開始レート完全復元・対局ゼロ初期化）",
