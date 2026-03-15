@@ -167,7 +167,7 @@ export async function POST(req: Request) {
 
     // 必須項目チェック
     if (
-      !body.wwinnerId ||
+      !body.winnerId ||
       !body.winnerName ||
       !body.loserId ||
       !body.loserName ||
