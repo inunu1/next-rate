@@ -23,6 +23,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /* ---------------------------------------------------------------------------
+ * UTC → JST (+9h)
+ * --------------------------------------------------------------------------- */
+function toJST(date: Date) {
+  return new Date(date.getTime() + 9 * 60 * 60 * 1000);
+}
+
+/* ---------------------------------------------------------------------------
  * ローカル日付としてパース（UTCズレ防止）
  * --------------------------------------------------------------------------- */
 function parseLocalDate(dateStr: string) {
@@ -42,7 +49,6 @@ function formatLocalDate(date: Date) {
 
 /* ============================================================================
  * GET /api/result
- * 機能：検索モード／日付ページネーションモードの結果取得
  * ============================================================================
  */
 export async function GET(req: Request) {
@@ -158,7 +164,6 @@ export async function GET(req: Request) {
 
 /* ============================================================================
  * POST /api/result
- * 機能：対局結果の登録（レート再計算フラグ更新含む）
  * ============================================================================
  */
 export async function POST(req: Request) {
@@ -179,7 +184,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const playedAt = new Date(body.playedAt);
+    // ★ UTC → JST に変換して保存
+    const playedAt = toJST(new Date(body.playedAt));
 
     const created = await prisma.result.create({
       data: {
@@ -211,7 +217,6 @@ export async function POST(req: Request) {
 
 /* ============================================================================
  * DELETE /api/result?id=xxxx
- * 機能：対局結果の削除（レート再計算フラグ更新含む）
  * ============================================================================
  */
 export async function DELETE(req: Request) {
