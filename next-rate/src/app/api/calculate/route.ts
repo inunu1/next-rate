@@ -1,27 +1,20 @@
 /**
  * ============================================================================
- * API 名　：/api/calculate
- * 概要　　：未計算の対局結果に対して Elo レートの差分再計算を行う
+ * API 名　：/api/calculate（フル再計算）
+ * 概要　　：全対局を playedAt 昇順で再計算し、レート整合性を完全保証する
  * 層区分　：Controller（計算ロジックは本 API 内で完結）
  *
  * 【本 API の目的】
- * ・追加／削除に伴うレートの不整合を解消する
- * ・差分再計算方式により、全件再計算を回避しつつ整合性を担保する
- *
- * 【削除対応のポイント】
- * ・削除された対局の影響を受けるのは「関係プレイヤーのみ」
- * ・境界（未計算の最初の対局）より前の対局のうち、
- *   関係プレイヤーが登場する対局のみを再計算して開始レートを復元する
+ * ・削除・過去挿入・ID 不整合などによるレート破綻を完全に排除する
+ * ・Elo の状態遷移特性に基づき、全件再計算により正しいレートを復元する
  *
  * 【処理概要】
  * ① 全対局を playedAt 昇順で取得
- * ② 未計算の最初の対局（境界）を特定
- * ③ 全プレイヤーの初期レートを取得
- * ④ 未計算対局に登場するプレイヤー（関係プレイヤー）を抽出
- * ⑤ 境界より前の対局のうち、関係プレイヤーが登場する対局のみ再計算
- * ⑥ 境界以降（未計算）の対局を順次再計算
- * ⑦ Result / Player を一括更新（トランザクション）
- * ⑧ ★対局ゼロのプレイヤーを初期レートに戻す（今回追加）
+ * ② 全プレイヤーのレートを初期化
+ * ③ 1 局ずつ Elo 計算を実施
+ * ④ Result（開始レート）を更新
+ * ⑤ Player（最終レート）を更新
+ * ⑥ トランザクションで一括反映
  * ============================================================================
  */
 
@@ -44,7 +37,7 @@ function calculateElo(winnerRate: number, loserRate: number) {
 }
 
 /* ============================================================================
- * POST /api/calculate
+ * POST /api/calculate（フル再計算）
  * ============================================================================
  */
 export async function POST() {
@@ -53,76 +46,43 @@ export async function POST() {
     orderBy: { playedAt: "asc" },
   });
 
-  // ② 未計算の最初の対局（境界）
-  const startIndex = allResults.findIndex((r) => !r.isCalculated);
-  if (startIndex === -1) {
-    return NextResponse.json({ message: "全て計算済み" });
-  }
-
-  const targets = allResults.slice(startIndex);
-
-  // ③ 全プレイヤーの初期レート
+  // ② 全プレイヤーの初期レートを取得
   const players = await prisma.player.findMany();
-  const initialRateMap = new Map(players.map((p) => [p.id, p.initialRate]));
+  const rateMap = new Map(players.map((p) => [p.id, p.initialRate]));
 
-  // ④ 関係プレイヤー抽出
-  const targetPlayerIds = new Set<string>();
-  for (const m of targets) {
-    targetPlayerIds.add(m.winnerId);
-    targetPlayerIds.add(m.loserId);
-  }
+  // Result 更新用配列
+  const resultUpdates: {
+    id: string;
+    winnerRate: number;
+    loserRate: number;
+  }[] = [];
 
-  // ⑤ 境界より前の開始レート復元
-  const rateMap = new Map<string, number>();
-  for (const pid of targetPlayerIds) {
-    rateMap.set(pid, initialRateMap.get(pid)!);
-  }
-
-  for (const match of allResults.slice(0, startIndex)) {
-    const { winnerId, loserId } = match;
-
-    if (!rateMap.has(winnerId) && !rateMap.has(loserId)) continue;
-
-    const winnerRate = rateMap.get(winnerId) ?? initialRateMap.get(winnerId)!;
-    const loserRate = rateMap.get(loserId) ?? initialRateMap.get(loserId)!;
+  // ③ 全対局を順次フル再計算
+  for (const match of allResults) {
+    const winnerRate = rateMap.get(match.winnerId)!;
+    const loserRate = rateMap.get(match.loserId)!;
 
     const { newWinnerRate, newLoserRate } = calculateElo(
       winnerRate,
       loserRate
     );
 
-    rateMap.set(winnerId, newWinnerRate);
-    rateMap.set(loserId, newLoserRate);
-  }
-
-  // ⑥ 未計算対局の Elo 計算
-  const resultUpdates: { id: string; winnerRate: number; loserRate: number }[] =
-    [];
-  const playerUpdates = new Map<string, number>();
-
-  for (const match of targets) {
-    const winnerStartRate = rateMap.get(match.winnerId)!;
-    const loserStartRate = rateMap.get(match.loserId)!;
-
-    const { newWinnerRate, newLoserRate } = calculateElo(
-      winnerStartRate,
-      loserStartRate
-    );
-
+    // 次局のためにレート更新
     rateMap.set(match.winnerId, newWinnerRate);
     rateMap.set(match.loserId, newLoserRate);
 
+    // Result 更新用に開始レートを保存
     resultUpdates.push({
       id: match.id,
-      winnerRate: winnerStartRate,
-      loserRate: loserStartRate,
+      winnerRate,
+      loserRate,
     });
-
-    playerUpdates.set(match.winnerId, newWinnerRate);
-    playerUpdates.set(match.loserId, newLoserRate);
   }
 
-  // ⑦ DB 更新（Result / Player）
+  // ④ Player の最終レートを抽出
+  const playerUpdates = Array.from(rateMap.entries());
+
+  // ⑤ DB 更新（Result / Player）※トランザクション
   await prisma.$transaction([
     prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
@@ -133,8 +93,7 @@ export async function POST() {
       FROM (VALUES
         ${resultUpdates
           .map(
-            (r) =>
-              `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
+            (r) => `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
           )
           .join(",")}
       ) AS v("id", "winnerRate", "loserRate")
@@ -145,7 +104,7 @@ export async function POST() {
       UPDATE "Player" AS p
       SET "currentRate" = v."currentRate"
       FROM (VALUES
-        ${Array.from(playerUpdates.entries())
+        ${playerUpdates
           .map(([id, rate]) => `('${id}', ${rate})`)
           .join(",")}
       ) AS v("id", "currentRate")
@@ -153,24 +112,8 @@ export async function POST() {
     `),
   ]);
 
-  /* ------------------------------------------------------------------------
-   * ⑧ ★対局ゼロのプレイヤーを初期レートに戻す（今回追加）
-   * ------------------------------------------------------------------------ */
-  await prisma.$executeRawUnsafe(`
-    UPDATE "Player" p
-    SET "currentRate" = "initialRate"
-    WHERE NOT EXISTS (
-      SELECT 1
-      FROM "Result" r
-      WHERE r."winnerId" = p.id
-        OR r."loserId" = p.id
-    );
-  `);
-
-
   return NextResponse.json({
-    message: "差分計算完了（削除対応・開始レート完全復元・対局ゼロ初期化）",
-    startIndex,
-    updatedMatches: targets.length,
+    message: "フル再計算完了（整合性100%保証）",
+    totalMatches: allResults.length,
   });
 }
