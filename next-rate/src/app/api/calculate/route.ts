@@ -37,27 +37,36 @@ function calculateElo(winnerRate: number, loserRate: number) {
 }
 
 /* ============================================================================
- * POST /api/calculate（フル再計算）
+ * POST /api/calculate（フル再計算 + 計測ポイント）
  * ============================================================================
  */
 export async function POST() {
-  // ① 全対局を昇順で取得
+  const t = () => performance.now();
+  const metrics: { label: string; ms: number }[] = [];
+
+  const totalStart = t();
+
+  /* ① 全対局取得 */
+  let s = t();
   const allResults = await prisma.result.findMany({
     orderBy: { playedAt: "asc" },
   });
+  metrics.push({ label: "fetch_results", ms: t() - s });
 
-  // ② 全プレイヤーの初期レートを取得
+  /* ② 全プレイヤー取得 */
+  s = t();
   const players = await prisma.player.findMany();
-  const rateMap = new Map(players.map((p) => [p.id, p.initialRate]));
+  metrics.push({ label: "fetch_players", ms: t() - s });
 
-  // Result 更新用配列
+  const rateMap = new Map(players.map((p) => [p.id, p.initialRate]));
   const resultUpdates: {
     id: string;
     winnerRate: number;
     loserRate: number;
   }[] = [];
 
-  // ③ 全対局を順次フル再計算
+  /* ③ Elo ループ */
+  s = t();
   for (const match of allResults) {
     const winnerRate = rateMap.get(match.winnerId)!;
     const loserRate = rateMap.get(match.loserId)!;
@@ -67,22 +76,22 @@ export async function POST() {
       loserRate
     );
 
-    // 次局のためにレート更新
     rateMap.set(match.winnerId, newWinnerRate);
     rateMap.set(match.loserId, newLoserRate);
 
-    // Result 更新用に開始レートを保存
     resultUpdates.push({
       id: match.id,
       winnerRate,
       loserRate,
     });
   }
+  metrics.push({ label: "elo_loop", ms: t() - s });
 
-  // ④ Player の最終レートを抽出
+  /* ④ Player の最終レート抽出 */
   const playerUpdates = Array.from(rateMap.entries());
 
-  // ⑤ DB 更新（Result / Player）※トランザクション
+  /* ⑤ DB 更新（Result / Player） */
+  s = t();
   await prisma.$transaction([
     prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
@@ -111,9 +120,14 @@ export async function POST() {
       WHERE p.id = v."id";
     `),
   ]);
+  metrics.push({ label: "update_db", ms: t() - s });
+
+  /* ⑥ 総処理時間 */
+  metrics.push({ label: "total", ms: t() - totalStart });
 
   return NextResponse.json({
     message: "フル再計算完了（整合性100%保証）",
     totalMatches: allResults.length,
+    metrics,
   });
 }
