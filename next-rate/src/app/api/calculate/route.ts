@@ -3,18 +3,6 @@
  * API 名　：/api/calculate（フル再計算）
  * 概要　　：全対局を playedAt 昇順で再計算し、レート整合性を完全保証する
  * 層区分　：Controller（計算ロジックは本 API 内で完結）
- *
- * 【本 API の目的】
- * ・削除・過去挿入・ID 不整合などによるレート破綻を完全に排除する
- * ・Elo の状態遷移特性に基づき、全件再計算により正しいレートを復元する
- *
- * 【処理概要】
- * ① 全対局を playedAt 昇順で取得
- * ② 全プレイヤーのレートを初期化
- * ③ 1 局ずつ Elo 計算を実施
- * ④ Result（開始レート）を更新
- * ⑤ Player（最終レート）を更新
- * ⑥ トランザクションで一括反映
  * ============================================================================
  */
 
@@ -22,6 +10,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const K_FACTOR = 32;
+const CHUNK_SIZE = 100;
 
 /* ---------------------------------------------------------------------------
  * Elo レート計算（1 対局分）
@@ -36,8 +25,19 @@ function calculateElo(winnerRate: number, loserRate: number) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * 配列をチャンクに分割
+ * --------------------------------------------------------------------------- */
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
 /* ============================================================================
- * POST /api/calculate（フル再計算 + 計測ポイント）
+ * POST /api/calculate（フル再計算 + 計測ポイント + 分割UPDATE）
  * ============================================================================
  */
 export async function POST() {
@@ -90,43 +90,49 @@ export async function POST() {
   /* ④ Player の最終レート抽出 */
   const playerUpdates = Array.from(rateMap.entries());
 
-  /* ⑤ DB 更新（Result / Player） */
+  /* ⑤ 分割 UPDATE */
   s = t();
-  await prisma.$transaction([
-    prisma.$executeRawUnsafe(`
+
+  // Result の分割 UPDATE
+  const resultChunks = chunk(resultUpdates, CHUNK_SIZE);
+  for (const c of resultChunks) {
+    await prisma.$executeRawUnsafe(`
       UPDATE "Result" AS r
       SET 
         "winnerRate" = v."winnerRate",
         "loserRate" = v."loserRate",
         "isCalculated" = true
       FROM (VALUES
-        ${resultUpdates
+        ${c
           .map(
             (r) => `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
           )
           .join(",")}
       ) AS v("id", "winnerRate", "loserRate")
       WHERE r.id = v."id";
-    `),
+    `);
+  }
 
-    prisma.$executeRawUnsafe(`
+  // Player の分割 UPDATE
+  const playerChunks = chunk(playerUpdates, CHUNK_SIZE);
+  for (const c of playerChunks) {
+    await prisma.$executeRawUnsafe(`
       UPDATE "Player" AS p
       SET "currentRate" = v."currentRate"
       FROM (VALUES
-        ${playerUpdates
-          .map(([id, rate]) => `('${id}', ${rate})`)
-          .join(",")}
+        ${c.map(([id, rate]) => `('${id}', ${rate})`).join(",")}
       ) AS v("id", "currentRate")
       WHERE p.id = v."id";
-    `),
-  ]);
+    `);
+  }
+
   metrics.push({ label: "update_db", ms: t() - s });
 
   /* ⑥ 総処理時間 */
   metrics.push({ label: "total", ms: t() - totalStart });
 
   return NextResponse.json({
-    message: "フル再計算完了（整合性100%保証）",
+    message: "フル再計算完了（整合性100%保証・分割UPDATE適用）",
     totalMatches: allResults.length,
     metrics,
   });
