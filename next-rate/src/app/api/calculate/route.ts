@@ -1,9 +1,13 @@
 /**
- * ============================================================================
- * API 名　：/api/calculate（フル再計算）
- * 概要　　：全対局を playedAt 昇順で再計算し、レート整合性を完全保証する
- * 層区分　：Controller（計算ロジックは本 API 内で完結）
- * ============================================================================
+ * =============================================================================
+ * API 名　　：/api/calculate（フル再計算）
+ * 概要　　　：全対局データを playedAt 昇順で再計算し、
+ * 　　　　　：Player.currentRate / Result.winnerRate / loserRate の
+ * 　　　　　：整合性を 100% 保証するバッチ処理。
+ * 層区分　　：Controller（計算ロジックは本 API 内で完結）
+ * 注意事項　：大量データ時は処理時間が増加するため、必要に応じて
+ * 　　　　　：バックグラウンド実行方式（キュー方式）へ移行可能。
+ * =============================================================================
  */
 
 import { NextResponse } from "next/server";
@@ -12,8 +16,11 @@ import { prisma } from "@/lib/prisma";
 const K_FACTOR = 32;
 const CHUNK_SIZE = 100;
 
-/* ---------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
  * Elo レート計算（1 対局分）
+ * 業務意図：
+ *   - 対局結果に基づき、勝者・敗者の新レートを算出する。
+ *   - K_FACTOR はレート変動幅の調整パラメータ。
  * --------------------------------------------------------------------------- */
 function calculateElo(winnerRate: number, loserRate: number) {
   const expectedWin = 1 / (1 + Math.pow(10, (loserRate - winnerRate) / 400));
@@ -25,8 +32,11 @@ function calculateElo(winnerRate: number, loserRate: number) {
   };
 }
 
-/* ---------------------------------------------------------------------------
- * 配列をチャンクに分割
+/* -----------------------------------------------------------------------------
+ * 配列チャンク化処理
+ * 業務意図：
+ *   - 大量 UPDATE 時の SQL パース負荷を軽減するため、
+ *     CHUNK_SIZE 件ごとに分割して実行する。
  * --------------------------------------------------------------------------- */
 function chunk<T>(arr: T[], size: number): T[][] {
   const chunks = [];
@@ -36,37 +46,53 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
-/* ============================================================================
- * POST /api/calculate（フル再計算 + 計測ポイント + 分割UPDATE）
- * ============================================================================
+/* =============================================================================
+ * POST /api/calculate
+ * 処理概要：
+ *   ① 全対局データ取得
+ *   ② 全プレイヤー初期レート取得
+ *   ③ playedAt 昇順で Elo 再計算
+ *   ④ Result / Player の更新データ作成
+ *   ⑤ 分割 UPDATE による DB 更新
+ *   ⑥ 計測結果を返却
+ * =============================================================================
  */
 export async function POST() {
-  const t = () => performance.now();
+  const now = () => performance.now();
   const metrics: { label: string; ms: number }[] = [];
 
-  const totalStart = t();
+  const totalStart = now();
 
-  /* ① 全対局取得 */
-  let s = t();
+  /* ---------------------------------------------------------------------------
+   * ① 全対局データ取得
+   * ------------------------------------------------------------------------- */
+  let s = now();
   const allResults = await prisma.result.findMany({
     orderBy: { playedAt: "asc" },
   });
-  metrics.push({ label: "fetch_results", ms: t() - s });
+  metrics.push({ label: "fetch_results", ms: now() - s });
 
-  /* ② 全プレイヤー取得 */
-  s = t();
+  /* ---------------------------------------------------------------------------
+   * ② 全プレイヤー取得（初期レートを使用）
+   * ------------------------------------------------------------------------- */
+  s = now();
   const players = await prisma.player.findMany();
-  metrics.push({ label: "fetch_players", ms: t() - s });
+  metrics.push({ label: "fetch_players", ms: now() - s });
 
+  // プレイヤーID → 現在レート のマッピング
   const rateMap = new Map(players.map((p) => [p.id, p.initialRate]));
+
+  // Result 更新用データ
   const resultUpdates: {
     id: string;
     winnerRate: number;
     loserRate: number;
   }[] = [];
 
-  /* ③ Elo ループ */
-  s = t();
+  /* ---------------------------------------------------------------------------
+   * ③ Elo 再計算ループ（playedAt 昇順）
+   * ------------------------------------------------------------------------- */
+  s = now();
   for (const match of allResults) {
     const winnerRate = rateMap.get(match.winnerId)!;
     const loserRate = rateMap.get(match.loserId)!;
@@ -76,22 +102,28 @@ export async function POST() {
       loserRate
     );
 
+    // レート更新
     rateMap.set(match.winnerId, newWinnerRate);
     rateMap.set(match.loserId, newLoserRate);
 
+    // Result 更新用データを保持
     resultUpdates.push({
       id: match.id,
       winnerRate,
       loserRate,
     });
   }
-  metrics.push({ label: "elo_loop", ms: t() - s });
+  metrics.push({ label: "elo_loop", ms: now() - s });
 
-  /* ④ Player の最終レート抽出 */
+  /* ---------------------------------------------------------------------------
+   * ④ Player 更新データ作成
+   * ------------------------------------------------------------------------- */
   const playerUpdates = Array.from(rateMap.entries());
 
-  /* ⑤ 分割 UPDATE */
-  s = t();
+  /* ---------------------------------------------------------------------------
+   * ⑤ 分割 UPDATE（Result → Player の順）
+   * ------------------------------------------------------------------------- */
+  s = now();
 
   // Result の分割 UPDATE
   const resultChunks = chunk(resultUpdates, CHUNK_SIZE);
@@ -126,10 +158,12 @@ export async function POST() {
     `);
   }
 
-  metrics.push({ label: "update_db", ms: t() - s });
+  metrics.push({ label: "update_db", ms: now() - s });
 
-  /* ⑥ 総処理時間 */
-  metrics.push({ label: "total", ms: t() - totalStart });
+  /* ---------------------------------------------------------------------------
+   * ⑥ 総処理時間
+   * ------------------------------------------------------------------------- */
+  metrics.push({ label: "total", ms: now() - totalStart });
 
   return NextResponse.json({
     message: "フル再計算完了（整合性100%保証・分割UPDATE適用）",
