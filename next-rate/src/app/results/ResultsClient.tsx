@@ -26,6 +26,11 @@ export default function ResultsClient({ players }: Props) {
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
 
+  // 新設: タブと検索用日付の状態
+  const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
+  const [searchFrom, setSearchFrom] = useState('');
+  const [searchTo, setSearchTo] = useState('');
+
   useEffect(() => {
     setMounted(true);
     fetchResults();
@@ -115,6 +120,8 @@ export default function ResultsClient({ players }: Props) {
     const params: Record<string, string> = {};
     if (winnerOpt) params.winner = winnerOpt.label;
     if (loserOpt) params.loser = loserOpt.label;
+    if (searchFrom) params.from = searchFrom;
+    if (searchTo) params.to = searchTo;
     fetchResults(params);
   };
 
@@ -141,47 +148,106 @@ export default function ResultsClient({ players }: Props) {
         </Link>
       </header>
 
-      {/* Form */}
+      {/* Form Area */}
       <div className={styles.formCard}>
-        <form className={styles.formBar} onSubmit={handleRegister}>
-          <div style={{ minWidth: 250 }}>
-            <PlayerSelect
-              value={winnerOpt}
-              onChange={setWinnerOpt}
-              options={playerOptions}
-              placeholder="勝者を選択"
-              mode="select"   // ★ 新規入力を許可しない
-            />
-          </div>
-          <div style={{ minWidth: 250 }}>
-            <PlayerSelect
-              value={loserOpt}
-              onChange={setLoserOpt}
-              options={playerOptions}
-              placeholder="敗者を選択"
-              mode="select"   // ★ 新規入力を許可しない
-            />
-          </div>
-
-          <Input
-            type="datetime-local"
-            value={playedAt}
-            onChange={(e) => setPlayedAt(e.target.value)}
-            width={180}
-          />
-
+        {/* Tab Navigation */}
+        <div className={styles.tabContainer}>
           <button
             type="button"
-            onClick={handleSearch}
-            className={styles.searchButton}
+            className={`${styles.tabButton} ${activeTab === 'search' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('search')}
           >
-            検索
+            🔍 検索
           </button>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === 'register' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('register')}
+          >
+            ✍️ 新規登録
+          </button>
+        </div>
 
-          <button type="submit" className={styles.registerButton}>
-            登録
-          </button>
-        </form>
+        {activeTab === 'search' ? (
+          /* ---------- 検索タブ UI ---------- */
+          <div className={styles.formBar}>
+            <div style={{ minWidth: 250 }}>
+              <PlayerSelect
+                value={winnerOpt}
+                onChange={setWinnerOpt}
+                options={playerOptions}
+                placeholder="勝者で絞り込み"
+                mode="select"
+              />
+            </div>
+            <div style={{ minWidth: 250 }}>
+              <PlayerSelect
+                value={loserOpt}
+                onChange={setLoserOpt}
+                options={playerOptions}
+                placeholder="敗者で絞り込み"
+                mode="select"
+              />
+            </div>
+
+            <div className={styles.dateRange}>
+              <Input
+                type="date"
+                value={searchFrom}
+                onChange={(e) => setSearchFrom(e.target.value)}
+                width={140}
+              />
+              <span className={styles.dateRangeSeparator}>〜</span>
+              <Input
+                type="date"
+                value={searchTo}
+                onChange={(e) => setSearchTo(e.target.value)}
+                width={140}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSearch}
+              className={styles.searchButton}
+            >
+              検索
+            </button>
+          </div>
+        ) : (
+          /* ---------- 登録タブ UI ---------- */
+          <form className={styles.formBar} onSubmit={handleRegister}>
+            <div style={{ minWidth: 250 }}>
+              <PlayerSelect
+                value={winnerOpt}
+                onChange={setWinnerOpt}
+                options={playerOptions}
+                placeholder="勝者を選択"
+                mode="select"
+              />
+            </div>
+            <div style={{ minWidth: 250 }}>
+              <PlayerSelect
+                value={loserOpt}
+                onChange={setLoserOpt}
+                options={playerOptions}
+                placeholder="敗者を選択"
+                mode="select"
+              />
+            </div>
+
+            <Input
+              type="datetime-local"
+              value={playedAt}
+              onChange={(e) => setPlayedAt(e.target.value)}
+              width={180}
+            />
+
+            <button type="submit" className={styles.registerButton}>
+              登録
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Pagination */}
