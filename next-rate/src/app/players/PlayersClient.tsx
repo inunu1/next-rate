@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './Players.module.css';
 import DataTable from '@/components/DataTable';
 import PlayerSelect from '@/components/PlayerSelect';
+import Input from '@/components/Input';
 
 type Player = {
   id: string;
@@ -132,14 +133,14 @@ export default function PlayersClient({ players, currentUserId }: Props) {
             />
           </div>
 
-          <input
+          <Input
             type="number"
             placeholder="初期レート (例: 1500)"
             value={initialRate}
             onChange={(e) => setInitialRate(e.target.value)}
             min={1000}
             max={9999}
-            className={styles.input}
+            width={200}
           />
 
           <button type="button" onClick={handleSearch} className={styles.searchButton}>

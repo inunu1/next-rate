@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './Admin.module.css';
 import DataTable from '@/components/DataTable';
 import PlayerSelect from '@/components/PlayerSelect';
+import Input from '@/components/Input';
 
 type AdminUser = {
   id: string;
@@ -135,20 +136,20 @@ export default function AdminClient({ users, currentUserId }: Props) {
             />
           </div>
 
-          <input
+          <Input
             type="email"
             placeholder="メールアドレス（新規登録時）"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={styles.input}
+            width={225}
           />
 
-          <input
+          <Input
             type="password"
             placeholder="パスワード（新規登録時）"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
+            width={220}
           />
 
           <button type="button" onClick={handleSearch} className={styles.searchButton}>

@@ -6,6 +6,7 @@ import type { Player, Result } from '@prisma/client';
 import styles from './Results.module.css';
 import DataTable from '@/components/DataTable';
 import PlayerSelect, { PlayerOption } from '@/components/PlayerSelect';
+import Input from '@/components/Input';
 
 type Props = {
   players: Player[];
@@ -162,11 +163,11 @@ export default function ResultsClient({ players }: Props) {
             />
           </div>
 
-          <input
+          <Input
             type="datetime-local"
             value={playedAt}
             onChange={(e) => setPlayedAt(e.target.value)}
-            className={styles.input}
+            width={200}
           />
 
           <button

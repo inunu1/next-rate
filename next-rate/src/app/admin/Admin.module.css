@@ -60,22 +60,7 @@
   flex-shrink: 0;
 }
 
-.input {
-  height: 42px;
-  padding: 0 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  color: var(--color-text-main);
-  background-color: var(--color-bg-surface);
-  min-width: 200px;
-}
 
-.input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
-}
 
 /* Buttons */
 .registerButton {
