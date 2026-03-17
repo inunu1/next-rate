@@ -167,7 +167,7 @@ export default function ResultsClient({ players }: Props) {
             type="datetime-local"
             value={playedAt}
             onChange={(e) => setPlayedAt(e.target.value)}
-            width={240}
+            width={200}
           />
 
           <button
