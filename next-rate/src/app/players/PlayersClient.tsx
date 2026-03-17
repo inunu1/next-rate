@@ -29,7 +29,9 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   /* ------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------ */
-  const [selected, setSelected] = useState<PlayerOption | null>(null);
+  const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
+  const [searchOpt, setSearchOpt] = useState<PlayerOption | null>(null);
+  const [registerOpt, setRegisterOpt] = useState<PlayerOption | null>(null);
   const [initialRate, setInitialRate] = useState('');
   const [filteredPlayers, setFilteredPlayers] = useState(players);
 
@@ -66,8 +68,8 @@ export default function PlayersClient({ players, currentUserId }: Props) {
    * 新規登録処理
    * ------------------------------------------------------------ */
   const handleRegister = async () => {
-    // ▼ 入力チェック（SIer では必須）
-    if (!selected || !selected.__isNew__) {
+    // ▼ 入力チェック
+    if (!registerOpt || !registerOpt.__isNew__) {
       alert('新規プレイヤー名を入力してください');
       return;
     }
@@ -77,7 +79,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
     }
 
     await postPlayer({
-      name: selected.label,
+      name: registerOpt.label,
       initialRate: Number(initialRate),
     });
 
@@ -88,11 +90,11 @@ export default function PlayersClient({ players, currentUserId }: Props) {
    * 検索（クライアント側フィルタ）
    * ------------------------------------------------------------ */
   const handleSearch = () => {
-    if (!selected || selected.__isNew__) {
+    if (!searchOpt || searchOpt.__isNew__) {
       setFilteredPlayers(players);
       return;
     }
-    setFilteredPlayers(players.filter((p) => p.id === selected.value));
+    setFilteredPlayers(players.filter((p) => p.id === searchOpt.value));
   };
 
   /* ------------------------------------------------------------
@@ -121,36 +123,80 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
       {/* Form Area */}
       <div className={styles.formCard}>
-        <div className={styles.formBar}>
-          <div className={styles.selectWrapper}>
-            <PlayerSelect
-              options={playerOptions}
-              value={selected}
-              onChange={setSelected}
-              placeholder="プレイヤー検索 / 新規入力"
-              width="260px"
-              mode="creatable" // ★ 新規入力を許可
-            />
-          </div>
-
-          <Input
-            type="number"
-            placeholder="初期レート (例: 1500)"
-            value={initialRate}
-            onChange={(e) => setInitialRate(e.target.value)}
-            min={1000}
-            max={9999}
-            width={200}
-          />
-
-          <button type="button" onClick={handleSearch} className={styles.searchButton}>
-            検索
+        {/* Tab Navigation */}
+        <div className={styles.tabContainer}>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === 'search' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('search')}
+          >
+            🔍 検索
           </button>
-
-          <button type="button" onClick={handleRegister} className={styles.registerButton}>
-            新規登録
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === 'register' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('register')}
+          >
+            ✍️ 新規登録
           </button>
         </div>
+
+        {activeTab === 'search' ? (
+          /* ---------- 検索タブ UI ---------- */
+          <div className={styles.formBar}>
+            <div className={styles.selectWrapper}>
+              <PlayerSelect
+                options={playerOptions}
+                value={searchOpt}
+                onChange={setSearchOpt}
+                placeholder="プレイヤーで絞り込み"
+                width="260px"
+                mode="select"
+              />
+            </div>
+            <button type="button" onClick={handleSearch} className={styles.searchButton}>
+              検索
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchOpt(null);
+                setFilteredPlayers(players);
+              }}
+              className={styles.searchButton}
+            >
+              クリア
+            </button>
+          </div>
+        ) : (
+          /* ---------- 登録タブ UI ---------- */
+          <form className={styles.formBar} onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+            <div className={styles.selectWrapper}>
+              <PlayerSelect
+                options={playerOptions}
+                value={registerOpt}
+                onChange={setRegisterOpt}
+                placeholder="新規プレイヤー名を入力"
+                width="260px"
+                mode="creatable"
+              />
+            </div>
+
+            <Input
+              type="number"
+              placeholder="初期レート (例: 1500)"
+              value={initialRate}
+              onChange={(e) => setInitialRate(e.target.value)}
+              min={1000}
+              max={9999}
+              width={200}
+            />
+
+            <button type="submit" className={styles.registerButton}>
+              新規登録
+            </button>
+          </form>
+        )}
       </div>
 
       {/* 一覧表示 */}
