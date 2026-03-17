@@ -38,7 +38,7 @@ export async function middleware(req: NextRequest) {
   /* ------------------------------------------------------------
    * ② 公開 API（/api/trend/*）は認証不要
    * ------------------------------------------------------------ */
-  const isPublicApi = pathname.startsWith('/api/trend')
+  const isPublicApi = pathname.startsWith('/api/public')
   if (isPublicApi) {
     return NextResponse.next()
   }
