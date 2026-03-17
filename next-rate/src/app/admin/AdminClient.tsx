@@ -141,7 +141,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
             placeholder="メールアドレス（新規登録時）"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            width={225}
+            width={260}
           />
 
           <Input
@@ -149,7 +149,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
             placeholder="パスワード（新規登録時）"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            width={220}
+            width={260}
           />
 
           <button type="button" onClick={handleSearch} className={styles.searchButton}>

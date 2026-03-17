@@ -9,6 +9,7 @@
   background-color: var(--color-bg-surface);
   transition: all var(--transition-fast);
   outline: none;
+  flex-shrink: 0;
   /* width は props や親要素から与えられるのでここでは定義しない */
 }
 
