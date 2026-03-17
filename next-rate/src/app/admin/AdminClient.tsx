@@ -28,7 +28,9 @@ export default function AdminClient({ users, currentUserId }: Props) {
   /* ------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------ */
-  const [selected, setSelected] = useState<AdminOption | null>(null);
+  const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
+  const [searchOpt, setSearchOpt] = useState<AdminOption | null>(null);
+  const [registerOpt, setRegisterOpt] = useState<AdminOption | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users);
@@ -64,8 +66,8 @@ export default function AdminClient({ users, currentUserId }: Props) {
    * 新規登録処理
    * ------------------------------------------------------------ */
   const handleRegister = async () => {
-    // ▼ 入力チェック（SIer では必須）
-    if (!selected || !selected.__isNew__) {
+    // ▼ 入力チェック
+    if (!registerOpt || !registerOpt.__isNew__) {
       alert('新規管理者の名前を入力してください');
       return;
     }
@@ -79,7 +81,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
     }
 
     await postAdmin({
-      name: selected.label,
+      name: registerOpt.label,
       email,
       password,
     });
@@ -91,11 +93,11 @@ export default function AdminClient({ users, currentUserId }: Props) {
    * 名前検索（クライアント側フィルタ）
    * ------------------------------------------------------------ */
   const handleSearch = () => {
-    if (!selected || selected.__isNew__) {
+    if (!searchOpt || searchOpt.__isNew__) {
       setFilteredUsers(users);
       return;
     }
-    setFilteredUsers(users.filter((u) => u.id === selected.value));
+    setFilteredUsers(users.filter((u) => u.id === searchOpt.value));
   };
 
   /* ------------------------------------------------------------
@@ -124,42 +126,87 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
       {/* 入力フォーム */}
       <div className={styles.formCard}>
-        <div className={styles.formBar}>
-          <div className={styles.selectWrapper}>
-            <PlayerSelect
-              options={adminOptions}
-              value={selected}
-              onChange={setSelected}
-              placeholder="名前検索 / 新規入力"
-              width="260px"
-              mode="creatable" // ★ 新規入力を許可
-            />
-          </div>
-
-          <Input
-            type="email"
-            placeholder="メールアドレス（新規登録時）"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            width={260}
-          />
-
-          <Input
-            type="password"
-            placeholder="パスワード（新規登録時）"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            width={260}
-          />
-
-          <button type="button" onClick={handleSearch} className={styles.searchButton}>
-            検索
+        {/* Tab Navigation */}
+        <div className={styles.tabContainer}>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === 'search' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('search')}
+          >
+            🔍 検索
           </button>
-
-          <button type="button" onClick={handleRegister} className={styles.registerButton}>
-            新規登録
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === 'register' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('register')}
+          >
+            ✍️ 新規登録
           </button>
         </div>
+
+        {activeTab === 'search' ? (
+          /* ---------- 検索タブ UI ---------- */
+          <div className={styles.formBar}>
+            <div className={styles.selectWrapper}>
+              <PlayerSelect
+                options={adminOptions}
+                value={searchOpt}
+                onChange={setSearchOpt}
+                placeholder="管理者で絞り込み"
+                width="260px"
+                mode="select"
+              />
+            </div>
+
+            <button type="button" onClick={handleSearch} className={styles.searchButton}>
+              検索
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchOpt(null);
+                setFilteredUsers(users);
+              }}
+              className={styles.searchButton}
+            >
+              クリア
+            </button>
+          </div>
+        ) : (
+          /* ---------- 登録タブ UI ---------- */
+          <form className={styles.formBar} onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+            <div className={styles.selectWrapper}>
+              <PlayerSelect
+                options={adminOptions}
+                value={registerOpt}
+                onChange={setRegisterOpt}
+                placeholder="新規管理者の名前を入力"
+                width="260px"
+                mode="creatable"
+              />
+            </div>
+
+            <Input
+              type="email"
+              placeholder="メールアドレス（新規登録時）"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              width={260}
+            />
+
+            <Input
+              type="password"
+              placeholder="パスワード（新規登録時）"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              width={260}
+            />
+
+            <button type="submit" className={styles.registerButton}>
+              新規登録
+            </button>
+          </form>
+        )}
       </div>
 
       {/* 一覧表示 */}
