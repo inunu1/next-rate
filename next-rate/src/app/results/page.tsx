@@ -14,6 +14,11 @@ export default async function ResultsPage() {
     where: { deletedAt: null },
     orderBy: { name: 'asc' },
   });
-  
-  return <ResultsClient players={players}/>;
+
+  // ★ アーカイブ機能廃止 → archivedAt 条件を削除
+  const results: Result[] = await prisma.result.findMany({
+    orderBy: { playedAt: 'desc' },
+  });
+
+  return <ResultsClient players={players} results={results} />;
 }

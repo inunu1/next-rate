@@ -10,6 +10,7 @@ import Input from '@/components/Input';
 
 type Props = {
   players: Player[];
+  results: Result[];  // ★ これを追加
 };
 
 export default function ResultsClient({ players }: Props) {
