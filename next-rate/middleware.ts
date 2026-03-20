@@ -6,7 +6,7 @@
  * ① 認証が必要なページ（/dashboard, /players, /results, /settings）
  * ② 認証が必要な API（/api/*）
  *
- * ただし、公開 API（/api/trend/*）は認証不要とする。
+ * ただし、公開 API（/api/public/*）は認証不要とする。
  *
  * 【処理概要】
  * ・JWT トークンの有無により認証状態を判定する
@@ -36,7 +36,7 @@ export async function middleware(req: NextRequest) {
   }
 
   /* ------------------------------------------------------------
-   * ② 公開 API（/api/trend/*）は認証不要
+   * ② 公開 API（/api/public/*）は認証不要
    * ------------------------------------------------------------ */
   const isPublicApi = pathname.startsWith('/api/public')
   if (isPublicApi) {
