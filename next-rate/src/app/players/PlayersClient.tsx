@@ -46,7 +46,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
   // 新規登録（POST）
   async function postPlayer(data: { name: string; initialRate: number }) {
-    const res = await fetch('/api/player', {
+    const res = await fetch('/api/private/player', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -56,7 +56,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
   // 論理削除（DELETE）
   async function deletePlayer(id: string) {
-    const res = await fetch('/api/player', {
+    const res = await fetch('/api/private/player', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),

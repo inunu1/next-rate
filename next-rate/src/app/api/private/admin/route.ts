@@ -3,12 +3,12 @@
  * 管理ユーザー（Admin）を扱う REST API。
  * 以下の 2 種類の処理を提供する。
  *
- * ① POST   /api/admin
+ * ① POST   /api/private/admin
  *      - 管理ユーザーの新規登録を行う
  *      - パスワードはハッシュ化して保存
  *      - email の重複チェックを実施（業務要件として必須）
  *
- * ② DELETE /api/admin
+ * ② DELETE /api/private/admin
  *      - 管理ユーザーの物理削除を行う
  *      - 関連データが存在しない前提で物理削除を許可
  *
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(created);
   } catch (err) {
-    console.error('POST /api/admin error:', err);
+    console.error('POST /api/private/admin error:', err);
     return NextResponse.json(
       { error: '管理ユーザー登録に失敗しました' },
       { status: 500 }
@@ -101,7 +101,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json(deleted);
   } catch (err) {
-    console.error('DELETE /api/admin error:', err);
+    console.error('DELETE /api/private/admin error:', err);
     return NextResponse.json(
       { error: '管理ユーザー削除に失敗しました' },
       { status: 500 }

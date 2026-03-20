@@ -1,6 +1,6 @@
 /**
  * =============================================================================
- * API 名　　：POST /api/calculate
+ * API 名　　：POST /api/private/calculate
  * 機能概要　：全対局データを基に Elo レートをフル再計算し、
  * 　　　　　：変更が発生したレコードのみ差分 UPDATE する。
  *
@@ -49,7 +49,7 @@ function calculateElo(winnerRate: number, loserRate: number) {
 }
 
 /* =============================================================================
- * POST /api/calculate（フル再計算 + 差分 UPDATE）
+ * POST /api/private/calculate（フル再計算 + 差分 UPDATE）
  * =============================================================================
  */
 export async function POST() {

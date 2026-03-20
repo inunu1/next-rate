@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * API 名：/api/result
+ * API 名：/api/private/result
  * 概要　：対局結果の取得・登録・削除を行う REST API
  * 層区分：Controller（業務ロジックは最小限）
  *
@@ -11,7 +11,7 @@
  *
  * 【注意事項】
  * ・日付はローカル日付として扱い、UTC 変換によるズレを防止する
- * ・レート再計算は別 API（/api/calculate）で行うため本 API では実施しない
+ * ・レート再計算は別 API（/api/private/calculate）で行うため本 API では実施しない
  * ・Controller としての責務に留め、複雑なロジックは lib へ移譲可能
  * ============================================================================
  */
@@ -48,7 +48,7 @@ function formatLocalDate(date: Date) {
 }
 
 /* ============================================================================
- * GET /api/result
+ * GET /api/private/result
  * ============================================================================
  */
 export async function GET(req: Request) {
@@ -154,7 +154,7 @@ export async function GET(req: Request) {
       nextDate: next ? formatLocalDate(next.playedAt) : null,
     });
   } catch (err) {
-    console.error('GET /api/result error:', err);
+    console.error('GET /api/private/result error:', err);
     return NextResponse.json(
       { error: 'Failed to fetch results' },
       { status: 500 }
@@ -163,7 +163,7 @@ export async function GET(req: Request) {
 }
 
 /* ============================================================================
- * POST /api/result
+ * POST /api/private/result
  * ============================================================================
  */
 export async function POST(req: Request) {
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(created);
   } catch (err) {
-    console.error('POST /api/result error:', err);
+    console.error('POST /api/private/result error:', err);
     return NextResponse.json(
       { error: 'Failed to create result' },
       { status: 500 }
@@ -216,7 +216,7 @@ export async function POST(req: Request) {
 }
 
 /* ============================================================================
- * DELETE /api/result?id=xxxx
+ * DELETE /api/private/result?id=xxxx
  * ============================================================================
  */
 export async function DELETE(req: Request) {
@@ -248,7 +248,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('DELETE /api/result error:', err);
+    console.error('DELETE /api/private/result error:', err);
     return NextResponse.json(
       { error: 'Failed to delete result' },
       { status: 500 }

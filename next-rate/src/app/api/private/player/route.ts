@@ -3,16 +3,16 @@
  * プレイヤー情報を扱う REST API。
  * 以下の 3 種類の処理を提供する。
  *
- * ① GET    /api/player?keyword=xxx
+ * ① GET    /api/private/player?keyword=xxx
  *      - プレイヤー名の部分一致検索を行う
  *      - 削除済み（deletedAt != null）は対象外
  *      - 最大 20 件まで返却（パフォーマンス対策）
  *
- * ② POST   /api/player
+ * ② POST   /api/private/player
  *      - プレイヤーの新規登録を行う
  *      - 初期レート(initialRate) を currentRate に反映
  *
- * ③ DELETE /api/player
+ * ③ DELETE /api/private/player
  *      - プレイヤーの論理削除を行う
  *      - 削除日時(deletedAt) を設定し、以降の検索対象外とする
  *
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
       }))
     );
   } catch (err) {
-    console.error('GET /api/player error:', err);
+    console.error('GET /api/private/player error:', err);
     return NextResponse.json(
       { error: 'プレイヤー検索に失敗しました' },
       { status: 500 }
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(created);
   } catch (err) {
-    console.error('POST /api/player error:', err);
+    console.error('POST /api/private/player error:', err);
     return NextResponse.json(
       { error: 'プレイヤー登録に失敗しました' },
       { status: 500 }
@@ -134,7 +134,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json(deleted);
   } catch (err) {
-    console.error('DELETE /api/player error:', err);
+    console.error('DELETE /api/private/player error:', err);
     return NextResponse.json(
       { error: 'プレイヤー削除に失敗しました' },
       { status: 500 }

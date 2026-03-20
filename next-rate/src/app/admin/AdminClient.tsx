@@ -45,7 +45,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
    * REST API 呼び出し（共通化）
    * ------------------------------------------------------------ */
   async function postAdmin(data: { name: string; email: string; password: string }) {
-    const res = await fetch('/api/admin', {
+    const res = await fetch('/api/private/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -54,7 +54,7 @@ export default function AdminClient({ users, currentUserId }: Props) {
   }
 
   async function deleteAdmin(id: string) {
-    const res = await fetch('/api/admin', {
+    const res = await fetch('/api/private/admin', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),

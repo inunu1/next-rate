@@ -44,11 +44,11 @@ export default function ResultsClient({ players }: Props) {
   }));
 
   /* --------------------------------------------------------------------
-   * GET /api/result
+   * GET /api/private/result
    * -------------------------------------------------------------------- */
   async function fetchResults(params?: Record<string, string>) {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
-    const res = await fetch(`/api/result${query}`);
+    const res = await fetch(`/api/private/result${query}`);
     const data = await res.json();
 
     setMode(data.mode);
@@ -76,7 +76,7 @@ export default function ResultsClient({ players }: Props) {
     const w = players.find((p) => p.id === winnerOpt.value)!;
     const l = players.find((p) => p.id === loserOpt.value)!;
 
-    await fetch('/api/result', {
+    await fetch('/api/private/result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function ResultsClient({ players }: Props) {
     });
 
     // レート計算API呼び出し
-    await fetch('/api/calculate', { method: 'POST' });
+    await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('登録が完了しました');
     fetchResults();
@@ -103,10 +103,10 @@ export default function ResultsClient({ players }: Props) {
   const handleDelete = async (id: string) => {
     if (!confirm('この対局結果を削除しますか？')) return;
 
-    await fetch(`/api/result?id=${id}`, { method: 'DELETE' });
+    await fetch(`/api/private/result?id=${id}`, { method: 'DELETE' });
 
     // レート計算API呼び出し
-    await fetch('/api/calculate', { method: 'POST' });
+    await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('削除が完了しました');
     if (date) fetchResults({ date });
