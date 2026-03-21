@@ -8,17 +8,33 @@ import DataTable from '@/components/DataTable';
 import PlayerSelect, { PlayerOption } from '@/components/PlayerSelect';
 import Input from '@/components/Input';
 
-type Props = {
-  players: Player[];
-  results: Result[];  // ★ これを追加
-};
+/**
+ * ============================================================
+ * 【画面概要】
+ * 対局結果管理（Client Component）
+ *
+ * 【責務】
+ * ・初期表示でプレイヤー一覧と対局結果を API から取得
+ * ・検索条件の管理
+ * ・対局結果の登録／削除
+ *
+ * 【非責務】
+ * ・DB アクセス（API に集約）
+ * ・認証（page.tsx 側で実施）
+ * ============================================================
+ */
 
-export default function ResultsClient({ players }: Props) {
+export default function ResultsClient() {
+  /* ------------------------------------------------------------
+   * 状態管理
+   * ------------------------------------------------------------ */
   const [mounted, setMounted] = useState(false);
+
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
 
   const [mode, setMode] = useState<'date' | 'search'>('date');
   const [date, setDate] = useState<string | null>(null);
-  const [results, setResults] = useState<Result[]>([]);
   const [prevDate, setPrevDate] = useState<string | null>(null);
   const [nextDate, setNextDate] = useState<string | null>(null);
 
@@ -26,26 +42,38 @@ export default function ResultsClient({ players }: Props) {
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
 
-  // 新設: タブと検索用日付の状態
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
 
+  /* ------------------------------------------------------------
+   * 初期表示：プレイヤー一覧 & 対局結果を取得
+   * ------------------------------------------------------------ */
   useEffect(() => {
     setMounted(true);
+    fetchPlayers();
     fetchResults();
   }, []);
 
   if (!mounted) return null;
+
+  /* ------------------------------------------------------------
+   * プレイヤー一覧取得（全件）
+   * ------------------------------------------------------------ */
+  async function fetchPlayers() {
+    const res = await fetch('/api/private/player');
+    const data = await res.json();
+    setPlayers(data);
+  }
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  /* --------------------------------------------------------------------
-   * GET /api/private/result
-   * -------------------------------------------------------------------- */
+  /* ------------------------------------------------------------
+   * 対局結果取得
+   * ------------------------------------------------------------ */
   async function fetchResults(params?: Record<string, string>) {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     const res = await fetch(`/api/private/result${query}`);
@@ -58,9 +86,9 @@ export default function ResultsClient({ players }: Props) {
     setNextDate(data.nextDate ?? null);
   }
 
-  /* --------------------------------------------------------------------
-   * 登録
-   * -------------------------------------------------------------------- */
+  /* ------------------------------------------------------------
+   * 登録処理
+   * ------------------------------------------------------------ */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -90,32 +118,28 @@ export default function ResultsClient({ players }: Props) {
       }),
     });
 
-    // レート計算API呼び出し
     await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('登録が完了しました');
     fetchResults();
   };
 
-  /* --------------------------------------------------------------------
-   * 削除
-   * -------------------------------------------------------------------- */
+  /* ------------------------------------------------------------
+   * 削除処理
+   * ------------------------------------------------------------ */
   const handleDelete = async (id: string) => {
     if (!confirm('この対局結果を削除しますか？')) return;
 
     await fetch(`/api/private/result?id=${id}`, { method: 'DELETE' });
-
-    // レート計算API呼び出し
     await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('削除が完了しました');
-    if (date) fetchResults({ date });
-    else fetchResults();
+    date ? fetchResults({ date }) : fetchResults();
   };
 
-  /* --------------------------------------------------------------------
-   * 検索
-   * -------------------------------------------------------------------- */
+  /* ------------------------------------------------------------
+   * 検索処理
+   * ------------------------------------------------------------ */
   const handleSearch = () => {
     const params: Record<string, string> = {};
     if (winnerOpt) params.winner = winnerOpt.label;
@@ -125,20 +149,9 @@ export default function ResultsClient({ players }: Props) {
     fetchResults(params);
   };
 
-  /* --------------------------------------------------------------------
-   * 日付ページネーション
-   * -------------------------------------------------------------------- */
-  const handleNextDate = () => {
-    if (nextDate) fetchResults({ date: nextDate });
-  };
-
-  const handlePrevDate = () => {
-    if (prevDate) fetchResults({ date: prevDate });
-  };
-
-  /* --------------------------------------------------------------------
+  /* ------------------------------------------------------------
    * UI
-   * -------------------------------------------------------------------- */
+   * ------------------------------------------------------------ */
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -148,9 +161,8 @@ export default function ResultsClient({ players }: Props) {
         </Link>
       </header>
 
-      {/* Form Area */}
+      {/* ---------- フォームエリア ---------- */}
       <div className={styles.formCard}>
-        {/* Tab Navigation */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -169,7 +181,6 @@ export default function ResultsClient({ players }: Props) {
         </div>
 
         {activeTab === 'search' ? (
-          /* ---------- 検索タブ UI ---------- */
           <div className={styles.formBar}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
@@ -180,6 +191,7 @@ export default function ResultsClient({ players }: Props) {
                 mode="select"
               />
             </div>
+
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
                 value={loserOpt}
@@ -206,16 +218,11 @@ export default function ResultsClient({ players }: Props) {
               />
             </div>
 
-            <button
-              type="button"
-              onClick={handleSearch}
-              className={styles.searchButton}
-            >
+            <button type="button" onClick={handleSearch} className={styles.searchButton}>
               検索
             </button>
           </div>
         ) : (
-          /* ---------- 登録タブ UI ---------- */
           <form className={styles.formBar} onSubmit={handleRegister}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
@@ -226,6 +233,7 @@ export default function ResultsClient({ players }: Props) {
                 mode="select"
               />
             </div>
+
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
                 value={loserOpt}
@@ -250,12 +258,12 @@ export default function ResultsClient({ players }: Props) {
         )}
       </div>
 
-      {/* Pagination */}
+      {/* ---------- ページネーション ---------- */}
       {mode === 'date' && (
         <div className={styles.paginationBar}>
           <button
             type="button"
-            onClick={handleNextDate}
+            onClick={() => nextDate && fetchResults({ date: nextDate })}
             disabled={!nextDate}
             className={styles.pageButton}
           >
@@ -266,7 +274,7 @@ export default function ResultsClient({ players }: Props) {
 
           <button
             type="button"
-            onClick={handlePrevDate}
+            onClick={() => prevDate && fetchResults({ date: prevDate })}
             disabled={!prevDate}
             className={styles.pageButton}
           >
@@ -275,7 +283,7 @@ export default function ResultsClient({ players }: Props) {
         </div>
       )}
 
-      {/* Table */}
+      {/* ---------- テーブル ---------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
@@ -284,8 +292,7 @@ export default function ResultsClient({ players }: Props) {
             columns={[
               {
                 header: '日時',
-                render: (r) =>
-                  new Date(r.playedAt).toLocaleString('ja-JP'),
+                render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
               },
               {
                 header: '勝者（開始時）',
