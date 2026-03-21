@@ -29,6 +29,11 @@ import Input from '@/components/Input';
  * ・検索はクライアント側フィルタで軽量に実装
  * ============================================================
  */
+type AdminOption = {
+  value: string;
+  label: string;
+  __isNew__?: boolean;
+};
 
 type AdminUser = {
   id: string;
@@ -44,8 +49,8 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
   const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
 
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
-  const [searchOpt, setSearchOpt] = useState<any>(null);
-  const [registerOpt, setRegisterOpt] = useState<any>(null);
+  const [searchOpt, setSearchOpt] = useState<AdminOption | null>(null);
+  const [registerOpt, setRegisterOpt] = useState<AdminOption | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
