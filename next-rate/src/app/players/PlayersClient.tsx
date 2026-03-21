@@ -1,11 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Players.module.css';
 import DataTable from '@/components/DataTable';
 import PlayerSelect from '@/components/PlayerSelect';
 import Input from '@/components/Input';
+
+/**
+ * ============================================================
+ * 【画面概要】
+ * プレイヤー管理（Client Component）
+ *
+ * 【責務】
+ * ・初期表示でプレイヤー一覧を API から取得
+ * ・検索条件の管理
+ * ・プレイヤーの新規登録／論理削除
+ *
+ * 【非責務】
+ * ・DB アクセス（API に集約）
+ * ・認証（page.tsx 側で実施）
+ * ============================================================
+ */
 
 type Player = {
   id: string;
@@ -14,26 +30,37 @@ type Player = {
   currentRate: number;
 };
 
-type Props = {
-  players: Player[];
-  currentUserId: string;
-};
-
 type PlayerOption = {
   value: string;
   label: string;
   __isNew__?: boolean;
 };
 
-export default function PlayersClient({ players, currentUserId }: Props) {
+export default function PlayersClient({ currentUserId }: { currentUserId: string }) {
   /* ------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------ */
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
+
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
   const [searchOpt, setSearchOpt] = useState<PlayerOption | null>(null);
   const [registerOpt, setRegisterOpt] = useState<PlayerOption | null>(null);
   const [initialRate, setInitialRate] = useState('');
-  const [filteredPlayers, setFilteredPlayers] = useState(players);
+
+  /* ------------------------------------------------------------
+   * 初期表示：プレイヤー一覧を取得
+   * ------------------------------------------------------------ */
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  async function fetchPlayers() {
+    const res = await fetch('/api/private/player');
+    const data = await res.json();
+    setPlayers(data);
+    setFilteredPlayers(data);
+  }
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
@@ -41,7 +68,7 @@ export default function PlayersClient({ players, currentUserId }: Props) {
   }));
 
   /* ------------------------------------------------------------
-   * REST API 呼び出し（共通化）
+   * REST API 呼び出し
    * ------------------------------------------------------------ */
 
   // 新規登録（POST）
@@ -68,7 +95,6 @@ export default function PlayersClient({ players, currentUserId }: Props) {
    * 新規登録処理
    * ------------------------------------------------------------ */
   const handleRegister = async () => {
-    // ▼ 入力チェック
     if (!registerOpt || !registerOpt.__isNew__) {
       alert('新規プレイヤー名を入力してください');
       return;
@@ -83,11 +109,12 @@ export default function PlayersClient({ players, currentUserId }: Props) {
       initialRate: Number(initialRate),
     });
 
-    location.reload();
+    alert('登録が完了しました');
+    fetchPlayers();
   };
 
   /* ------------------------------------------------------------
-   * 検索（クライアント側フィルタ）
+   * 検索処理（クライアント側フィルタ）
    * ------------------------------------------------------------ */
   const handleSearch = () => {
     if (!searchOpt || searchOpt.__isNew__) {
@@ -105,11 +132,12 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
     await deletePlayer(id);
 
-    location.reload();
+    alert('削除が完了しました');
+    fetchPlayers();
   };
 
   /* ------------------------------------------------------------
-   * 画面描画
+   * UI
    * ------------------------------------------------------------ */
   return (
     <div className={styles.container}>
@@ -123,7 +151,6 @@ export default function PlayersClient({ players, currentUserId }: Props) {
 
       {/* Form Area */}
       <div className={styles.formCard}>
-        {/* Tab Navigation */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -142,7 +169,6 @@ export default function PlayersClient({ players, currentUserId }: Props) {
         </div>
 
         {activeTab === 'search' ? (
-          /* ---------- 検索タブ UI ---------- */
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
               <PlayerSelect
@@ -154,9 +180,11 @@ export default function PlayersClient({ players, currentUserId }: Props) {
                 mode="select"
               />
             </div>
+
             <button type="button" onClick={handleSearch} className={styles.searchButton}>
               検索
             </button>
+
             <button
               type="button"
               onClick={() => {
@@ -169,8 +197,13 @@ export default function PlayersClient({ players, currentUserId }: Props) {
             </button>
           </div>
         ) : (
-          /* ---------- 登録タブ UI ---------- */
-          <form className={styles.formBar} onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+          <form
+            className={styles.formBar}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRegister();
+            }}
+          >
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 options={playerOptions}
