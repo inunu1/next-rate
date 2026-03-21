@@ -134,7 +134,12 @@ export default function ResultsClient() {
     await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('削除が完了しました');
-    date ? fetchResults({ date }) : fetchResults();
+
+    if (date) {
+      fetchResults({ date });
+    } else {
+      fetchResults();
+    }
   };
 
   /* ------------------------------------------------------------
