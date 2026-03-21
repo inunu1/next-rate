@@ -3,16 +3,6 @@
  * API 名：/api/private/result
  * 概要　：対局結果の取得・登録・削除を行う REST API
  * 層区分：Controller（業務ロジックは最小限）
- *
- * 【役割】
- * ・GET：検索モード／日付ページネーションモードの結果取得
- * ・POST：対局結果の登録（レート再計算フラグの更新含む）
- * ・DELETE：対局結果の削除（レート再計算フラグの更新含む）
- *
- * 【注意事項】
- * ・日付はローカル日付として扱い、UTC 変換によるズレを防止する
- * ・レート再計算は別 API（/api/private/calculate）で行うため本 API では実施しない
- * ・Controller としての責務に留め、複雑なロジックは lib へ移譲可能
  * ============================================================================
  */
 
@@ -170,7 +160,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 必須項目チェック
     if (
       !body.winnerId ||
       !body.winnerName ||
@@ -184,7 +173,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ★ UTC → JST に変換して保存
     const playedAt = toJST(new Date(body.playedAt));
 
     const created = await prisma.result.create({
@@ -199,10 +187,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // レート再計算フラグ更新
-    await prisma.result.updateMany({
-      where: { playedAt: { gte: playedAt } },
-    });
+    // ★ isCalculated 削除に伴い updateMany も削除
 
     return NextResponse.json(created);
   } catch (err) {
@@ -240,9 +225,7 @@ export async function DELETE(req: Request) {
 
     await prisma.result.delete({ where: { id } });
 
-    await prisma.result.updateMany({
-      where: { playedAt: { gte: target.playedAt } },
-    });
+    // ★ isCalculated 削除に伴い updateMany も削除
 
     return NextResponse.json({ ok: true });
   } catch (err) {
