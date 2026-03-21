@@ -1,11 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Admin.module.css';
 import DataTable from '@/components/DataTable';
 import PlayerSelect from '@/components/PlayerSelect';
 import Input from '@/components/Input';
+
+/**
+ * ============================================================
+ * 【画面概要】
+ * 管理ユーザー管理（Client Component）
+ *
+ * 【責務】
+ * ・初期表示で管理ユーザー一覧を API から取得
+ * ・検索条件の管理（クライアント側フィルタ）
+ * ・管理ユーザーの新規登録（POST）
+ * ・管理ユーザーの削除（DELETE）
+ *
+ * 【非責務】
+ * ・認証（page.tsx 側で実施）
+ * ・DB アクセス（API に集約）
+ * ・業務ロジック（API Route に集約）
+ *
+ * 【設計方針】
+ * ・UI はイベントと状態管理に専念し、データ操作は API に委譲する
+ * ・Players / Results と同一アーキテクチャで統一し、保守性を高める
+ * ・検索はクライアント側フィルタで軽量に実装
+ * ============================================================
+ */
 
 type AdminUser = {
   id: string;
@@ -13,36 +36,41 @@ type AdminUser = {
   email: string;
 };
 
-type Props = {
-  users: AdminUser[];
-  currentUserId: string;
-};
-
-type AdminOption = {
-  value: string;
-  label: string;
-  __isNew__?: boolean;
-};
-
-export default function AdminClient({ users, currentUserId }: Props) {
+export default function AdminClient({ currentUserId }: { currentUserId: string }) {
   /* ------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------ */
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
+
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
-  const [searchOpt, setSearchOpt] = useState<AdminOption | null>(null);
-  const [registerOpt, setRegisterOpt] = useState<AdminOption | null>(null);
+  const [searchOpt, setSearchOpt] = useState<any>(null);
+  const [registerOpt, setRegisterOpt] = useState<any>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState(users);
 
-  // セレクトボックス用オプション
-  const adminOptions: AdminOption[] = users.map((u) => ({
+  /* ------------------------------------------------------------
+   * 初期表示：管理ユーザー一覧を API から取得
+   * ------------------------------------------------------------ */
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  async function fetchUsers() {
+    const res = await fetch('/api/private/admin');
+    const data = await res.json();
+    setUsers(data);
+    setFilteredUsers(data);
+  }
+
+  // ▼ セレクトボックス用オプション
+  const adminOptions = users.map((u) => ({
     value: u.id,
     label: u.name ?? '(名前なし)',
   }));
 
   /* ------------------------------------------------------------
-   * REST API 呼び出し（共通化）
+   * REST API 呼び出し
    * ------------------------------------------------------------ */
   async function postAdmin(data: { name: string; email: string; password: string }) {
     const res = await fetch('/api/private/admin', {
@@ -66,7 +94,6 @@ export default function AdminClient({ users, currentUserId }: Props) {
    * 新規登録処理
    * ------------------------------------------------------------ */
   const handleRegister = async () => {
-    // ▼ 入力チェック
     if (!registerOpt || !registerOpt.__isNew__) {
       alert('新規管理者の名前を入力してください');
       return;
@@ -86,7 +113,8 @@ export default function AdminClient({ users, currentUserId }: Props) {
       password,
     });
 
-    location.reload();
+    alert('登録が完了しました');
+    fetchUsers();
   };
 
   /* ------------------------------------------------------------
@@ -108,11 +136,12 @@ export default function AdminClient({ users, currentUserId }: Props) {
 
     await deleteAdmin(id);
 
-    location.reload();
+    alert('削除が完了しました');
+    fetchUsers();
   };
 
   /* ------------------------------------------------------------
-   * 画面描画
+   * UI
    * ------------------------------------------------------------ */
   return (
     <div className={styles.container}>
@@ -174,7 +203,13 @@ export default function AdminClient({ users, currentUserId }: Props) {
           </div>
         ) : (
           /* ---------- 登録タブ UI ---------- */
-          <form className={styles.formBar} onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+          <form
+            className={styles.formBar}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRegister();
+            }}
+          >
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 options={adminOptions}
