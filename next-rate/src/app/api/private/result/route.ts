@@ -202,7 +202,6 @@ export async function POST(req: Request) {
     // レート再計算フラグ更新
     await prisma.result.updateMany({
       where: { playedAt: { gte: playedAt } },
-      data: { isCalculated: false },
     });
 
     return NextResponse.json(created);
@@ -243,7 +242,6 @@ export async function DELETE(req: Request) {
 
     await prisma.result.updateMany({
       where: { playedAt: { gte: target.playedAt } },
-      data: { isCalculated: false },
     });
 
     return NextResponse.json({ ok: true });
