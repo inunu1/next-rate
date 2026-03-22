@@ -9,86 +9,85 @@ import PlayerSelect, { PlayerOption } from '@/components/PlayerSelect';
 import Input from '@/components/Input';
 
 /**
- * ============================================================
- * 【画面概要】
- * 対局結果管理（Client Component）
- *
- * 【責務】
- * ・初期表示でプレイヤー一覧と対局結果を API から取得
- * ・検索条件の管理
- * ・対局結果の登録／削除
- *
- * 【非責務】
- * ・DB アクセス（API に集約）
- * ・認証（page.tsx 側で実施）
- * ============================================================
+ * ============================================================================
+ * 画面名　：対局結果管理（Client Component）
+ * 画面概要：対局結果の検索（playerId / date）、日付ページネーション、登録、削除
+ * 責務　　：UI 状態管理、API 呼び出し、画面遷移制御
+ * 非責務　：DB アクセス（API 側で実施）、認証（page.tsx 側で実施）
+ * ============================================================================
  */
-
 export default function ResultsClient() {
-  /* ------------------------------------------------------------
-   * 状態管理
-   * ------------------------------------------------------------ */
+  /* ==========================================================================
+   * 1. 状態管理（State）
+   * ========================================================================== */
+
+  /** 初期マウント判定（SSR → CSR 切替用） */
   const [mounted, setMounted] = useState(false);
 
+  /** プレイヤー一覧 */
   const [players, setPlayers] = useState<Player[]>([]);
+
+  /** 対局結果一覧 */
   const [results, setResults] = useState<Result[]>([]);
 
-  const [mode, setMode] = useState<'date' | 'search'>('date');
+  /** 日付ページネーション情報 */
   const [date, setDate] = useState<string | null>(null);
   const [prevDate, setPrevDate] = useState<string | null>(null);
   const [nextDate, setNextDate] = useState<string | null>(null);
 
+  /** 検索条件（playerId / date） */
+  const [playerOpt, setPlayerOpt] = useState<PlayerOption | null>(null);
+  const [searchDate, setSearchDate] = useState<string>(''); // ← 単日検索追加
+
+  /** 登録フォーム */
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
   const [playedAt, setPlayedAt] = useState('');
 
+  /** タブ切替（検索／登録） */
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
-  const [searchFrom, setSearchFrom] = useState('');
-  const [searchTo, setSearchTo] = useState('');
 
-  /* ------------------------------------------------------------
-   * 初期表示：プレイヤー一覧 & 対局結果を取得
-   * ------------------------------------------------------------ */
+  /* ==========================================================================
+   * 2. 初期表示処理（プレイヤー一覧 + 最新日付の対局取得）
+   * ========================================================================== */
   useEffect(() => {
     setMounted(true);
     fetchPlayers();
-    fetchResults();
+    fetchResults(); // 最新日付の対局
   }, []);
 
   if (!mounted) return null;
 
-  /* ------------------------------------------------------------
-   * プレイヤー一覧取得（全件）
-   * ------------------------------------------------------------ */
+  /* ==========================================================================
+   * 3. API 呼び出し関数群
+   * ========================================================================== */
+
+  /** プレイヤー一覧取得 */
   async function fetchPlayers() {
     const res = await fetch('/api/private/player');
     const data = await res.json();
     setPlayers(data);
   }
 
+  /** PlayerSelect 用オプション */
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  /* ------------------------------------------------------------
-   * 対局結果取得
-   * ------------------------------------------------------------ */
+  /** 対局結果取得（playerId / date の2軸） */
   async function fetchResults(params?: Record<string, string>) {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     const res = await fetch(`/api/private/result${query}`);
     const data = await res.json();
 
-    setMode(data.mode);
-    setResults(data.results);
+    setResults(Array.isArray(data.results) ? data.results : []);
     setDate(data.date ?? null);
     setPrevDate(data.prevDate ?? null);
     setNextDate(data.nextDate ?? null);
   }
 
-  /* ------------------------------------------------------------
-   * 登録処理
-   * ------------------------------------------------------------ */
+  /** 対局結果登録 */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -121,12 +120,11 @@ export default function ResultsClient() {
     await fetch('/api/private/calculate', { method: 'POST' });
 
     alert('登録が完了しました');
-    fetchResults();
+
+    fetchResults(); // 最新日付へ戻る
   };
 
-  /* ------------------------------------------------------------
-   * 削除処理
-   * ------------------------------------------------------------ */
+  /** 対局結果削除 */
   const handleDelete = async (id: string) => {
     if (!confirm('この対局結果を削除しますか？')) return;
 
@@ -142,23 +140,24 @@ export default function ResultsClient() {
     }
   };
 
-  /* ------------------------------------------------------------
-   * 検索処理
-   * ------------------------------------------------------------ */
+  /** 検索（playerId / date の2軸） */
   const handleSearch = () => {
     const params: Record<string, string> = {};
-    if (winnerOpt) params.winner = winnerOpt.label;
-    if (loserOpt) params.loser = loserOpt.label;
-    if (searchFrom) params.from = searchFrom;
-    if (searchTo) params.to = searchTo;
+
+    if (playerOpt) params.playerId = playerOpt.value;
+    if (searchDate) params.date = searchDate;
+
     fetchResults(params);
   };
 
-  /* ------------------------------------------------------------
-   * UI
-   * ------------------------------------------------------------ */
+  /* ==========================================================================
+   * 4. UI（表示部）
+   * ========================================================================== */
   return (
     <div className={styles.container}>
+      {/* ------------------------------------------------------------
+       * 画面ヘッダ
+       * ------------------------------------------------------------ */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局結果管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -166,7 +165,9 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* ---------- フォームエリア ---------- */}
+      {/* ------------------------------------------------------------
+       * 検索／登録タブ
+       * ------------------------------------------------------------ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -185,49 +186,36 @@ export default function ResultsClient() {
           </button>
         </div>
 
+        {/* ------------------------------------------------------------
+         * 検索フォーム（playerId / date）
+         * ------------------------------------------------------------ */}
         {activeTab === 'search' ? (
           <div className={styles.formBar}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
-                value={winnerOpt}
-                onChange={setWinnerOpt}
+                value={playerOpt}
+                onChange={setPlayerOpt}
                 options={playerOptions}
-                placeholder="勝者で絞り込み"
+                placeholder="プレイヤーで絞り込み"
                 mode="select"
               />
             </div>
 
-            <div style={{ minWidth: 250 }}>
-              <PlayerSelect
-                value={loserOpt}
-                onChange={setLoserOpt}
-                options={playerOptions}
-                placeholder="敗者で絞り込み"
-                mode="select"
-              />
-            </div>
-
-            <div className={styles.dateRange}>
-              <Input
-                type="date"
-                value={searchFrom}
-                onChange={(e) => setSearchFrom(e.target.value)}
-                width={140}
-              />
-              <span className={styles.dateRangeSeparator}>〜</span>
-              <Input
-                type="date"
-                value={searchTo}
-                onChange={(e) => setSearchTo(e.target.value)}
-                width={140}
-              />
-            </div>
+            <Input
+              type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
+              width={150}
+            />
 
             <button type="button" onClick={handleSearch} className={styles.searchButton}>
               検索
             </button>
           </div>
         ) : (
+          /* ------------------------------------------------------------
+           * 登録フォーム
+           * ------------------------------------------------------------ */
           <form className={styles.formBar} onSubmit={handleRegister}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
@@ -263,8 +251,10 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* ---------- ページネーション ---------- */}
-      {mode === 'date' && (
+      {/* ------------------------------------------------------------
+       * 日付ページネーション（prev/next がある場合のみ表示）
+       * ------------------------------------------------------------ */}
+      {(prevDate || nextDate) && (
         <div className={styles.paginationBar}>
           <button
             type="button"
@@ -288,7 +278,9 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* ---------- テーブル ---------- */}
+      {/* ------------------------------------------------------------
+       * 対局結果テーブル
+       * ------------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable

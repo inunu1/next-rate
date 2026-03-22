@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * API 名：/api/private/result
- * 概要　：対局結果の取得・登録・削除を行う REST API
+ * 概要　：対局結果の取得・登録・削除（ORM 版）
  * 層区分：Controller（業務ロジックは最小限）
  * ============================================================================
  */
@@ -11,21 +11,6 @@ import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/* ---------------------------------------------------------------------------
- * UTC → JST (+9h)
- * --------------------------------------------------------------------------- */
-function toJST(date: Date) {
-  return new Date(date.getTime() + 9 * 60 * 60 * 1000);
-}
-
-/* ---------------------------------------------------------------------------
- * ローカル日付としてパース（UTCズレ防止）
- * --------------------------------------------------------------------------- */
-function parseLocalDate(dateStr: string) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
 
 /* ---------------------------------------------------------------------------
  * ローカル日付 YYYY-MM-DD を生成
@@ -45,58 +30,20 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
+    const playerId = searchParams.get('playerId');
     const dateParam = searchParams.get('date');
-    const winner = searchParams.get('winner');
-    const loser = searchParams.get('loser');
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
-
-    const hasSearch =
-      (winner && winner.trim() !== '') ||
-      (loser && loser.trim() !== '') ||
-      from ||
-      to;
 
     /* ------------------------------------------------------------------------
-     * 1. 検索モード
-     * ------------------------------------------------------------------------ */
-    if (hasSearch) {
-      const where: {
-        winnerName?: { contains: string };
-        loserName?: { contains: string };
-        playedAt?: { gte?: Date; lte?: Date };
-      } = {};
-
-      if (winner) where.winnerName = { contains: winner };
-      if (loser) where.loserName = { contains: loser };
-
-      if (from || to) {
-        where.playedAt = {};
-        if (from) where.playedAt.gte = new Date(from);
-        if (to) where.playedAt.lte = new Date(to);
-      }
-
-      const results = await prisma.result.findMany({
-        where,
-        orderBy: { playedAt: 'desc' },
-      });
-
-      return NextResponse.json({
-        mode: 'search',
-        results,
-      });
-    }
-
-    /* ------------------------------------------------------------------------
-     * 2. 日付ページネーションモード
+     * 1. 最新日付の取得（date 指定なしの場合）
      * ------------------------------------------------------------------------ */
     const latest = await prisma.result.findFirst({
       orderBy: { playedAt: 'desc' },
+      select: { playedAt: true },
     });
 
     if (!latest) {
       return NextResponse.json({
-        mode: 'date',
+        mode: playerId ? 'player' : 'date',
         date: null,
         results: [],
         prevDate: null,
@@ -104,41 +51,75 @@ export async function GET(req: Request) {
       });
     }
 
-    const latestLocalDate = formatLocalDate(latest.playedAt);
+    const latestDate = formatLocalDate(latest.playedAt);
 
-    const targetDate = dateParam
-      ? parseLocalDate(dateParam)
-      : parseLocalDate(latestLocalDate);
+    /* ------------------------------------------------------------------------
+     * 2. 対象日付の決定（単日検索対応）
+     * ------------------------------------------------------------------------ */
+    const targetDate = dateParam ?? latestDate;
 
-    const start = new Date(targetDate);
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date(targetDate);
-    end.setHours(23, 59, 59, 999);
-
+    /* ------------------------------------------------------------------------
+     * 3. 対象日の対局取得（4パターン）
+     * ------------------------------------------------------------------------ */
     const results = await prisma.result.findMany({
       where: {
         playedAt: {
-          gte: start,
-          lte: end,
+          gte: new Date(`${targetDate}T00:00:00`),
+          lt: new Date(`${targetDate}T23:59:59`),
         },
+        ...(playerId
+          ? {
+              OR: [
+                { winnerId: playerId },
+                { loserId: playerId },
+              ],
+            }
+          : {}),
       },
       orderBy: { playedAt: 'desc' },
     });
 
+    /* ------------------------------------------------------------------------
+     * 4. 前後の日付（空の日スキップ）
+     * ------------------------------------------------------------------------ */
     const prev = await prisma.result.findFirst({
-      where: { playedAt: { lt: start } },
+      where: {
+        playedAt: { lt: new Date(`${targetDate}T00:00:00`) },
+        ...(playerId
+          ? {
+              OR: [
+                { winnerId: playerId },
+                { loserId: playerId },
+              ],
+            }
+          : {}),
+      },
       orderBy: { playedAt: 'desc' },
+      select: { playedAt: true },
     });
 
     const next = await prisma.result.findFirst({
-      where: { playedAt: { gt: end } },
+      where: {
+        playedAt: { gt: new Date(`${targetDate}T23:59:59`) },
+        ...(playerId
+          ? {
+              OR: [
+                { winnerId: playerId },
+                { loserId: playerId },
+              ],
+            }
+          : {}),
+      },
       orderBy: { playedAt: 'asc' },
+      select: { playedAt: true },
     });
 
+    /* ------------------------------------------------------------------------
+     * 5. レスポンス返却
+     * ------------------------------------------------------------------------ */
     return NextResponse.json({
-      mode: 'date',
-      date: formatLocalDate(start),
+      mode: playerId ? 'player' : 'date',
+      date: targetDate,
       results,
       prevDate: prev ? formatLocalDate(prev.playedAt) : null,
       nextDate: next ? formatLocalDate(next.playedAt) : null,
@@ -173,7 +154,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const playedAt = toJST(new Date(body.playedAt));
+    const playedAt = new Date(body.playedAt);
 
     const created = await prisma.result.create({
       data: {
@@ -186,8 +167,6 @@ export async function POST(req: Request) {
         playedAt,
       },
     });
-
-    // ★ isCalculated 削除に伴い updateMany も削除
 
     return NextResponse.json(created);
   } catch (err) {
@@ -224,8 +203,6 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.result.delete({ where: { id } });
-
-    // ★ isCalculated 削除に伴い updateMany も削除
 
     return NextResponse.json({ ok: true });
   } catch (err) {
