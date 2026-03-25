@@ -8,31 +8,34 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  name           String?
-  hashedPassword String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String?
+  hashedPassword  String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Player {
-  id          String    @id @default(uuid())
-  name        String    @unique   // ★ ユニーク制約を追加
-  initialRate Int
-  currentRate Int
-  createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
+  id              String    @id @default(uuid())
+  name            String    @unique   // ★ ユニーク制約を追加
+  initialRate     Int
+  currentRate     Int
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime?
 }
 
 model Result {
-  id           String    @id @default(uuid())
-  winnerId     String
-  winnerName   String
-  winnerRate   Int
-  loserId      String
-  loserName    String
-  loserRate    Int
-  playedAt     DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  winnerId        String
+  winnerName      String
+  winnerRate      Int
+  loserId         String
+  loserName       String
+  loserRate       Int
+  matchDate       Int
+  roundIndex      Int
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([winnerId, loserId, matchDate, roundIndex])
 }

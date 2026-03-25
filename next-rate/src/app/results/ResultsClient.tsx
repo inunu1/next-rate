@@ -34,7 +34,10 @@ export default function ResultsClient() {
 
   const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
   const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
-  const [playedAt, setPlayedAt] = useState('');
+
+  // ★ 登録用：対局日（matchDate）とラウンド（roundIndex）
+  const [registerDate, setRegisterDate] = useState('');
+  const [roundIndex, setRoundIndex] = useState('1');
 
   const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
 
@@ -75,11 +78,23 @@ export default function ResultsClient() {
     setNextDate(data.nextDate ?? null);
   }
 
+  /* ==========================================================================
+   * 4. 登録処理
+   * ========================================================================== */
+  const handleSearch = () => {
+    const params: Record<string, string> = {};
+
+    if (playerOpt) params.playerId = playerOpt.value;
+    if (searchDate) params.date = searchDate;
+
+    fetchResults(params);
+  };
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!winnerOpt || !loserOpt || !playedAt) {
-      alert('勝者・敗者・対局日時は必須です');
+    if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
+      alert('勝者・敗者・対局日・ラウンドは必須です');
       return;
     }
     if (winnerOpt.value === loserOpt.value) {
@@ -89,6 +104,9 @@ export default function ResultsClient() {
 
     const w = players.find((p) => p.id === winnerOpt.value)!;
     const l = players.find((p) => p.id === loserOpt.value)!;
+
+    const matchDate = Number(registerDate.replaceAll('-', ''));
+    const round = Number(roundIndex);
 
     await fetch('/api/private/result', {
       method: 'POST',
@@ -100,7 +118,8 @@ export default function ResultsClient() {
         loserId: l.id,
         loserName: l.name,
         loserRate: l.currentRate,
-        playedAt: new Date(playedAt).toISOString(),
+        matchDate,
+        roundIndex: round,
       }),
     });
 
@@ -110,6 +129,10 @@ export default function ResultsClient() {
 
     fetchResults(); // 最新日付へ
   };
+
+  /* ==========================================================================
+   * 5. 削除処理
+   * ========================================================================== */
 
   const handleDelete = async (id: string) => {
     if (!confirm('この対局結果を削除しますか？')) return;
@@ -129,18 +152,22 @@ export default function ResultsClient() {
     }
   };
 
-  const handleSearch = () => {
-    const params: Record<string, string> = {};
+  /* ==========================================================================
+   * 6. ラウンド選択肢の動的生成
+   * ========================================================================== */
 
-    if (playerOpt) params.playerId = playerOpt.value;
-    if (searchDate) params.date = searchDate;
+  const maxRound =
+    results.length > 0 ? Math.max(...results.map((r) => r.roundIndex)) : 0;
 
-    fetchResults(params);
-  };
+  const selectableRounds = Array.from(
+    { length: Math.min(maxRound + 1) },
+    (_, i) => i + 1
+  );
 
   /* ==========================================================================
-   * 4. UI
+   * 7. UI
    * ========================================================================== */
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -150,6 +177,9 @@ export default function ResultsClient() {
         </Link>
       </header>
 
+      {/* ============================
+          検索 / 登録タブ
+      ============================ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -168,6 +198,9 @@ export default function ResultsClient() {
           </button>
         </div>
 
+        {/* ============================
+            検索フォーム
+        ============================ */}
         {activeTab === 'search' ? (
           <div className={styles.formBar}>
             <div style={{ minWidth: 250 }}>
@@ -192,6 +225,9 @@ export default function ResultsClient() {
             </button>
           </div>
         ) : (
+          /* ============================
+             新規登録フォーム
+          ============================ */
           <form className={styles.formBar} onSubmit={handleRegister}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
@@ -214,11 +250,23 @@ export default function ResultsClient() {
             </div>
 
             <Input
-              type="datetime-local"
-              value={playedAt}
-              onChange={(e) => setPlayedAt(e.target.value)}
-              width={180}
+              type="date"
+              value={registerDate}
+              onChange={(e) => setRegisterDate(e.target.value)}
+              width={150}
             />
+
+            <select
+              className={styles.roundSelect}
+              value={roundIndex}
+              onChange={(e) => setRoundIndex(e.target.value)}
+            >
+              {selectableRounds.map((r) => (
+                <option key={r} value={r}>
+                  第{r}ラウンド
+                </option>
+              ))}
+            </select>
 
             <button type="submit" className={styles.registerButton}>
               登録
@@ -227,6 +275,9 @@ export default function ResultsClient() {
         )}
       </div>
 
+      {/* ============================
+          ページネーション
+      ============================ */}
       {(prevDate || nextDate) && (
         <div className={styles.paginationBar}>
           <button
@@ -248,7 +299,7 @@ export default function ResultsClient() {
             {date
               ? date
               : playerOpt
-              ? '' // プレイヤー検索モードでは空ページが存在しない
+              ? ''
               : 'データなし'}
           </span>
 
@@ -269,6 +320,9 @@ export default function ResultsClient() {
         </div>
       )}
 
+      {/* ============================
+          対局一覧
+      ============================ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
@@ -276,8 +330,15 @@ export default function ResultsClient() {
             rows={results}
             columns={[
               {
-                header: '日時',
-                render: (r) => new Date(r.playedAt).toLocaleString('ja-JP'),
+                header: '日付',
+                render: (r) => {
+                  const s = r.matchDate.toString();
+                  return `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}`;
+                },
+              },
+              {
+                header: 'ラウンド',
+                render: (r) => `R${r.roundIndex}`,
               },
               {
                 header: '勝者（開始時）',

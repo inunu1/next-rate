@@ -8,7 +8,7 @@
  *
  * 処理方式　：
  *   ① 現行データ（Result / Player）を取得（差分比較用）
- *   ② 全対局を playedAt 昇順で取得
+ *   ② 全対局を matchDate → roundIndex 昇順で取得
  *   ③ 全プレイヤーを初期レートで初期化
  *   ④ Elo レートをフル再計算（メモリ上で完結）
  *   ⑤ 差分抽出（Result / Player）
@@ -36,7 +36,6 @@ const K_FACTOR = 32;
 
 /* -----------------------------------------------------------------------------
  * Elo レート計算（1 対局分）
- *  - 業務ロジック：勝者 +K、敗者 -K の期待値補正方式
  * --------------------------------------------------------------------------- */
 function calculateElo(winnerRate: number, loserRate: number) {
   const expectedWin = 1 / (1 + Math.pow(10, (loserRate - winnerRate) / 400));
@@ -59,8 +58,6 @@ export async function POST() {
 
   /* ---------------------------------------------------------------------------
    * ① 現行データ取得（差分比較用）
-   *    - Result：winnerRate / loserRate の比較に使用
-   *    - Player：currentRate の比較に使用
    * ------------------------------------------------------------------------- */
   let s = t();
   const oldResults = await prisma.result.findMany();
@@ -71,18 +68,19 @@ export async function POST() {
   const oldPlayerMap = new Map(oldPlayers.map(p => [p.id, p]));
 
   /* ---------------------------------------------------------------------------
-   * ② 全対局取得（再計算用）
-   *    - playedAt 昇順で取得し、レート変動の時系列整合性を担保
+   * ② 全対局取得（matchDate → roundIndex 昇順）
    * ------------------------------------------------------------------------- */
   s = t();
   const allResults = await prisma.result.findMany({
-    orderBy: { playedAt: "asc" },
+    orderBy: [
+      { matchDate: "asc" },
+      { roundIndex: "asc" },
+    ],
   });
   metrics.push({ label: "fetch_results", ms: t() - s });
 
   /* ---------------------------------------------------------------------------
    * ③ 全プレイヤー取得（初期レートで初期化）
-   *    - 対局が 0 件のプレイヤーは initialRate のまま確定
    * ------------------------------------------------------------------------- */
   s = t();
   const players = await prisma.player.findMany();
@@ -91,9 +89,7 @@ export async function POST() {
   const rateMap = new Map(players.map(p => [p.id, p.initialRate]));
 
   /* ---------------------------------------------------------------------------
-   * ④ Elo フル再計算
-   *    - メモリ上で全対局を順次処理
-   *    - DB には一切アクセスしない（I/O 最適化）
+   * ④ Elo フル再計算（メモリ上で完結）
    * ------------------------------------------------------------------------- */
   s = t();
   const newResultUpdates: {
@@ -124,7 +120,6 @@ export async function POST() {
 
   /* ---------------------------------------------------------------------------
    * ⑤ 差分抽出（Result）
-   *    - winnerRate / loserRate が変化したレコードのみ抽出
    * ------------------------------------------------------------------------- */
   s = t();
   const diffResults = newResultUpdates.filter(r => {
@@ -139,7 +134,6 @@ export async function POST() {
 
   /* ---------------------------------------------------------------------------
    * ⑥ 差分抽出（Player）
-   *    - currentRate が変化したプレイヤーのみ抽出
    * ------------------------------------------------------------------------- */
   s = t();
   const newPlayerUpdates = Array.from(rateMap.entries());
@@ -151,8 +145,6 @@ export async function POST() {
 
   /* ---------------------------------------------------------------------------
    * ⑦ 差分 UPDATE（バルク 1 回）
-   *    - Result → Player の順で更新
-   *    - SQL は VALUES 句を用いた一括更新方式
    * ------------------------------------------------------------------------- */
   s = t();
 
@@ -162,8 +154,7 @@ export async function POST() {
       UPDATE "Result" AS r
       SET 
         "winnerRate" = v."winnerRate",
-        "loserRate" = v."loserRate",
-        "isCalculated" = true
+        "loserRate" = v."loserRate"
       FROM (VALUES
         ${diffResults
           .map(
