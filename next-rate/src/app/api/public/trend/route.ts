@@ -3,23 +3,37 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+/* ============================================================================
+ * Utility: YYYY-MM-DD → matchDate(Int)
+ * ========================================================================== */
+function toMatchDate(dateStr: string): number {
+  return Number(dateStr.replaceAll("-", ""));
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+
   const keyword = searchParams.get("keyword");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  // ▼ 日付検索モード（keyword が空でも OK）
+  /* ==========================================================================
+   * ① 日付検索モード（keyword が空でも OK）
+   * ======================================================================== */
   if ((!keyword || keyword.trim() === "") && (from || to)) {
-    const dateFilter: { gte?: Date; lte?: Date } = {};
-    if (from) dateFilter.gte = new Date(from);
-    if (to) dateFilter.lte = new Date(to);
+    const dateFilter: { gte?: number; lte?: number } = {};
+
+    if (from) dateFilter.gte = toMatchDate(from);
+    if (to) dateFilter.lte = toMatchDate(to);
 
     const results = await prisma.result.findMany({
       where: {
-        playedAt: dateFilter,
+        matchDate: dateFilter,
       },
-      orderBy: { playedAt: "desc" },
+      orderBy: [
+        { matchDate: "desc" },
+        { roundIndex: "desc" },
+      ],
     });
 
     return NextResponse.json(results, {
@@ -27,14 +41,18 @@ export async function GET(req: Request) {
     });
   }
 
-  // ▼ keyword も日付も空 → 空配列
+  /* ==========================================================================
+   * ② keyword も日付も空 → 空配列
+   * ======================================================================== */
   if (!keyword || keyword.trim() === "") {
     return NextResponse.json([], {
       headers: { "Access-Control-Allow-Origin": "*" },
     });
   }
 
-  // ▼ プレイヤー検索
+  /* ==========================================================================
+   * ③ プレイヤー検索
+   * ======================================================================== */
   const players = await prisma.player.findMany({
     where: {
       deletedAt: null,
@@ -50,25 +68,32 @@ export async function GET(req: Request) {
     orderBy: { currentRate: "desc" },
   });
 
+  /* ==========================================================================
+   * ④ 各プレイヤーの対局履歴取得
+   * ======================================================================== */
   const playersWithHistory = await Promise.all(
     players.map(async (p) => {
-      const dateFilter: { gte?: Date; lte?: Date } = {};
-      if (from) dateFilter.gte = new Date(from);
-      if (to) dateFilter.lte = new Date(to);
+      const dateFilter: { gte?: number; lte?: number } = {};
+      if (from) dateFilter.gte = toMatchDate(from);
+      if (to) dateFilter.lte = toMatchDate(to);
 
       const results = await prisma.result.findMany({
         where: {
           OR: [{ winnerId: p.id }, { loserId: p.id }],
-          ...(from || to ? { playedAt: dateFilter } : {}),
+          ...(from || to ? { matchDate: dateFilter } : {}),
         },
-        orderBy: { playedAt: "desc" },
+        orderBy: [
+          { matchDate: "desc" },
+          { roundIndex: "desc" },
+        ],
         take: from || to ? undefined : 9,
       });
 
       const history = [
         {
           rate: p.currentRate,
-          playedAt: null,
+          matchDate: null,
+          roundIndex: null,
           opponent: null,
           opponentRate: null,
           result: null,
@@ -77,7 +102,8 @@ export async function GET(req: Request) {
           const isWinner = r.winnerId === p.id;
           return {
             rate: isWinner ? r.winnerRate : r.loserRate,
-            playedAt: r.playedAt,
+            matchDate: r.matchDate,
+            roundIndex: r.roundIndex,
             opponent: isWinner ? r.loserName : r.winnerName,
             opponentRate: isWinner ? r.loserRate : r.winnerRate,
             result: isWinner ? "○" : "●",
