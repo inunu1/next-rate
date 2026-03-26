@@ -7,7 +7,7 @@
  * 【責務】
  * ・対局結果の取得／検索
  * ・対局結果の登録（業務バリデーション含む）
- * ・対局結果の削除（削除後の遷移含む）
+ * ・対局結果の削除
  * ・プレイヤー一覧の取得
  * ・画面状態の管理
  *
@@ -19,7 +19,6 @@
  */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Player, Result } from "@prisma/client";
 
 export type PlayerOption = {
@@ -28,8 +27,6 @@ export type PlayerOption = {
 };
 
 export function useResults() {
-  const router = useRouter();
-
   /* ------------------------------------------------------------
    * 1. 画面状態管理
    * ------------------------------------------------------------ */
@@ -90,7 +87,7 @@ export function useResults() {
   };
 
   /* ------------------------------------------------------------
-   * 5. 検索処理（クライアント → API）
+   * 5. 検索処理
    * ------------------------------------------------------------ */
   const handleSearch = () => {
     const params: Record<string, string> = {};
@@ -109,7 +106,7 @@ export function useResults() {
    * ② 勝者・敗者の同一チェック
    * ③ 同一日付 × 同一ラウンドでの重複対局チェック
    * ④ 登録後はレート再計算
-   * ⑤ 登録した日付ページへ遷移
+   * ⑤ 登録した日付の一覧を再取得（画面遷移はしない）
    * ------------------------------------------------------------ */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -171,11 +168,11 @@ export function useResults() {
 
     alert("登録が完了しました");
 
-    // ⑤ 登録した日付ページへ遷移
+    // ⑤ 登録した日付の一覧を再取得（画面遷移なし）
     const s = matchDate.toString();
     const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-    router.push(`/results?date=${dateStr}`);
+    await fetchResults({ date: dateStr });
   };
 
   /* ------------------------------------------------------------
@@ -186,7 +183,7 @@ export function useResults() {
    * ② 削除確認
    * ③ 削除処理
    * ④ レート再計算
-   * ⑤ 削除した対局の日付ページへ遷移
+   * ⑤ 削除した対局の日付の一覧を再取得（画面遷移なし）
    * ------------------------------------------------------------ */
   const handleDelete = async (id: string) => {
     // ① 削除対象取得
@@ -207,11 +204,11 @@ export function useResults() {
 
     alert("削除が完了しました");
 
-    // ⑤ 削除した日付ページへ遷移
+    // ⑤ 削除した日付の一覧を再取得（画面遷移なし）
     const s = target.matchDate.toString();
     const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-    router.push(`/results?date=${dateStr}`);
+    await fetchResults({ date: dateStr });
   };
 
   /* ------------------------------------------------------------
@@ -226,7 +223,7 @@ export function useResults() {
   );
 
   /* ------------------------------------------------------------
-   * 9. 外部公開（UI から利用する値・関数）
+   * 9. 外部公開
    * ------------------------------------------------------------ */
   return {
     mounted,
