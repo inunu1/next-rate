@@ -13,6 +13,9 @@ import { useResults } from "./useResults";
 export default function ResultsClient() {
   const R = useResults();
 
+  /* ------------------------------------------------------------
+   * 初期化（プレイヤー一覧 + 最新日付の対局一覧）
+   * ---------------------------------------------------------- */
   useEffect(() => {
     R.init();
   }, []);
@@ -21,6 +24,9 @@ export default function ResultsClient() {
 
   return (
     <div className={styles.container}>
+      {/* --------------------------------------------------------
+       * Header
+       * ------------------------------------------------------ */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局結果管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -28,9 +34,9 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* ============================ */}
-      {/* 検索 / 登録タブ */}
-      {/* ============================ */}
+      {/* --------------------------------------------------------
+       * 検索 / 登録タブ
+       * ------------------------------------------------------ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -54,12 +60,13 @@ export default function ResultsClient() {
           </button>
         </div>
 
-        {/* ============================ */}
-        {/* 検索フォーム */}
-        {/* ============================ */}
+        {/* --------------------------------------------------------
+         * 検索フォーム
+         * ------------------------------------------------------ */}
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
-            <div style={{ minWidth: 250 }}>
+            {/* プレイヤー絞り込み */}
+            <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.playerOpt}
                 onChange={R.setPlayerOpt}
@@ -69,6 +76,7 @@ export default function ResultsClient() {
               />
             </div>
 
+            {/* 日付検索 */}
             <Input
               type="date"
               value={R.searchDate}
@@ -76,6 +84,7 @@ export default function ResultsClient() {
               width={150}
             />
 
+            {/* 検索ボタン */}
             <button
               type="button"
               onClick={R.handleSearch}
@@ -85,11 +94,12 @@ export default function ResultsClient() {
             </button>
           </div>
         ) : (
-          /* ============================ */
-          /* 登録フォーム */
-          /* ============================ */
+          /* --------------------------------------------------------
+           * 登録フォーム
+           * ------------------------------------------------------ */
           <form className={styles.formBar} onSubmit={R.handleRegister}>
-            <div style={{ minWidth: 250 }}>
+            {/* 勝者 */}
+            <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.winnerOpt}
                 onChange={R.setWinnerOpt}
@@ -99,7 +109,8 @@ export default function ResultsClient() {
               />
             </div>
 
-            <div style={{ minWidth: 250 }}>
+            {/* 敗者 */}
+            <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.loserOpt}
                 onChange={R.setLoserOpt}
@@ -109,6 +120,7 @@ export default function ResultsClient() {
               />
             </div>
 
+            {/* 日付 */}
             <Input
               type="date"
               value={R.registerDate}
@@ -116,6 +128,7 @@ export default function ResultsClient() {
               width={150}
             />
 
+            {/* ラウンド（統一デザイン済み） */}
             <select
               className={styles.roundSelect}
               value={R.roundIndex}
@@ -128,6 +141,7 @@ export default function ResultsClient() {
               ))}
             </select>
 
+            {/* 登録ボタン */}
             <button type="submit" className={styles.registerButton}>
               登録
             </button>
@@ -135,11 +149,12 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* ============================ */}
-      {/* ページネーション */}
-      {/* ============================ */}
+      {/* --------------------------------------------------------
+       * ページネーション
+       * ------------------------------------------------------ */}
       {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
+          {/* 次の日 */}
           <button
             type="button"
             onClick={() =>
@@ -155,10 +170,12 @@ export default function ResultsClient() {
             次の日
           </button>
 
+          {/* 現在日付 */}
           <span className={styles.pageDate}>
             {R.date ? R.date : R.playerOpt ? "" : "データなし"}
           </span>
 
+          {/* 前の日 */}
           <button
             type="button"
             onClick={() =>
@@ -176,9 +193,9 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* ============================ */}
-      {/* 対局一覧 */}
-      {/* ============================ */}
+      {/* --------------------------------------------------------
+       * 対局一覧テーブル
+       * ------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
