@@ -1,172 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import type { Player, Result } from '@prisma/client';
-import styles from './Results.module.css';
-import DataTable from '@/components/DataTable';
-import PlayerSelect, { PlayerOption } from '@/components/PlayerSelect';
-import Input from '@/components/Input';
+import { useEffect } from "react";
+import Link from "next/link";
+import styles from "./Results.module.css";
 
-/**
- * ============================================================================
- * 画面名　：対局結果管理（Client Component）
- * 画面概要：対局結果の検索（playerId / date）、日付ページネーション、登録、削除
- * 責務　　：UI 状態管理、API 呼び出し、画面遷移制御
- * ============================================================================
- */
+import DataTable from "@/components/DataTable";
+import PlayerSelect from "@/components/PlayerSelect";
+import Input from "@/components/Input";
+
+import { useResults } from "./useResults";
+
 export default function ResultsClient() {
-  /* ==========================================================================
-   * 1. 状態管理
-   * ========================================================================== */
+  const R = useResults();
 
-  const [mounted, setMounted] = useState(false);
-
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
-
-  const [date, setDate] = useState<string | null>(null);
-  const [prevDate, setPrevDate] = useState<string | null>(null);
-  const [nextDate, setNextDate] = useState<string | null>(null);
-
-  const [playerOpt, setPlayerOpt] = useState<PlayerOption | null>(null);
-  const [searchDate, setSearchDate] = useState('');
-
-  const [winnerOpt, setWinnerOpt] = useState<PlayerOption | null>(null);
-  const [loserOpt, setLoserOpt] = useState<PlayerOption | null>(null);
-
-  // ★ 登録用：対局日（matchDate）とラウンド（roundIndex）
-  const [registerDate, setRegisterDate] = useState('');
-  const [roundIndex, setRoundIndex] = useState('1');
-
-  const [activeTab, setActiveTab] = useState<'search' | 'register'>('search');
-
-  /* ==========================================================================
-   * 2. 初期表示
-   * ========================================================================== */
   useEffect(() => {
-    setMounted(true);
-    fetchPlayers();
-    fetchResults(); // 最新日付
+    R.init();
   }, []);
 
-  if (!mounted) return null;
-
-  /* ==========================================================================
-   * 3. API 呼び出し
-   * ========================================================================== */
-
-  async function fetchPlayers() {
-    const res = await fetch('/api/private/player');
-    const data = await res.json();
-    setPlayers(data);
-  }
-
-  const playerOptions: PlayerOption[] = players.map((p) => ({
-    value: p.id,
-    label: p.name,
-  }));
-
-  async function fetchResults(params?: Record<string, string>) {
-    const query = params ? '?' + new URLSearchParams(params).toString() : '';
-    const res = await fetch(`/api/private/result${query}`);
-    const data = await res.json();
-
-    setResults(Array.isArray(data.results) ? data.results : []);
-    setDate(data.date ?? null);
-    setPrevDate(data.prevDate ?? null);
-    setNextDate(data.nextDate ?? null);
-  }
-
-  /* ==========================================================================
-   * 4. 登録処理
-   * ========================================================================== */
-  const handleSearch = () => {
-    const params: Record<string, string> = {};
-
-    if (playerOpt) params.playerId = playerOpt.value;
-    if (searchDate) params.date = searchDate;
-
-    fetchResults(params);
-  };
-
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
-      alert('勝者・敗者・対局日・ラウンドは必須です');
-      return;
-    }
-    if (winnerOpt.value === loserOpt.value) {
-      alert('勝者と敗者は別のプレイヤーを選んでください');
-      return;
-    }
-
-    const w = players.find((p) => p.id === winnerOpt.value)!;
-    const l = players.find((p) => p.id === loserOpt.value)!;
-
-    const matchDate = Number(registerDate.replaceAll('-', ''));
-    const round = Number(roundIndex);
-
-    await fetch('/api/private/result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        winnerId: w.id,
-        winnerName: w.name,
-        winnerRate: w.currentRate,
-        loserId: l.id,
-        loserName: l.name,
-        loserRate: l.currentRate,
-        matchDate,
-        roundIndex: round,
-      }),
-    });
-
-    await fetch('/api/private/calculate', { method: 'POST' });
-
-    alert('登録が完了しました');
-
-    fetchResults(); // 最新日付へ
-  };
-
-  /* ==========================================================================
-   * 5. 削除処理
-   * ========================================================================== */
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('この対局結果を削除しますか？')) return;
-
-    await fetch(`/api/private/result?id=${id}`, { method: 'DELETE' });
-    await fetch('/api/private/calculate', { method: 'POST' });
-
-    alert('削除が完了しました');
-
-    if (date) {
-      fetchResults({
-        date,
-        ...(playerOpt ? { playerId: playerOpt.value } : {}),
-      });
-    } else {
-      fetchResults();
-    }
-  };
-
-  /* ==========================================================================
-   * 6. ラウンド選択肢の動的生成
-   * ========================================================================== */
-
-  const maxRound =
-    results.length > 0 ? Math.max(...results.map((r) => r.roundIndex)) : 0;
-
-  const selectableRounds = Array.from(
-    { length: Math.min(maxRound + 1) },
-    (_, i) => i + 1
-  );
-
-  /* ==========================================================================
-   * 7. UI
-   * ========================================================================== */
+  if (!R.mounted) return null;
 
   return (
     <div className={styles.container}>
@@ -177,37 +28,42 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* ============================
-          検索 / 登録タブ
-      ============================ */}
+      {/* ============================ */}
+      {/* 検索 / 登録タブ */}
+      {/* ============================ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
             type="button"
-            className={`${styles.tabButton} ${activeTab === 'search' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('search')}
+            className={`${styles.tabButton} ${
+              R.activeTab === "search" ? styles.tabActive : ""
+            }`}
+            onClick={() => R.setActiveTab("search")}
           >
             🔍 検索
           </button>
+
           <button
             type="button"
-            className={`${styles.tabButton} ${activeTab === 'register' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('register')}
+            className={`${styles.tabButton} ${
+              R.activeTab === "register" ? styles.tabActive : ""
+            }`}
+            onClick={() => R.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
-        {/* ============================
-            検索フォーム
-        ============================ */}
-        {activeTab === 'search' ? (
+        {/* ============================ */}
+        {/* 検索フォーム */}
+        {/* ============================ */}
+        {R.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
-                value={playerOpt}
-                onChange={setPlayerOpt}
-                options={playerOptions}
+                value={R.playerOpt}
+                onChange={R.setPlayerOpt}
+                options={R.playerOptions}
                 placeholder="プレイヤーで絞り込み"
                 mode="select"
               />
@@ -215,25 +71,29 @@ export default function ResultsClient() {
 
             <Input
               type="date"
-              value={searchDate}
-              onChange={(e) => setSearchDate(e.target.value)}
+              value={R.searchDate}
+              onChange={(e) => R.setSearchDate(e.target.value)}
               width={150}
             />
 
-            <button type="button" onClick={handleSearch} className={styles.searchButton}>
+            <button
+              type="button"
+              onClick={R.handleSearch}
+              className={styles.searchButton}
+            >
               検索
             </button>
           </div>
         ) : (
-          /* ============================
-             新規登録フォーム
-          ============================ */
-          <form className={styles.formBar} onSubmit={handleRegister}>
+          /* ============================ */
+          /* 登録フォーム */
+          /* ============================ */
+          <form className={styles.formBar} onSubmit={R.handleRegister}>
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
-                value={winnerOpt}
-                onChange={setWinnerOpt}
-                options={playerOptions}
+                value={R.winnerOpt}
+                onChange={R.setWinnerOpt}
+                options={R.playerOptions}
                 placeholder="勝者を選択"
                 mode="select"
               />
@@ -241,9 +101,9 @@ export default function ResultsClient() {
 
             <div style={{ minWidth: 250 }}>
               <PlayerSelect
-                value={loserOpt}
-                onChange={setLoserOpt}
-                options={playerOptions}
+                value={R.loserOpt}
+                onChange={R.setLoserOpt}
+                options={R.playerOptions}
                 placeholder="敗者を選択"
                 mode="select"
               />
@@ -251,17 +111,17 @@ export default function ResultsClient() {
 
             <Input
               type="date"
-              value={registerDate}
-              onChange={(e) => setRegisterDate(e.target.value)}
+              value={R.registerDate}
+              onChange={(e) => R.setRegisterDate(e.target.value)}
               width={150}
             />
 
             <select
               className={styles.roundSelect}
-              value={roundIndex}
-              onChange={(e) => setRoundIndex(e.target.value)}
+              value={R.roundIndex}
+              onChange={(e) => R.setRoundIndex(e.target.value)}
             >
-              {selectableRounds.map((r) => (
+              {R.selectableRounds.map((r) => (
                 <option key={r} value={r}>
                   第{r}ラウンド
                 </option>
@@ -275,44 +135,40 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* ============================
-          ページネーション
-      ============================ */}
-      {(prevDate || nextDate) && (
+      {/* ============================ */}
+      {/* ページネーション */}
+      {/* ============================ */}
+      {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
           <button
             type="button"
             onClick={() =>
-              nextDate &&
-              fetchResults({
-                date: nextDate,
-                ...(playerOpt ? { playerId: playerOpt.value } : {}),
+              R.nextDate &&
+              R.fetchResults({
+                date: R.nextDate,
+                ...(R.playerOpt ? { playerId: R.playerOpt.value } : {}),
               })
             }
-            disabled={!nextDate}
+            disabled={!R.nextDate}
             className={styles.pageButton}
           >
             次の日
           </button>
 
           <span className={styles.pageDate}>
-            {date
-              ? date
-              : playerOpt
-              ? ''
-              : 'データなし'}
+            {R.date ? R.date : R.playerOpt ? "" : "データなし"}
           </span>
 
           <button
             type="button"
             onClick={() =>
-              prevDate &&
-              fetchResults({
-                date: prevDate,
-                ...(playerOpt ? { playerId: playerOpt.value } : {}),
+              R.prevDate &&
+              R.fetchResults({
+                date: R.prevDate,
+                ...(R.playerOpt ? { playerId: R.playerOpt.value } : {}),
               })
             }
-            disabled={!prevDate}
+            disabled={!R.prevDate}
             className={styles.pageButton}
           >
             前の日
@@ -320,41 +176,41 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* ============================
-          対局一覧
-      ============================ */}
+      {/* ============================ */}
+      {/* 対局一覧 */}
+      {/* ============================ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
             tableClass={styles.table}
-            rows={results}
+            rows={R.results}
             columns={[
               {
-                header: '日付',
+                header: "日付",
                 render: (r) => {
                   const s = r.matchDate.toString();
                   return `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}`;
                 },
               },
               {
-                header: 'ラウンド',
+                header: "ラウンド",
                 render: (r) => `R${r.roundIndex}`,
               },
               {
-                header: '勝者（開始時）',
+                header: "勝者（開始時）",
                 render: (r) => `${r.winnerName}（${r.winnerRate}）`,
               },
               {
-                header: '敗者（開始時）',
+                header: "敗者（開始時）",
                 render: (r) => `${r.loserName}（${r.loserRate}）`,
               },
               {
-                header: '操作',
+                header: "操作",
                 render: (r) => (
                   <button
                     type="button"
                     className={styles.deleteButton}
-                    onClick={() => handleDelete(r.id)}
+                    onClick={() => R.handleDelete(r.id)}
                   >
                     削除
                   </button>
