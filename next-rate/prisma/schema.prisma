@@ -38,4 +38,6 @@ model Result {
   updatedAt       DateTime  @updatedAt
 
   @@unique([winnerId, loserId, matchDate, roundIndex])
+  @@unique([matchDate, roundIndex, winnerId])
+  @@unique([matchDate, roundIndex, loserId])
 }
