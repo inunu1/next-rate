@@ -129,17 +129,20 @@ export default function ResultsClient() {
             />
 
             {/* ラウンド（統一デザイン済み） */}
-            <select
-              className={styles.roundSelect}
-              value={R.roundIndex}
-              onChange={(e) => R.setRoundIndex(e.target.value)}
-            >
-              {R.selectableRounds.map((r) => (
-                <option key={r} value={r}>
-                  第{r}ラウンド
-                </option>
-              ))}
-            </select>
+            <PlayerSelect
+              value={
+                R.roundIndex
+                  ? { value: R.roundIndex, label: `第${R.roundIndex}ラウンド` }
+                  : null
+              }
+              onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
+              options={R.selectableRounds.map((r) => ({
+                value: String(r),
+                label: `第${r}ラウンド`,
+              }))}
+              placeholder="ラウンドを選択"
+              mode="select"
+            />
 
             {/* 登録ボタン */}
             <button type="submit" className={styles.registerButton}>
