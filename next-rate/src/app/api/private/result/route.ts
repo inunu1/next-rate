@@ -1,133 +1,70 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-/* ============================================================================
- * Utility: matchDate(Int) → YYYY-MM-DD
- * ========================================================================== */
-function formatMatchDate(md: number): string {
-  const s = md.toString();
-  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
-}
-
-/* ============================================================================
- * Utility: YYYY-MM-DD → matchDate(Int)
- * ========================================================================== */
-function toMatchDate(dateStr: string): number {
-  return Number(dateStr.replaceAll("-", ""));
-}
+import { Result } from "@prisma/client";
 
 /* ============================================================================
  * GET: 対局結果の取得（matchDate + roundIndex）
+ * ----------------------------------------------------------------------------
+ * 【業務概要】
+ * ・指定された日付（YYYY-MM-DD）の対局結果一覧を返却する。
+ * ・日付未指定の場合は「最新日付」を返却する。
+ *
+ * 【非責務】
+ * ・前後日付の計算（画面側で dates API を使用）
+ * ・プレイヤー絞り込み（画面側で実施）
  * ========================================================================== */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-
-  const date = searchParams.get("date"); // YYYY-MM-DD
-  const playerId = searchParams.get("playerId");
+  const dateStr = searchParams.get("date"); // YYYY-MM-DD
 
   /* -------------------------------------------------------------------------
-   * ① 最新 matchDate の決定
+   * ① targetMatchDate の決定
    * ----------------------------------------------------------------------- */
-  let latest: { matchDate: number } | null = null;
+  let targetMatchDate: number;
 
-  if (!date && playerId) {
-    latest = await prisma.result.findFirst({
-      where: {
-        OR: [{ winnerId: playerId }, { loserId: playerId }],
-      },
-      orderBy: { matchDate: "desc" },
-      select: { matchDate: true },
-    });
+  if (dateStr) {
+    // YYYY-MM-DD → YYYYMMDD（数値）
+    targetMatchDate = Number(dateStr.replaceAll("-", ""));
   } else {
-    latest = await prisma.result.findFirst({
-      orderBy: { matchDate: "desc" },
-      select: { matchDate: true },
-    });
+    // 最新日付を取得（生 SQL）
+    const latest = await prisma.$queryRaw<
+      { matchDate: number }[]
+    >`SELECT DISTINCT "matchDate" FROM "Result" ORDER BY "matchDate" DESC LIMIT 1`;
+
+    if (latest.length === 0) {
+      return NextResponse.json({
+        date: null,
+        results: [],
+      });
+    }
+
+    targetMatchDate = latest[0].matchDate;
   }
 
-  if (!latest) {
-    return NextResponse.json({
-      mode: playerId ? "player" : "date",
-      date: null,
-      results: [],
-      prevDate: null,
-      nextDate: null,
-    });
-  }
-
-  const latestDate = formatMatchDate(latest.matchDate);
+  /* -------------------------------------------------------------------------
+   * ② 対局データ取得（生 SQL）
+   * ----------------------------------------------------------------------- */
+  const results = await prisma.$queryRaw<Result[]>`
+    SELECT *
+    FROM "Result"
+    WHERE "matchDate" = ${targetMatchDate}
+    ORDER BY "roundIndex" ASC
+  `;
 
   /* -------------------------------------------------------------------------
-   * ② targetDate の決定
+   * ③ レスポンス
    * ----------------------------------------------------------------------- */
-  const targetDate = date ?? latestDate;
-  const targetMatchDate = toMatchDate(targetDate);
+  const s = targetMatchDate.toString();
+  const yyyy_mm_dd = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-  /* -------------------------------------------------------------------------
-   * ③ 対局データ取得
-   * ----------------------------------------------------------------------- */
-  const results = await prisma.result.findMany({
-    where: {
-      matchDate: targetMatchDate,
-      ...(playerId
-        ? {
-            OR: [{ winnerId: playerId }, { loserId: playerId }],
-          }
-        : {}),
-    },
-    orderBy: { roundIndex: "asc" },
-  });
-
-  /* -------------------------------------------------------------------------
-   * ④ prevDate
-   * ----------------------------------------------------------------------- */
-  const prev = await prisma.result.findFirst({
-    where: {
-      matchDate: { lt: targetMatchDate },
-      ...(playerId
-        ? {
-            OR: [{ winnerId: playerId }, { loserId: playerId }],
-          }
-        : {}),
-    },
-    orderBy: { matchDate: "desc" },
-    select: { matchDate: true },
-  });
-
-  const prevDate = prev ? formatMatchDate(prev.matchDate) : null;
-
-  /* -------------------------------------------------------------------------
-   * ⑤ nextDate
-   * ----------------------------------------------------------------------- */
-  const next = await prisma.result.findFirst({
-    where: {
-      matchDate: { gt: targetMatchDate },
-      ...(playerId
-        ? {
-            OR: [{ winnerId: playerId }, { loserId: playerId }],
-          }
-        : {}),
-    },
-    orderBy: { matchDate: "asc" },
-    select: { matchDate: true },
-  });
-
-  const nextDate = next ? formatMatchDate(next.matchDate) : null;
-
-  /* -------------------------------------------------------------------------
-   * ⑥ レスポンス
-   * ----------------------------------------------------------------------- */
   return NextResponse.json({
-    mode: playerId ? "player" : "date",
-    date: targetDate,
+    date: yyyy_mm_dd,
     results,
-    prevDate,
-    nextDate,
   });
 }
 
 /* ============================================================================
- * POST: 対局結果の登録（matchDate + roundIndex）
+ * POST: 対局結果の登録
  * ========================================================================== */
 export async function POST(req: Request) {
   const body = await req.json();
@@ -141,16 +78,7 @@ export async function POST(req: Request) {
     loserRate,
     matchDate,
     roundIndex,
-  } = body as {
-    winnerId: string;
-    winnerName: string;
-    winnerRate: number;
-    loserId: string;
-    loserName: string;
-    loserRate: number;
-    matchDate: number;
-    roundIndex: number;
-  };
+  } = body;
 
   /* -------------------------------------------------------------------------
    * ① 必須チェック
@@ -163,8 +91,7 @@ export async function POST(req: Request) {
   }
 
   /* -------------------------------------------------------------------------
-   * ② 業務バリデーション：
-   *    同一日付 × 同一ラウンドで同一プレイヤーが対局済みなら登録不可
+   * ② 業務バリデーション（同一ラウンド重複）
    * ----------------------------------------------------------------------- */
   const conflict = await prisma.result.findFirst({
     where: {
@@ -184,38 +111,20 @@ export async function POST(req: Request) {
   /* -------------------------------------------------------------------------
    * ③ 登録処理
    * ----------------------------------------------------------------------- */
-  try {
-    const result = await prisma.result.create({
-      data: {
-        winnerId,
-        winnerName,
-        winnerRate,
-        loserId,
-        loserName,
-        loserRate,
-        matchDate,
-        roundIndex,
-      },
-    });
+  const result = await prisma.result.create({
+    data: {
+      winnerId,
+      winnerName,
+      winnerRate,
+      loserId,
+      loserName,
+      loserRate,
+      matchDate,
+      roundIndex,
+    },
+  });
 
-    return NextResponse.json(result);
-  } catch (e: unknown) {
-    // Prisma のユニーク制約エラー
-    if (
-      typeof e === "object" &&
-      e !== null &&
-      "code" in e &&
-      (e as { code: string }).code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "同じ対局がすでに登録されています" },
-        { status: 409 }
-      );
-    }
-
-    console.error("POST /api/private/result error:", e);
-    throw e;
-  }
+  return NextResponse.json(result);
 }
 
 /* ============================================================================
@@ -225,9 +134,6 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
-  /* -------------------------------------------------------------------------
-   * ① 必須チェック
-   * ----------------------------------------------------------------------- */
   if (!id) {
     return NextResponse.json(
       { error: "id が必要です" },
@@ -235,12 +141,7 @@ export async function DELETE(req: Request) {
     );
   }
 
-  /* -------------------------------------------------------------------------
-   * ② 削除処理
-   * ----------------------------------------------------------------------- */
-  await prisma.result.delete({
-    where: { id },
-  });
+  await prisma.result.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }

@@ -9,6 +9,7 @@
  * ・対局結果の登録（業務バリデーション含む）
  * ・対局結果の削除
  * ・プレイヤー一覧の取得
+ * ・日付一覧の取得（/api/dates）
  * ・画面状態の管理
  *
  * 【非責務】
@@ -35,7 +36,13 @@ export function useResults() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [results, setResults] = useState<Result[]>([]);
 
+  /** 全対局日付一覧（YYYYMMDD 数値） */
+  const [dates, setDates] = useState<number[]>([]);
+
+  /** 現在表示中の日付（YYYY-MM-DD） */
   const [date, setDate] = useState<string | null>(null);
+
+  /** 前後の日付（YYYY-MM-DD） */
   const [prevDate, setPrevDate] = useState<string | null>(null);
   const [nextDate, setNextDate] = useState<string | null>(null);
 
@@ -54,12 +61,28 @@ export function useResults() {
    * ------------------------------------------------------------ */
   const init = async () => {
     setMounted(true);
+
+    // ① 日付一覧取得
+    await fetchDates();
+
+    // ② プレイヤー一覧取得
     await fetchPlayers();
+
+    // ③ 最新日付の対局結果取得
     await fetchResults();
   };
 
   /* ------------------------------------------------------------
-   * 3. プレイヤー取得
+   * 3. 日付一覧取得
+   * ------------------------------------------------------------ */
+  const fetchDates = async () => {
+    const res = await fetch("/api/dates");
+    const data = await res.json();
+    setDates(data.dates); // [20250301, 20250305, ...]
+  };
+
+  /* ------------------------------------------------------------
+   * 4. プレイヤー取得
    * ------------------------------------------------------------ */
   const fetchPlayers = async () => {
     const res = await fetch("/api/private/player");
@@ -73,7 +96,7 @@ export function useResults() {
   }));
 
   /* ------------------------------------------------------------
-   * 4. 対局結果取得（検索含む）
+   * 5. 対局結果取得（検索含む）
    * ------------------------------------------------------------ */
   const fetchResults = async (params?: Record<string, string>) => {
     const query = params ? "?" + new URLSearchParams(params).toString() : "";
@@ -82,12 +105,33 @@ export function useResults() {
 
     setResults(Array.isArray(data.results) ? data.results : []);
     setDate(data.date ?? null);
-    setPrevDate(data.prevDate ?? null);
-    setNextDate(data.nextDate ?? null);
+
+    // prev/next は API から返さず、クライアント側で計算する
+    if (data.date) updatePrevNext(data.date);
   };
 
   /* ------------------------------------------------------------
-   * 5. 検索処理
+   * 6. 前後日付の計算（クライアント側）
+   * ------------------------------------------------------------ */
+  const updatePrevNext = (yyyy_mm_dd: string) => {
+    const yyyymmdd = Number(yyyy_mm_dd.replaceAll("-", ""));
+    const idx = dates.indexOf(yyyymmdd);
+
+    const prev = idx > 0 ? dates[idx - 1] : null;
+    const next = idx < dates.length - 1 ? dates[idx + 1] : null;
+
+    setPrevDate(prev ? formatDate(prev) : null);
+    setNextDate(next ? formatDate(next) : null);
+  };
+
+  /** yyyymmdd → yyyy-mm-dd */
+  const formatDate = (n: number) => {
+    const s = n.toString();
+    return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  };
+
+  /* ------------------------------------------------------------
+   * 7. 検索処理
    * ------------------------------------------------------------ */
   const handleSearch = () => {
     const params: Record<string, string> = {};
@@ -99,14 +143,7 @@ export function useResults() {
   };
 
   /* ------------------------------------------------------------
-   * 6. 対局結果登録処理
-   * ------------------------------------------------------------
-   * 【業務ルール】
-   * ① 必須項目チェック
-   * ② 勝者・敗者の同一チェック
-   * ③ 同一日付 × 同一ラウンドでの重複対局チェック
-   * ④ 登録後はレート再計算
-   * ⑤ 登録した日付の一覧を再取得（画面遷移はしない）
+   * 8. 対局結果登録処理
    * ------------------------------------------------------------ */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -123,14 +160,13 @@ export function useResults() {
       return;
     }
 
-    // 入力値の正規化
     const w = players.find((p) => p.id === winnerOpt.value)!;
     const l = players.find((p) => p.id === loserOpt.value)!;
 
     const matchDate = Number(registerDate.replaceAll("-", ""));
     const round = Number(roundIndex);
 
-    // ③ 同一ラウンド重複対局チェック
+    // ③ 同一ラウンド重複チェック
     const conflict = results.some((r) => {
       return (
         r.matchDate === matchDate &&
@@ -147,7 +183,7 @@ export function useResults() {
       return;
     }
 
-    // ④ 対局結果登録
+    // ④ 登録
     await fetch("/api/private/result", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -168,43 +204,34 @@ export function useResults() {
 
     alert("登録が完了しました");
 
-    // ⑤ 登録した日付の一覧を再取得（画面遷移なし）
-    const s = matchDate.toString();
-    const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+    // 日付一覧を更新
+    await fetchDates();
 
-    await fetchResults({ date: dateStr });
+    // 登録した日付の結果を再取得
+    await fetchResults({ date: registerDate });
   };
 
   /* ------------------------------------------------------------
-   * 7. 対局結果削除処理
-   * ------------------------------------------------------------
-   * 【業務ルール】
-   * ① 削除対象の対局を事前に取得
-   * ② 削除確認
-   * ③ 削除処理
-   * ④ レート再計算
-   * ⑤ 削除した対局の日付の一覧を再取得（画面遷移なし）
+   * 9. 対局結果削除処理
    * ------------------------------------------------------------ */
   const handleDelete = async (id: string) => {
-    // ① 削除対象取得
     const target = results.find((r) => r.id === id);
     if (!target) {
       alert("削除対象の対局が見つかりません");
       return;
     }
 
-    // ② 削除確認
     if (!confirm("この対局結果を削除しますか？")) return;
 
-    // ③ 削除処理
     await fetch(`/api/private/result?id=${id}`, { method: "DELETE" });
 
-    // ④ レート再計算
     await fetch("/api/private/calculate", { method: "POST" });
 
     alert("削除が完了しました");
 
-    // ⑤ 削除した日付の一覧を再取得（画面遷移なし）
+    // 日付一覧を更新
+    await fetchDates();
+
     const s = target.matchDate.toString();
     const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
@@ -212,7 +239,7 @@ export function useResults() {
   };
 
   /* ------------------------------------------------------------
-   * 8. ラウンド選択肢（最大ラウンド + 1）
+   * 10. ラウンド選択肢
    * ------------------------------------------------------------ */
   const maxRound =
     results.length > 0 ? Math.max(...results.map((r) => r.roundIndex)) : 0;
@@ -223,7 +250,7 @@ export function useResults() {
   );
 
   /* ------------------------------------------------------------
-   * 9. 外部公開
+   * 11. 外部公開（＝UI に渡す値・関数）
    * ------------------------------------------------------------ */
   return {
     mounted,
