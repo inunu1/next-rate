@@ -70,6 +70,9 @@ export function useResults() {
 
     // ③ 最新日付の対局結果取得
     await fetchResults();
+
+    // ④ 初期化完了
+    setMounted(true);
   };
 
   /* ------------------------------------------------------------
