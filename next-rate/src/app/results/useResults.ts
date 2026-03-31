@@ -9,7 +9,7 @@
  * ・対局結果の登録（業務バリデーション含む）
  * ・対局結果の削除
  * ・プレイヤー一覧の取得
- * ・日付一覧の取得（/api/dates）
+ * ・日付一覧の取得（/api/private/dates）
  * ・画面状態の管理
  *
  * 【非責務】
@@ -76,7 +76,7 @@ export function useResults() {
    * 3. 日付一覧取得
    * ------------------------------------------------------------ */
   const fetchDates = async () => {
-    const res = await fetch("/api/dates");
+    const res = await fetch("/api/private/dates");
     const data = await res.json();
     setDates(data.dates); // [20250301, 20250305, ...]
   };
