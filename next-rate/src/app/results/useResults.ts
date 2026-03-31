@@ -6,16 +6,11 @@
  * ------------------------------------------------------------
  * 【責務】
  * ・対局結果の取得／検索
- * ・対局結果の登録（業務バリデーション含む）
- * ・対局結果の削除
+ * ・対局結果の登録／削除
  * ・プレイヤー一覧の取得
- * ・日付一覧の取得（/api/private/dates）
+ * ・日付一覧の取得（/api/result/dates）
+ * ・前後日付の計算（クライアント側）
  * ・画面状態の管理
- *
- * 【非責務】
- * ・UI 表示（ResultsClient.tsx に委譲）
- * ・DB アクセス（API Route に委譲）
- * ・認証（page.tsx 側で実施）
  * ============================================================
  */
 
@@ -57,21 +52,19 @@ export function useResults() {
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
   /* ------------------------------------------------------------
-   * 2. 初期化処理
+   * 2. 初期化処理（順番が超重要）
    * ------------------------------------------------------------ */
   const init = async () => {
-    setMounted(true);
-
-    // ① 日付一覧取得
+    // ① 日付一覧
     await fetchDates();
 
-    // ② プレイヤー一覧取得
+    // ② プレイヤー一覧
     await fetchPlayers();
 
-    // ③ 最新日付の対局結果取得
+    // ③ 最新日付の対局結果
     await fetchResults();
 
-    // ④ 初期化完了
+    // ④ 全て揃ってから描画
     setMounted(true);
   };
 
@@ -79,9 +72,9 @@ export function useResults() {
    * 3. 日付一覧取得
    * ------------------------------------------------------------ */
   const fetchDates = async () => {
-    const res = await fetch("/api/private/dates");
+    const res = await fetch("/api/result/dates");
     const data = await res.json();
-    setDates(data.dates); // [20250301, 20250305, ...]
+    setDates(data.dates);
   };
 
   /* ------------------------------------------------------------
@@ -109,8 +102,10 @@ export function useResults() {
     setResults(Array.isArray(data.results) ? data.results : []);
     setDate(data.date ?? null);
 
-    // prev/next は API から返さず、クライアント側で計算する
-    if (data.date) updatePrevNext(data.date);
+    // dates が揃っている時だけ prev/next を計算
+    if (dates.length > 0 && data.date) {
+      updatePrevNext(data.date);
+    }
   };
 
   /* ------------------------------------------------------------
@@ -139,7 +134,6 @@ export function useResults() {
   const handleSearch = () => {
     const params: Record<string, string> = {};
 
-    if (playerOpt) params.playerId = playerOpt.value;
     if (searchDate) params.date = searchDate;
 
     fetchResults(params);
@@ -151,13 +145,11 @@ export function useResults() {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // ① 必須チェック
     if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
       alert("勝者・敗者・対局日・ラウンドは必須です");
       return;
     }
 
-    // ② 勝者・敗者の同一チェック
     if (winnerOpt.value === loserOpt.value) {
       alert("勝者と敗者は別のプレイヤーを選んでください");
       return;
@@ -169,7 +161,6 @@ export function useResults() {
     const matchDate = Number(registerDate.replaceAll("-", ""));
     const round = Number(roundIndex);
 
-    // ③ 同一ラウンド重複チェック
     const conflict = results.some((r) => {
       return (
         r.matchDate === matchDate &&
@@ -186,7 +177,6 @@ export function useResults() {
       return;
     }
 
-    // ④ 登録
     await fetch("/api/private/result", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -202,7 +192,6 @@ export function useResults() {
       }),
     });
 
-    // レート再計算
     await fetch("/api/private/calculate", { method: "POST" });
 
     alert("登録が完了しました");
@@ -232,7 +221,6 @@ export function useResults() {
 
     alert("削除が完了しました");
 
-    // 日付一覧を更新
     await fetchDates();
 
     const s = target.matchDate.toString();
@@ -253,7 +241,7 @@ export function useResults() {
   );
 
   /* ------------------------------------------------------------
-   * 11. 外部公開（＝UI に渡す値・関数）
+   * 11. 外部公開（UI に渡す public API）
    * ------------------------------------------------------------ */
   return {
     mounted,
