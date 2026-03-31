@@ -8,7 +8,7 @@
  * ・対局結果の取得／検索
  * ・対局結果の登録／削除
  * ・プレイヤー一覧の取得
- * ・日付一覧の取得（/api/result/dates）
+ * ・日付一覧の取得（/api/private/dates）
  * ・前後日付の計算（クライアント側）
  * ・画面状態の管理
  * ============================================================
@@ -72,7 +72,7 @@ export function useResults() {
    * 3. 日付一覧取得
    * ------------------------------------------------------------ */
   const fetchDates = async () => {
-    const res = await fetch("/api/result/dates");
+    const res = await fetch("/api/private/dates");
     const data = await res.json();
     setDates(data.dates);
   };
