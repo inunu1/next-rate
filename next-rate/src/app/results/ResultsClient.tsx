@@ -14,9 +14,6 @@ import type { Result } from "@prisma/client";
 export default function ResultsClient() {
   const R = useResults();
 
-  /* -------------------------------------------------------------------------
-   * 初期化（依存配列は空で正しいため ESLint を抑制）
-   * ----------------------------------------------------------------------- */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     R.init();
@@ -26,9 +23,6 @@ export default function ResultsClient() {
 
   return (
     <div className={styles.container}>
-      {/* -------------------------------------------------------------------
-       * Header
-       * ------------------------------------------------------------------- */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局結果管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -36,17 +30,11 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* -------------------------------------------------------------------
-       * 入力フォーム（検索 / 登録）
-       * ------------------------------------------------------------------- */}
       <div className={styles.formCard}>
-        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
-            className={`${styles.tabButton} ${
-              R.activeTab === "search" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tabButton} ${R.activeTab === "search" ? styles.tabActive : ""}`}
             onClick={() => R.setActiveTab("search")}
           >
             🔍 検索
@@ -54,18 +42,13 @@ export default function ResultsClient() {
 
           <button
             type="button"
-            className={`${styles.tabButton} ${
-              R.activeTab === "register" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tabButton} ${R.activeTab === "register" ? styles.tabActive : ""}`}
             onClick={() => R.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
-        {/* -------------------------------------------------------------------
-         * 検索タブ
-         * ------------------------------------------------------------------- */}
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
@@ -85,26 +68,15 @@ export default function ResultsClient() {
               width={150}
             />
 
-            <button
-              type="button"
-              onClick={R.handleSearch}
-              className={styles.searchButton}
-            >
+            <button type="button" onClick={R.handleSearch} className={styles.searchButton}>
               検索
             </button>
 
-            <button
-              type="button"
-              onClick={R.clearSearch}
-              className={styles.clearButton}
-            >
+            <button type="button" onClick={R.clearSearch} className={styles.clearButton}>
               クリア
             </button>
           </div>
         ) : (
-          /* -------------------------------------------------------------------
-           * 登録タブ
-           * ------------------------------------------------------------------- */
           <form className={styles.formBar} onSubmit={R.handleRegister}>
             <div className={styles.selectWrapper}>
               <PlayerSelect
@@ -155,9 +127,6 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* -------------------------------------------------------------------
-       * ページネーション
-       * ------------------------------------------------------------------- */}
       {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
           <button
@@ -175,9 +144,7 @@ export default function ResultsClient() {
             次の日
           </button>
 
-          <span className={styles.pageDate}>
-            {R.date ? R.date : "データなし"}
-          </span>
+          <span className={styles.pageDate}>{R.date ?? "データなし"}</span>
 
           <button
             type="button"
@@ -196,9 +163,6 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* -------------------------------------------------------------------
-       * テーブル
-       * ------------------------------------------------------------------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable

@@ -13,7 +13,6 @@ import { useAdmin } from "./useAdmin";
 export default function AdminClient({ currentUserId }: { currentUserId: string }) {
   const A = useAdmin(currentUserId);
 
-  // 初期化（依存配列は空で正しい）
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     A.init();
@@ -23,7 +22,6 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <header className={styles.header}>
         <h1 className={styles.title}>管理者管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -31,15 +29,11 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         </Link>
       </header>
 
-      {/* 入力フォーム */}
       <div className={styles.formCard}>
-        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
-            className={`${styles.tabButton} ${
-              A.activeTab === "search" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tabButton} ${A.activeTab === "search" ? styles.tabActive : ""}`}
             onClick={() => A.setActiveTab("search")}
           >
             🔍 検索
@@ -47,9 +41,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
           <button
             type="button"
-            className={`${styles.tabButton} ${
-              A.activeTab === "register" ? styles.tabActive : ""
-            }`}
+            className={`${styles.tabButton} ${A.activeTab === "register" ? styles.tabActive : ""}`}
             onClick={() => A.setActiveTab("register")}
           >
             ✍️ 新規登録
@@ -119,7 +111,6 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         )}
       </div>
 
-      {/* 一覧表示 */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
