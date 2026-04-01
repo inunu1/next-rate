@@ -14,9 +14,9 @@ import type { Result } from "@prisma/client";
 export default function ResultsClient() {
   const R = useResults();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     R.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!R.mounted) return null;

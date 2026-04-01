@@ -13,9 +13,9 @@ import { useAdmin } from "./useAdmin";
 export default function AdminClient({ currentUserId }: { currentUserId: string }) {
   const A = useAdmin(currentUserId);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     A.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!A.mounted) return null;

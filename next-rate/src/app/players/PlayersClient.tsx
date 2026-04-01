@@ -13,9 +13,9 @@ import { usePlayers } from "./usePlayers";
 export default function PlayersClient({ currentUserId }: { currentUserId: string }) {
   const P = usePlayers(currentUserId);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     P.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!P.mounted) return null;
