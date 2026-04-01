@@ -6,6 +6,9 @@ import type { Player, Result } from "@prisma/client";
 export type PlayerOption = { value: string; label: string };
 
 export function useResults() {
+  /* ==========================================================================
+   * 状態管理
+   * ======================================================================== */
   const [mounted, setMounted] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -25,15 +28,26 @@ export function useResults() {
 
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
-  const [searchParams, setSearchParams] = useState<{ date?: string }>({});
+  const [searchParams, setSearchParams] = useState<{
+    date?: string;
+    playerId?: string;
+  }>({});
 
+  /* ==========================================================================
+   * 初期化
+   * ======================================================================== */
   const init = async () => {
     await fetchPlayers();
+
     const data = await fetchResults({});
     setSearchParams({ date: data.date ?? undefined });
+
     setMounted(true);
   };
 
+  /* ==========================================================================
+   * プレイヤー一覧取得
+   * ======================================================================== */
   const fetchPlayers = async () => {
     const res = await fetch("/api/private/player");
     const data = await res.json();
@@ -45,11 +59,19 @@ export function useResults() {
     label: p.name,
   }));
 
+  /* ==========================================================================
+   * プレイヤー選択変更
+   * ======================================================================== */
   const handlePlayerChange = (opt: PlayerOption | null) => {
     setPlayerOpt(opt);
   };
 
-  const fetchResults = async (params: Record<string, string | undefined>) => {
+  /* ==========================================================================
+   * 対局結果取得
+   * ======================================================================== */
+  const fetchResults = async (
+    params: Record<string, string | undefined>
+  ) => {
     const filteredParams = Object.fromEntries(
       Object.entries(params).filter((entry) => entry[1] !== undefined)
     ) as Record<string, string>;
@@ -66,26 +88,42 @@ export function useResults() {
     return data;
   };
 
+  /* ==========================================================================
+   * 検索
+   * ======================================================================== */
   const handleSearch = async () => {
     const params: Record<string, string> = {};
+
     if (searchDate) params.date = searchDate;
+    if (playerOpt) params.playerId = playerOpt.value;
+
     setSearchParams(params);
     await fetchResults(params);
   };
 
+  /* ==========================================================================
+   * 検索クリア
+   * ======================================================================== */
   const clearSearch = async () => {
     setPlayerOpt(null);
     setSearchDate("");
+
     setSearchParams({});
     await fetchResults({});
   };
 
+  /* ==========================================================================
+   * 初期ロード後に日付欄へ反映
+   * ======================================================================== */
   useEffect(() => {
-    if (!mounted && date) {
+    if (mounted && date) {
       setSearchDate(date);
     }
   }, [mounted, date]);
 
+  /* ==========================================================================
+   * 登録
+   * ======================================================================== */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -126,9 +164,13 @@ export function useResults() {
 
     const params = { date: registerDate };
     setSearchParams(params);
+
     await fetchResults(params);
   };
 
+  /* ==========================================================================
+   * 削除
+   * ======================================================================== */
   const handleDelete = async (id: string) => {
     const target = results.find((r) => r.id === id);
     if (!target) return;
@@ -145,9 +187,13 @@ export function useResults() {
 
     const params = { ...searchParams, date: dateStr };
     setSearchParams(params);
+
     await fetchResults(params);
   };
 
+  /* ==========================================================================
+   * ラウンド選択肢
+   * ======================================================================== */
   const maxRound =
     results.length > 0 ? Math.max(...results.map((r) => r.roundIndex)) : 0;
 
@@ -156,6 +202,9 @@ export function useResults() {
     (_, i) => i + 1
   );
 
+  /* ==========================================================================
+   * 返却
+   * ======================================================================== */
   return {
     mounted,
     init,
