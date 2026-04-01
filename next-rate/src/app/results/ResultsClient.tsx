@@ -9,12 +9,13 @@ import PlayerSelect from "@/components/PlayerSelect";
 import Input from "@/components/Input";
 
 import { useResults } from "./useResults";
+import type { Result } from "@prisma/client";
 
 export default function ResultsClient() {
   const R = useResults();
 
   /* ------------------------------------------------------------
-   * 初期化（プレイヤー一覧 + 最新日付の対局一覧）
+   * 初期化
    * ---------------------------------------------------------- */
   useEffect(() => {
     R.init();
@@ -24,9 +25,7 @@ export default function ResultsClient() {
 
   return (
     <div className={styles.container}>
-      {/* --------------------------------------------------------
-       * Header
-       * ------------------------------------------------------ */}
+      {/* Header */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局結果管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -34,9 +33,7 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* --------------------------------------------------------
-       * 検索 / 登録タブ
-       * ------------------------------------------------------ */}
+      {/* タブ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -60,23 +57,19 @@ export default function ResultsClient() {
           </button>
         </div>
 
-        {/* --------------------------------------------------------
-         * 検索フォーム
-         * ------------------------------------------------------ */}
+        {/* 検索フォーム */}
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
-            {/* プレイヤー絞り込み */}
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.playerOpt}
-                onChange={R.setPlayerOpt}
+                onChange={R.handlePlayerChange}
                 options={R.playerOptions}
                 placeholder="プレイヤーで絞り込み"
                 mode="select"
               />
             </div>
 
-            {/* 日付検索 */}
             <Input
               type="date"
               value={R.searchDate}
@@ -84,7 +77,6 @@ export default function ResultsClient() {
               width={150}
             />
 
-            {/* 検索ボタン */}
             <button
               type="button"
               onClick={R.handleSearch}
@@ -92,13 +84,18 @@ export default function ResultsClient() {
             >
               検索
             </button>
+
+            <button
+              type="button"
+              onClick={R.clearSearch}
+              className={styles.clearButton}
+            >
+              クリア
+            </button>
           </div>
         ) : (
-          /* --------------------------------------------------------
-           * 登録フォーム
-           * ------------------------------------------------------ */
+          /* 登録フォーム */
           <form className={styles.formBar} onSubmit={R.handleRegister}>
-            {/* 勝者 */}
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.winnerOpt}
@@ -109,7 +106,6 @@ export default function ResultsClient() {
               />
             </div>
 
-            {/* 敗者 */}
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 value={R.loserOpt}
@@ -120,7 +116,6 @@ export default function ResultsClient() {
               />
             </div>
 
-            {/* 日付 */}
             <Input
               type="date"
               value={R.registerDate}
@@ -128,7 +123,6 @@ export default function ResultsClient() {
               width={150}
             />
 
-            {/* ラウンド（統一デザイン済み） */}
             <PlayerSelect
               value={
                 R.roundIndex
@@ -144,7 +138,6 @@ export default function ResultsClient() {
               mode="select"
             />
 
-            {/* 登録ボタン */}
             <button type="submit" className={styles.registerButton}>
               登録
             </button>
@@ -152,19 +145,16 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* --------------------------------------------------------
-       * ページネーション
-       * ------------------------------------------------------ */}
+      {/* ページネーション */}
       {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
-          {/* 次の日 */}
           <button
             type="button"
             onClick={() =>
               R.nextDate &&
               R.fetchResults({
+                ...R.searchParams,
                 date: R.nextDate,
-                ...(R.playerOpt ? { playerId: R.playerOpt.value } : {}),
               })
             }
             disabled={!R.nextDate}
@@ -173,19 +163,17 @@ export default function ResultsClient() {
             次の日
           </button>
 
-          {/* 現在日付 */}
           <span className={styles.pageDate}>
-            {R.date ? R.date : R.playerOpt ? "" : "データなし"}
+            {R.date ? R.date : "データなし"}
           </span>
 
-          {/* 前の日 */}
           <button
             type="button"
             onClick={() =>
               R.prevDate &&
               R.fetchResults({
+                ...R.searchParams,
                 date: R.prevDate,
-                ...(R.playerOpt ? { playerId: R.playerOpt.value } : {}),
               })
             }
             disabled={!R.prevDate}
@@ -196,9 +184,7 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* --------------------------------------------------------
-       * 対局一覧テーブル
-       * ------------------------------------------------------ */}
+      {/* テーブル */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
@@ -207,26 +193,23 @@ export default function ResultsClient() {
             columns={[
               {
                 header: "日付",
-                render: (r) => {
+                render: (r: Result) => {
                   const s = r.matchDate.toString();
                   return `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}`;
                 },
               },
-              {
-                header: "ラウンド",
-                render: (r) => `R${r.roundIndex}`,
-              },
+              { header: "ラウンド", render: (r: Result) => `R${r.roundIndex}` },
               {
                 header: "勝者（開始時）",
-                render: (r) => `${r.winnerName}（${r.winnerRate}）`,
+                render: (r: Result) => `${r.winnerName}（${r.winnerRate}）`,
               },
               {
                 header: "敗者（開始時）",
-                render: (r) => `${r.loserName}（${r.loserRate}）`,
+                render: (r: Result) => `${r.loserName}（${r.loserRate}）`,
               },
               {
                 header: "操作",
-                render: (r) => (
+                render: (r: Result) => (
                   <button
                     type="button"
                     className={styles.deleteButton}
