@@ -14,9 +14,8 @@ import type { Result } from "@prisma/client";
 export default function ResultsClient() {
   const R = useResults();
 
-  /* ------------------------------------------------------------
-   * 初期化
-   * ---------------------------------------------------------- */
+  // 初期化（依存配列は空で正しい）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     R.init();
   }, []);
@@ -33,7 +32,7 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* タブ */}
+      {/* Tabs */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -57,7 +56,7 @@ export default function ResultsClient() {
           </button>
         </div>
 
-        {/* 検索フォーム */}
+        {/* Search Form */}
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
@@ -94,7 +93,7 @@ export default function ResultsClient() {
             </button>
           </div>
         ) : (
-          /* 登録フォーム */
+          /* Register Form */
           <form className={styles.formBar} onSubmit={R.handleRegister}>
             <div className={styles.selectWrapper}>
               <PlayerSelect
@@ -145,7 +144,7 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* ページネーション */}
+      {/* Pagination */}
       {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
           <button
@@ -184,7 +183,7 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* テーブル */}
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable

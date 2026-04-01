@@ -1,10 +1,14 @@
-/* Admin.module.css */
+/* ============================================================================
+ * Layout
+ * ========================================================================== */
 .container {
   min-height: 100vh;
   padding-bottom: 4rem;
 }
 
-/* Header */
+/* ============================================================================
+ * Header
+ * ========================================================================== */
 .header {
   height: var(--header-height);
   display: flex;
@@ -35,7 +39,9 @@
   color: var(--color-text-main);
 }
 
-/* Form Area */
+/* ============================================================================
+ * Form Card
+ * ========================================================================== */
 .formCard {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
@@ -46,7 +52,9 @@
   max-width: var(--container-max-width);
 }
 
-/* Tabs */
+/* ============================================================================
+ * Tabs
+ * ========================================================================== */
 .tabContainer {
   display: flex;
   gap: 1rem;
@@ -77,6 +85,9 @@
   background-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
 }
 
+/* ============================================================================
+ * Form Bar
+ * ========================================================================== */
 .formBar {
   display: flex;
   gap: 1rem;
@@ -85,27 +96,26 @@
   padding-bottom: 0.5rem;
 }
 
-/* Inputs */
 .selectWrapper {
   min-width: 250px;
   flex-shrink: 0;
 }
 
-
-
-/* Buttons */
+/* ============================================================================
+ * Buttons
+ * ========================================================================== */
 .registerButton {
   height: 42px;
   padding: 0 1.5rem;
-  background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 90%, 65%)); /* More subtle gradient */
+  background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 90%, 65%));
   color: white;
   border: none;
-  border-radius: 9999px; /* Pill shape */
+  border-radius: 9999px;
   cursor: pointer;
   white-space: nowrap;
   font-weight: 700;
   font-size: 0.9rem;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); /* Glow effect */
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
   transition: all var(--transition-fast);
 }
 
@@ -118,7 +128,7 @@
 .searchButton {
   height: 42px;
   padding: 0 1.5rem;
-  background-color: transparent; /* Ghost style */
+  background-color: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text-main);
   border-radius: var(--radius-sm);
@@ -134,9 +144,31 @@
   border-color: var(--color-text-muted);
 }
 
-/* Table Area */
+/* --- NEW: Clear Button (Results と統一) ----------------------------------- */
+.clearButton {
+  height: 42px;
+  padding: 0 1.5rem;
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+
+.clearButton:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: var(--color-text-main);
+}
+
+/* ============================================================================
+ * Table
+ * ========================================================================== */
 .main {
-  margin: 0 auto; /* Centered */
+  margin: 0 auto;
   max-width: var(--container-max-width);
   padding: 0 2rem;
 }
@@ -179,7 +211,9 @@
   border-bottom: none;
 }
 
-/* Action Button (Delete) */
+/* ============================================================================
+ * Delete Button
+ * ========================================================================== */
 .deleteButton {
   padding: 0.4rem 0.8rem;
   background-color: rgba(220, 38, 38, 0.1);

@@ -78,7 +78,7 @@ export function useResults() {
     params: Record<string, string | undefined>
   ) => {
     const filteredParams = Object.fromEntries(
-      Object.entries(params).filter(([_, v]) => v !== undefined)
+      Object.entries(params).filter((entry) => entry[1] !== undefined)
     ) as Record<string, string>;
 
     const queryString = new URLSearchParams(filteredParams).toString();
@@ -120,13 +120,13 @@ export function useResults() {
   };
 
   /* ==========================================================================
-   * 表示されている日付を検索欄に反映
+   * 表示されている日付を検索欄に反映（初期化時のみ）
    * ======================================================================== */
   useEffect(() => {
-    if (date) {
+    if (!mounted && date) {
       setSearchDate(date);
     }
-  }, [date]);
+  }, [mounted, date]);
 
   /* ==========================================================================
    * 登録
