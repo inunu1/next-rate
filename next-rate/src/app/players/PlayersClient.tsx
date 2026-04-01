@@ -13,6 +13,10 @@ import { usePlayers } from "./usePlayers";
 export default function PlayersClient({ currentUserId }: { currentUserId: string }) {
   const P = usePlayers(currentUserId);
 
+  /* -------------------------------------------------------------------------
+   * 初期化（依存配列は空で正しいため ESLint を抑制）
+   * ----------------------------------------------------------------------- */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     P.init();
   }, []);
@@ -21,7 +25,9 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* -------------------------------------------------------------------
+       * Header
+       * ------------------------------------------------------------------- */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局者管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -29,8 +35,11 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         </Link>
       </header>
 
-      {/* Form Area */}
+      {/* -------------------------------------------------------------------
+       * 入力フォーム（検索 / 登録）
+       * ------------------------------------------------------------------- */}
       <div className={styles.formCard}>
+        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -53,6 +62,9 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
           </button>
         </div>
 
+        {/* -------------------------------------------------------------------
+         * 検索タブ
+         * ------------------------------------------------------------------- */}
         {P.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
@@ -66,22 +78,26 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               />
             </div>
 
-            <button type="button" onClick={P.handleSearch} className={styles.searchButton}>
+            <button
+              type="button"
+              onClick={P.handleSearch}
+              className={styles.searchButton}
+            >
               検索
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                P.setSearchOpt(null);
-                P.handleSearch();
-              }}
-              className={styles.searchButton}
+              onClick={P.clearSearch}
+              className={styles.clearButton}
             >
               クリア
             </button>
           </div>
         ) : (
+          /* -------------------------------------------------------------------
+           * 登録タブ
+           * ------------------------------------------------------------------- */
           <form
             className={styles.formBar}
             onSubmit={(e) => {
@@ -117,7 +133,9 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         )}
       </div>
 
-      {/* 一覧表示 */}
+      {/* -------------------------------------------------------------------
+       * 一覧表示
+       * ------------------------------------------------------------------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable

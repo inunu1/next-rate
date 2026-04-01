@@ -13,9 +13,7 @@ import { useAdmin } from "./useAdmin";
 export default function AdminClient({ currentUserId }: { currentUserId: string }) {
   const A = useAdmin(currentUserId);
 
-  /* -------------------------------------------------------------------------
-   * 初期化（依存配列は空で正しいため ESLint を抑制）
-   * ----------------------------------------------------------------------- */
+  // 初期化（依存配列は空で正しい）
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     A.init();
@@ -25,9 +23,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
   return (
     <div className={styles.container}>
-      {/* -------------------------------------------------------------------
-       * Header
-       * ------------------------------------------------------------------- */}
+      {/* Header */}
       <header className={styles.header}>
         <h1 className={styles.title}>管理者管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -35,9 +31,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         </Link>
       </header>
 
-      {/* -------------------------------------------------------------------
-       * 入力フォーム（検索 / 登録）
-       * ------------------------------------------------------------------- */}
+      {/* 入力フォーム */}
       <div className={styles.formCard}>
         {/* Tabs */}
         <div className={styles.tabContainer}>
@@ -62,9 +56,6 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
           </button>
         </div>
 
-        {/* -------------------------------------------------------------------
-         * 検索タブ
-         * ------------------------------------------------------------------- */}
         {A.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
@@ -78,26 +69,15 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
               />
             </div>
 
-            <button
-              type="button"
-              onClick={A.handleSearch}
-              className={styles.searchButton}
-            >
+            <button type="button" onClick={A.handleSearch} className={styles.searchButton}>
               検索
             </button>
 
-            <button
-              type="button"
-              onClick={A.clearSearch}
-              className={styles.clearButton}
-            >
+            <button type="button" onClick={A.clearSearch} className={styles.clearButton}>
               クリア
             </button>
           </div>
         ) : (
-          /* -------------------------------------------------------------------
-           * 登録タブ
-           * ------------------------------------------------------------------- */
           <form
             className={styles.formBar}
             onSubmit={(e) => {
@@ -139,23 +119,15 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         )}
       </div>
 
-      {/* -------------------------------------------------------------------
-       * 一覧表示
-       * ------------------------------------------------------------------- */}
+      {/* 一覧表示 */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
             tableClass={styles.table}
             rows={A.filteredUsers}
             columns={[
-              {
-                header: "Email",
-                render: (u) => u.email,
-              },
-              {
-                header: "Name",
-                render: (u) => u.name ?? "未設定",
-              },
+              { header: "Email", render: (u) => u.email },
+              { header: "Name", render: (u) => u.name ?? "未設定" },
               {
                 header: "操作",
                 render: (u) =>

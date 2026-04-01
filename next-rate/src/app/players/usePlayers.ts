@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Player } from "@prisma/client";
+import type { Player } from "@prisma/client";
 
 export type PlayerOption = {
   value: string;
@@ -10,9 +10,9 @@ export type PlayerOption = {
 };
 
 export function usePlayers(currentUserId: string) {
-  /* -----------------------------
+  /* ==========================================================================
    * 状態管理
-   * --------------------------- */
+   * ======================================================================== */
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
 
@@ -24,32 +24,36 @@ export function usePlayers(currentUserId: string) {
 
   const [mounted, setMounted] = useState(false);
 
-  /* -----------------------------
-   * 初期ロード
-   * --------------------------- */
+  /* ==========================================================================
+   * 初期化
+   * ======================================================================== */
   const init = async () => {
     setMounted(true);
     await fetchPlayers();
   };
 
-  /* -----------------------------
-   * プレイヤー取得
-   * --------------------------- */
+  /* ==========================================================================
+   * プレイヤー一覧取得
+   * ======================================================================== */
   const fetchPlayers = async () => {
     const res = await fetch("/api/private/player");
     const data = await res.json();
+
     setPlayers(data);
     setFilteredPlayers(data);
   };
 
+  /* ==========================================================================
+   * セレクトボックス用オプション
+   * ======================================================================== */
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  /* -----------------------------
+  /* ==========================================================================
    * API 呼び出し
-   * --------------------------- */
+   * ======================================================================== */
   const postPlayer = async (data: { name: string; initialRate: number }) => {
     const res = await fetch("/api/private/player", {
       method: "POST",
@@ -68,9 +72,9 @@ export function usePlayers(currentUserId: string) {
     return res.json();
   };
 
-  /* -----------------------------
+  /* ==========================================================================
    * 新規登録
-   * --------------------------- */
+   * ======================================================================== */
   const handleRegister = async () => {
     if (!registerOpt || !registerOpt.__isNew__) {
       alert("新規プレイヤー名を入力してください");
@@ -87,32 +91,44 @@ export function usePlayers(currentUserId: string) {
     });
 
     alert("登録が完了しました");
-    fetchPlayers();
+    await fetchPlayers();
   };
 
-  /* -----------------------------
-   * 検索（クライアントフィルタ）
-   * --------------------------- */
+  /* ==========================================================================
+   * 検索（クライアントサイドフィルタ）
+   * ======================================================================== */
   const handleSearch = () => {
     if (!searchOpt || searchOpt.__isNew__) {
       setFilteredPlayers(players);
       return;
     }
+
     setFilteredPlayers(players.filter((p) => p.id === searchOpt.value));
   };
 
-  /* -----------------------------
+  /* ==========================================================================
+   * 検索条件クリア
+   * ======================================================================== */
+  const clearSearch = () => {
+    setSearchOpt(null);
+    setFilteredPlayers(players);
+  };
+
+  /* ==========================================================================
    * 論理削除（出禁）
-   * --------------------------- */
+   * ======================================================================== */
   const handleSoftDelete = async (id: string) => {
     if (!confirm("このプレイヤーを出禁にしますか？")) return;
 
     await deletePlayer(id);
 
     alert("削除が完了しました");
-    fetchPlayers();
+    await fetchPlayers();
   };
 
+  /* ==========================================================================
+   * 返却
+   * ======================================================================== */
   return {
     mounted,
     init,
@@ -135,6 +151,7 @@ export function usePlayers(currentUserId: string) {
     playerOptions,
 
     handleSearch,
+    clearSearch,
     handleRegister,
     handleSoftDelete,
 

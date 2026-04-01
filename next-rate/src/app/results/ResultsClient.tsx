@@ -14,7 +14,9 @@ import type { Result } from "@prisma/client";
 export default function ResultsClient() {
   const R = useResults();
 
-  // 初期化（依存配列は空で正しい）
+  /* -------------------------------------------------------------------------
+   * 初期化（依存配列は空で正しいため ESLint を抑制）
+   * ----------------------------------------------------------------------- */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     R.init();
@@ -24,7 +26,9 @@ export default function ResultsClient() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* -------------------------------------------------------------------
+       * Header
+       * ------------------------------------------------------------------- */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局結果管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -32,8 +36,11 @@ export default function ResultsClient() {
         </Link>
       </header>
 
-      {/* Tabs */}
+      {/* -------------------------------------------------------------------
+       * 入力フォーム（検索 / 登録）
+       * ------------------------------------------------------------------- */}
       <div className={styles.formCard}>
+        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -56,7 +63,9 @@ export default function ResultsClient() {
           </button>
         </div>
 
-        {/* Search Form */}
+        {/* -------------------------------------------------------------------
+         * 検索タブ
+         * ------------------------------------------------------------------- */}
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
@@ -93,7 +102,9 @@ export default function ResultsClient() {
             </button>
           </div>
         ) : (
-          /* Register Form */
+          /* -------------------------------------------------------------------
+           * 登録タブ
+           * ------------------------------------------------------------------- */
           <form className={styles.formBar} onSubmit={R.handleRegister}>
             <div className={styles.selectWrapper}>
               <PlayerSelect
@@ -144,7 +155,9 @@ export default function ResultsClient() {
         )}
       </div>
 
-      {/* Pagination */}
+      {/* -------------------------------------------------------------------
+       * ページネーション
+       * ------------------------------------------------------------------- */}
       {(R.prevDate || R.nextDate) && (
         <div className={styles.paginationBar}>
           <button
@@ -183,7 +196,9 @@ export default function ResultsClient() {
         </div>
       )}
 
-      {/* Table */}
+      {/* -------------------------------------------------------------------
+       * テーブル
+       * ------------------------------------------------------------------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataTable
