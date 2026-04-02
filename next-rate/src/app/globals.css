@@ -1,99 +1,212 @@
-/* =========================================
-   Modern Design System & Variables
-   ========================================= */
+/* ============================================================================
+ * Variables
+ * ========================================================================== */
 :root {
-  /* Color Palette (HSL for easier manipulation) */
   --primary-h: 221;
   --primary-s: 83%;
   --primary-l: 53%;
   --color-primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-  --color-primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
-
-  --color-success: hsl(142, 71%, 45%);
-  --color-warning: hsl(45, 93%, 47%);
   --color-danger: hsl(0, 84%, 60%);
-
-  /* Neutrals */
-  --color-bg-app: hsl(210, 40%, 98%);     /* Slightly cool gray background */
-  --color-bg-surface: #ffffff;
-  --color-text-main: hsl(215, 25%, 27%);
-  --color-text-muted: hsl(215, 16%, 47%);
-  --color-border: hsl(214, 32%, 91%);
-
-  /* Typography */
-  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  /* Spacing & Sizing */
+  --color-bg-app: hsl(220, 20%, 14%);
+  --color-bg-surface:hsl(220, 20%, 18%);
+  --color-text-main:hsl(220, 20%, 94%);
+  --color-text-muted:hsl(220, 10%, 70%);
+  --color-border: hsl(220, 20%, 26%);
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 20px;
   --container-max-width: 1200px;
   --header-height: 70px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-  /* Transitions */
-  --transition-fast: 0.2s ease;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --transition: 0.2s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg-app: hsl(220, 20%, 14%);
-    --color-bg-surface: hsl(220, 20%, 18%);
-    --color-text-main: hsl(220, 20%, 94%);
-    --color-text-muted: hsl(220, 10%, 70%);
-    --color-border: hsl(220, 20%, 26%);
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  }
-}
-
-/* =========================================
-   Reset & Base Styles
-   ========================================= */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-}
-
+/* ============================================================================
+ * Reset
+ * ========================================================================== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: var(--font-family-base);
-  background-color: var(--color-bg-app);
+  font-family: Inter, sans-serif;
+  background: var(--color-bg-app);
   color: var(--color-text-main);
   line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* ============================================================================
+ * Layout
+ * ========================================================================== */
+.layout {
+  min-height: 100vh;
+  padding-bottom: 4rem;
 }
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-  font-family: inherit;
-}
-
-/* =========================================
-   Global Utilities (Optional helpers)
-   ========================================= */
-.container {
-  max-width: var(--container-max-width);
+.main {
   margin: 0 auto;
-  padding: 0 20px;
+  max-width: var(--container-max-width);
+  padding: 0 2rem;
 }
 
-input::placeholder {
+/* ============================================================================
+ * Header
+ * ========================================================================== */
+.header {
+  height: var(--header-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  margin-bottom: 2rem;
+}
+.backLink {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+.backLink:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--color-text-main);
+}
+
+/* ============================================================================
+ * Form Card
+ * ========================================================================== */
+.formCard {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* ============================================================================
+ * Tabs
+ * ========================================================================== */
+.tabContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+.tabButton {
+  padding: 0.5rem 1rem;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+.tabButton:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--color-text-main);
+}
+.tabActive {
+  color: var(--color-primary);
+  background: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+}
+
+/* ============================================================================
+ * Form Bar
+ * ========================================================================== */
+.formBar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.selectWrapper { min-width: 250px; }
+
+/* ============================================================================
+ * Inputs / Selects
+ * ========================================================================== */
+.input-base {
+  height: 42px;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+.input-base:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+}
+.input { composes: input-base; }
+.roundSelect { composes: input-base; appearance: none; }
+
+/* ============================================================================
+ * Buttons
+ * ========================================================================== */
+.btn {
+  height: 42px;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+.btn-primary {
+  background: linear-gradient(135deg, hsl(221,83%,53%), hsl(221,90%,65%));
+  color: #fff;
+}
+.btn-outline {
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+}
+.btn-clear {
+  border: 1px solid var(--color-border);
+  background: rgba(0,0,0,0.04);
   color: var(--color-text-muted);
 }
+.btn-danger {
+  background: rgba(220,38,38,0.1);
+  color: var(--color-danger);
+}
+
+/* ============================================================================
+ * Pagination
+ * ========================================================================== */
+.paginationBar {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.pageButton {
+  composes: btn btn-primary;
+  height: 38px;
+  padding: 0 1.2rem;
+  border-radius: 9999px;
+}
+.pageDate {
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-bg-app);
+  padding: 0.4rem 1.2rem;
+  border-radius: 9999px;
+}
+
+/* ============================================================================
+ * Table
+ * ========================================================================== */
+.tableWrapper {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+}
+.table-cell {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.95rem;
+}
+.table th { composes: table-cell; color: var(--color-text-muted); text-transform: uppercase; }
+.table td { composes: table-cell; }
