@@ -1,5 +1,4 @@
 import { InputHTMLAttributes } from 'react';
-import styles from './Input.module.css';
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   width?: string | number;
@@ -10,10 +9,10 @@ export default function Input({ className, width, style, ...props }: Props) {
   const customStyle = { ...style, ...(width ? { width } : {}) };
 
   return (
-      <input
-          className={`${styles.input} ${className || ''}`}
-          style={customStyle}
-          {...props}
-      />
+    <input
+      className={`input${className ? ' ' + className : ''}`}
+      style={customStyle}
+      {...props}
+    />
   );
 }
