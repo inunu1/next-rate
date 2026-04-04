@@ -61,11 +61,11 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
               />
             </div>
 
-            <button type="button" onClick={A.handleSearch} className={styles.searchButton}>
+            <button type="button" onClick={A.handleSearch} className="btn-ghost">
               検索
             </button>
 
-            <button type="button" onClick={A.clearSearch} className={styles.clearButton}>
+            <button type="button" onClick={A.clearSearch} className="btn-clear">
               クリア
             </button>
           </div>
@@ -104,7 +104,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
               width={260}
             />
 
-            <button type="submit" className={styles.registerButton}>
+            <button type="submit" className="btn-primary">
               新規登録
             </button>
           </form>
@@ -125,7 +125,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
                   u.id !== A.currentUserId && (
                     <button
                       type="button"
-                      className={styles.deleteButton}
+                      className="btn-danger"
                       onClick={() => A.handleDelete(u.id)}
                     >
                       削除

@@ -101,68 +101,6 @@
   flex-shrink: 0;
 }
 
-/* ============================================================================
- * Buttons
- * ========================================================================== */
-.registerButton {
-  height: 42px;
-  padding: 0 1.5rem;
-  background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 90%, 65%));
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 700;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-  transition: all var(--transition-fast);
-}
-
-.registerButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
-  filter: brightness(1.1);
-}
-
-.searchButton {
-  height: 42px;
-  padding: 0 1.5rem;
-  background-color: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-main);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all var(--transition-fast);
-}
-
-.searchButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-color: var(--color-text-muted);
-}
-
-/* --- NEW: Clear Button (Results と統一) ----------------------------------- */
-.clearButton {
-  height: 42px;
-  padding: 0 1.5rem;
-  background-color: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all var(--transition-fast);
-}
-
-.clearButton:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-  color: var(--color-text-main);
-}
 
 /* ============================================================================
  * Table
@@ -209,23 +147,4 @@
 
 .table tr:last-child td {
   border-bottom: none;
-}
-
-/* ============================================================================
- * Delete Button
- * ========================================================================== */
-.deleteButton {
-  padding: 0.4rem 0.8rem;
-  background-color: rgba(220, 38, 38, 0.1);
-  color: var(--color-danger);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
-
-.deleteButton:hover {
-  background-color: rgba(220, 38, 38, 0.2);
 }

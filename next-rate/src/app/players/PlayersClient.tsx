@@ -61,11 +61,11 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               />
             </div>
 
-            <button type="button" onClick={P.handleSearch} className={styles.searchButton}>
+            <button type="button" onClick={P.handleSearch} className="btn-ghost">
               検索
             </button>
 
-            <button type="button" onClick={P.clearSearch} className={styles.clearButton}>
+            <button type="button" onClick={P.clearSearch} className="btn-clear">
               クリア
             </button>
           </div>
@@ -98,7 +98,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               width={200}
             />
 
-            <button type="submit" className={styles.registerButton}>
+            <button type="submit" className="btn-primary">
               新規登録
             </button>
           </form>
@@ -120,7 +120,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
                   p.id !== P.currentUserId && (
                     <button
                       type="button"
-                      className={styles.deleteButton}
+                      className="btn-danger"
                       onClick={() => P.handleSoftDelete(p.id)}
                     >
                       出禁

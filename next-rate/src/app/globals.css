@@ -1,4 +1,102 @@
 /* =========================================
+   Common Button Styles (Global)
+   ========================================= */
+.btn-primary {
+  height: 42px;
+  padding: 0 1.5rem;
+  background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 90%, 65%));
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+  transition: all var(--transition-fast);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-ghost {
+  height: 42px;
+  padding: 0 1.5rem;
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+.btn-ghost:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: var(--color-text-muted);
+}
+
+.btn-clear {
+  height: 42px;
+  padding: 0 1.5rem;
+  background-color: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+}
+.btn-clear:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: var(--color-text-main);
+}
+
+.btn-danger {
+  padding: 0.4rem 0.8rem;
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--color-danger);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.btn-danger:hover {
+  background-color: rgba(220, 38, 38, 0.2);
+}
+/* =========================================
+   Input Field Styling (Global)
+   ========================================= */
+.input {
+  height: 42px;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  outline: none;
+  transition: all var(--transition-fast);
+  /* widthはpropsや親要素で制御 */
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+/* =========================================
    Modern Design System & Variables
    ========================================= */
 :root {
@@ -49,6 +147,37 @@
     
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    /* テーブル・ボタンのダーク用色調整 */
+    --color-table-bg: hsl(220, 20%, 22%);
+    --color-table-header-bg: hsl(220, 20%, 16%);
+    --color-table-border: hsl(220, 20%, 28%);
+    --color-btn-danger-bg: hsla(0, 84%, 60%, 0.18);
+    --color-btn-danger-hover: hsla(0, 84%, 60%, 0.32);
+    --color-btn-danger-text: hsl(0, 84%, 70%);
+  }
+}
+/* ===== ダークモード用 テーブル・ボタン色調整 ===== */
+@media (prefers-color-scheme: dark) {
+  .tableWrapper {
+    background-color: var(--color-table-bg) !important;
+    border-color: var(--color-table-border) !important;
+  }
+  .table th {
+    background-color: var(--color-table-header-bg) !important;
+    color: var(--color-text-muted) !important;
+    border-bottom: 1px solid var(--color-table-border) !important;
+  }
+  .table td {
+    color: var(--color-text-main) !important;
+    border-bottom: 1px solid var(--color-table-border) !important;
+  }
+  .btn-danger {
+    background-color: var(--color-btn-danger-bg) !important;
+    color: var(--color-btn-danger-text) !important;
+  }
+  .btn-danger:hover {
+    background-color: var(--color-btn-danger-hover) !important;
+    color: #fff !important;
   }
 }
 
