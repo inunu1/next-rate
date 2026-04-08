@@ -1,0 +1,48 @@
+.button {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast), border-color var(--transition-fast), opacity 0.15s ease;
+}
+
+/* サイズ（現行 UI と完全一致） */
+.sm { height: 38px; padding: 0 1.2rem; font-size: 0.85rem; }
+.md { height: 42px; padding: 0 1.5rem; font-size: 0.95rem; }
+.lg { height: 46px; padding: 0 1.8rem; font-size: 1rem; }
+
+/* ============================================================================
+ * PRIMARY（青）
+ * ========================================================================== */
+.primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.primary:hover {
+  background: var(--color-primary-hover);
+}
+
+/* ============================================================================
+ * SECONDARY（黒系）— 検索 / クリア / 前の日 / 次の日
+ * ========================================================================== */
+.secondary {
+  background: var(--color-bg-surface);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+}
+.secondary:hover {
+  background-color: var(--color-bg-app);   /* ← 全画面で統一される hover */
+  border-color: var(--color-border);
+}
+
+/* ============================================================================
+ * DANGER（削除）
+ * ========================================================================== */
+.danger {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--color-danger);
+  border: none;
+}
+.danger:hover {
+  background-color: rgba(220, 38, 38, 0.2);
+}
