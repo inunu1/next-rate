@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import styles from "./Results.module.css";
 
-import PlayerSelect from "@/components/PlayerSelect";
+import Select from "@/components/Select/Select";
 import Input from "@/components/Input";
 import DataTable from "@/components/DataTable";
 import AppButton from "@/components/AppButton/AppButton";
@@ -16,7 +16,6 @@ export default function ResultsClient() {
 
   useEffect(() => {
     R.init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!R.mounted) return null;
@@ -60,13 +59,12 @@ export default function ResultsClient() {
         {R.activeTab === "search" ? (
           <div className={styles.formBar}>
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={R.playerOptions}
                 value={R.playerOpt}
                 onChange={R.handlePlayerChange}
                 placeholder="プレイヤーで絞り込み"
                 width="260px"
-                mode="select"
               />
             </div>
 
@@ -92,24 +90,22 @@ export default function ResultsClient() {
             onSubmit={(e) => R.handleRegister(e)}
           >
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={R.playerOptions}
                 value={R.winnerOpt}
                 onChange={R.setWinnerOpt}
                 placeholder="勝者を選択"
                 width="260px"
-                mode="select"
               />
             </div>
 
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={R.playerOptions}
                 value={R.loserOpt}
                 onChange={R.setLoserOpt}
                 placeholder="敗者を選択"
                 width="260px"
-                mode="select"
               />
             </div>
 
@@ -120,17 +116,27 @@ export default function ResultsClient() {
               width={180}
             />
 
-            <select
-              className={styles.roundSelect}
-              value={R.roundIndex}
-              onChange={(e) => R.setRoundIndex(e.target.value)}
-            >
-              {R.selectableRounds.map((r) => (
-                <option key={r} value={r}>
-                  第{r}ラウンド
-                </option>
-              ))}
-            </select>
+            {/* Round Select */}
+            <div className={styles.selectWrapper}>
+              <Select
+                options={R.selectableRounds.map((r) => ({
+                  value: String(r),
+                  label: `第${r}ラウンド`,
+                }))}
+                value={
+                  R.roundIndex
+                    ? {
+                        value: R.roundIndex,
+                        label: `第${R.roundIndex}ラウンド`,
+                      }
+                    : null
+                }
+                onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
+                placeholder="ラウンド"
+                width="180px"
+                searchable={false}  // ★ 入力禁止
+              />
+            </div>
 
             <AppButton variant="primary" size="md" type="submit">
               登録

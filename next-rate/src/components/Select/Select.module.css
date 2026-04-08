@@ -1,0 +1,52 @@
+.wrapper {
+  font-size: 0.95rem;
+}
+
+/* control */
+.control {
+  min-height: 42px !important;
+  height: 42px !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-bg-surface) !important;
+  box-shadow: none !important;
+  transition: all var(--transition-fast);
+}
+
+/* menu */
+.menu {
+  background-color: var(--color-bg-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  z-index: 9999 !important;
+}
+
+/* option */
+.option {
+  background-color: var(--color-bg-surface) !important;
+  color: var(--color-text-main) !important;
+  cursor: pointer !important;
+}
+
+.optionFocused {
+  background-color: var(--color-bg-hover) !important;
+  color: var(--color-text-main) !important;
+}
+
+/* value */
+.singleValue {
+  color: var(--color-text-main) !important;
+}
+
+.placeholder {
+  color: var(--color-text-muted) !important;
+}
+
+.valueContainer {
+  padding: 0 12px !important;
+}
+
+.input {
+  color: var(--color-text-main) !important;
+}
