@@ -9,6 +9,7 @@ import Input from "@/components/Input";
 import DataTable from "@/components/DataTable";
 import AppButton from "@/components/AppButton/AppButton";
 
+import FormBar from "@/components/FormBar/FormBar"; // ← 追加
 import { useResults } from "./useResults";
 
 export default function ResultsClient() {
@@ -57,7 +58,7 @@ export default function ResultsClient() {
 
         {/* Search Mode */}
         {R.activeTab === "search" ? (
-          <div className={styles.formBar}>
+          <FormBar>
             <div className={styles.selectWrapper}>
               <Select
                 options={R.playerOptions}
@@ -82,13 +83,10 @@ export default function ResultsClient() {
             <AppButton variant="secondary" size="md" onClick={R.clearSearch}>
               クリア
             </AppButton>
-          </div>
+          </FormBar>
         ) : (
           /* Register Mode */
-          <form
-            className={styles.formBar}
-            onSubmit={(e) => R.handleRegister(e)}
-          >
+          <FormBar as="form" onSubmit={(e) => R.handleRegister(e)}>
             <div className={styles.selectWrapper}>
               <Select
                 options={R.playerOptions}
@@ -116,7 +114,6 @@ export default function ResultsClient() {
               width={180}
             />
 
-            {/* Round Select */}
             <div className={styles.selectWrapper}>
               <Select
                 options={R.selectableRounds.map((r) => ({
@@ -141,7 +138,7 @@ export default function ResultsClient() {
             <AppButton variant="primary" size="md" type="submit">
               登録
             </AppButton>
-          </form>
+          </FormBar>
         )}
       </div>
 

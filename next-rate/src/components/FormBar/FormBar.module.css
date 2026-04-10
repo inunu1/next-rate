@@ -1,0 +1,20 @@
+.formBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  /* 折り返し防止 */
+  flex-wrap: nowrap;
+
+  /* スマホ対策：横スクロール */
+  overflow-x: auto;
+
+  /* スクロールバーの余白 */
+  padding-bottom: 4px;
+
+  /* 見た目の統一 */
+  width: 100%;
+  box-sizing: border-box;
+
+  align-items: flex-end;
+}
