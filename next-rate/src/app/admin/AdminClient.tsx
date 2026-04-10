@@ -8,8 +8,7 @@ import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
-import FormBar from "@/components/FormBar/FormBar";
-
+import FormBar from "@/components/FormBar/FormBar";import PageHeader from '@/components/PageHeader/PageHeader';
 import { useAdmin } from "./useAdmin";
 
 export default function AdminClient({ currentUserId }: { currentUserId: string }) {
@@ -23,13 +22,14 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>管理者管理</h1>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      </header>
+      <PageHeader
+        title="管理者管理"
+        actions={
+          <Link href="/dashboard" className={styles.backLink}>
+            ← ダッシュボードへ戻る
+          </Link>
+        }
+      />
 
       {/* Form Card */}
       <div className={styles.formCard}>

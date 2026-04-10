@@ -9,6 +9,7 @@ import Select from "@/components/Select/Select";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
 import Input from "@/components/DateInput/DateInput"; // number input として使う
+import PageHeader from "@/components/PageHeader/PageHeader";
 
 import { usePlayers } from "./usePlayers";
 
@@ -23,13 +24,14 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>対局者管理</h1>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      </header>
+      <PageHeader
+        title="対局者管理"
+        actions={
+          <Link href="/dashboard" className={styles.backLink}>
+            ← ダッシュボードへ戻る
+          </Link>
+        }
+      />
 
       {/* Form Card */}
       <div className={styles.formCard}>

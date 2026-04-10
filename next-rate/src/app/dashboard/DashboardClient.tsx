@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 import styles from './Dashboard.module.css';
+import PageHeader from '@/components/PageHeader/PageHeader';
 
 export default function DashboardClient() {
   return (
     <div className={styles.container}>
-      {/* Header Area */}
-      <header className={styles.header}>
-        <div className={styles.title}>next-rate</div>
-        <Link href="/api/auth/signout" className={styles.logoutButton}>
-          ログアウト
-        </Link>
-      </header>
+      <PageHeader
+        title="next-rate"
+        actions={
+          <Link href="/api/auth/signout" className={styles.logoutButton}>
+            ログアウト
+          </Link>
+        }
+      />
 
       <main className={styles.main}>
         {/* Welcome Section */}

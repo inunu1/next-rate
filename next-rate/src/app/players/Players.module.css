@@ -9,22 +9,6 @@
 /* ============================================================================
  * Header
  * ========================================================================== */
-.header {
-  height: var(--header-height);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  background-color: transparent;
-  margin-bottom: 2rem;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-main);
-}
-
 .backLink {
   font-size: 0.9rem;
   color: var(--color-text-muted);

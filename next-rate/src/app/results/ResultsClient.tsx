@@ -8,6 +8,7 @@ import Select from "@/components/Select/Select";
 import DateInput from "@/components/DateInput/DateInput";
 import Table from "@/components/Table/Table";
 import AppButton from "@/components/Button/Button";
+import PageHeader from "@/components/PageHeader/PageHeader";
 
 import FormBar from "@/components/FormBar/FormBar";
 import { useResults } from "./useResults";
@@ -23,13 +24,14 @@ export default function ResultsClient() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>対局結果管理</h1>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      </header>
+      <PageHeader
+        title="対局結果管理"
+        actions={
+          <Link href="/dashboard" className={styles.backLink}>
+            ← ダッシュボードへ戻る
+          </Link>
+        }
+      />
 
       {/* Form Card */}
       <div className={styles.formCard}>
