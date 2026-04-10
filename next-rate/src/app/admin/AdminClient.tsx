@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import styles from "./Admin.module.css";
 
-import DataTable from "@/components/DataTable";
+import DataTable from "@/components/Table/Table";
 import PlayerSelect from "@/components/PlayerSelect";
 import Input from "@/components/DateInput/DateInput";
 

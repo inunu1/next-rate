@@ -1,19 +1,22 @@
 'use client';
 
-type Column<T> = {
+import { ReactNode } from 'react';
+import styles from './Table.module.css';
+
+export type Column<T> = {
   header: string;
-  render: (row: T) => React.ReactNode;
+  render: (row: T) => ReactNode;
 };
 
 type Props<T> = {
   columns: Column<T>[];
   rows: T[];
-  tableClass: string;
+  className?: string;
 };
 
-export default function DataTable<T>({ columns, rows, tableClass }: Props<T>) {
+export default function Table<T>({ columns, rows, className }: Props<T>) {
   return (
-    <table className={tableClass}>
+    <table className={`${styles.table}${className ? ' ' + className : ''}`}>
       <thead>
         <tr>
           {columns.map((col, idx) => (
@@ -21,6 +24,7 @@ export default function DataTable<T>({ columns, rows, tableClass }: Props<T>) {
           ))}
         </tr>
       </thead>
+
       <tbody>
         {rows.map((row, i) => (
           <tr key={i}>

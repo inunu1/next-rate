@@ -5,11 +5,11 @@ import Link from "next/link";
 import styles from "./Results.module.css";
 
 import Select from "@/components/Select/Select";
-import Input from "@/components/DateInput/DateInput";
-import DataTable from "@/components/DataTable";
+import DateInput from "@/components/DateInput/DateInput";
+import Table from "@/components/Table/Table";
 import AppButton from "@/components/Button/Button";
 
-import FormBar from "@/components/FormBar/FormBar"; // ← 追加
+import FormBar from "@/components/FormBar/FormBar";
 import { useResults } from "./useResults";
 
 export default function ResultsClient() {
@@ -69,8 +69,7 @@ export default function ResultsClient() {
               />
             </div>
 
-            <Input
-              type="date"
+            <DateInput
               value={R.searchDate}
               onChange={(e) => R.setSearchDate(e.target.value)}
               width={180}
@@ -107,8 +106,7 @@ export default function ResultsClient() {
               />
             </div>
 
-            <Input
-              type="date"
+            <DateInput
               value={R.registerDate}
               onChange={(e) => R.setRegisterDate(e.target.value)}
               width={180}
@@ -170,8 +168,8 @@ export default function ResultsClient() {
       {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <DataTable
-            tableClass={styles.table}
+          <Table
+            className={styles.table}
             rows={R.results}
             columns={[
               {

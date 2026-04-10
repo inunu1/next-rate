@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import styles from "./Players.module.css";
 
-import DataTable from "@/components/DataTable";
+import Table from "@/components/Table/Table";
 import PlayerSelect from "@/components/PlayerSelect";
-import Input from "@/components/DateInput/DateInput";
+import AppButton from "@/components/Button/Button";
+import FormBar from "@/components/FormBar/FormBar";
+import Input from "@/components/DateInput/DateInput"; // number input として使う
 
 import { usePlayers } from "./usePlayers";
 
@@ -15,13 +17,13 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
 
   useEffect(() => {
     P.init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!P.mounted) return null;
 
   return (
     <div className={styles.container}>
+      {/* Header */}
       <header className={styles.header}>
         <h1 className={styles.title}>対局者管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -29,11 +31,15 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         </Link>
       </header>
 
+      {/* Form Card */}
       <div className={styles.formCard}>
+        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
-            className={`${styles.tabButton} ${P.activeTab === "search" ? styles.tabActive : ""}`}
+            className={`${styles.tabButton} ${
+              P.activeTab === "search" ? styles.tabActive : ""
+            }`}
             onClick={() => P.setActiveTab("search")}
           >
             🔍 検索
@@ -41,15 +47,18 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
 
           <button
             type="button"
-            className={`${styles.tabButton} ${P.activeTab === "register" ? styles.tabActive : ""}`}
+            className={`${styles.tabButton} ${
+              P.activeTab === "register" ? styles.tabActive : ""
+            }`}
             onClick={() => P.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
+        {/* Search Mode */}
         {P.activeTab === "search" ? (
-          <div className={styles.formBar}>
+          <FormBar>
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 options={P.playerOptions}
@@ -61,17 +70,18 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               />
             </div>
 
-            <button type="button" onClick={P.handleSearch} className="btn-ghost">
+            <AppButton variant="secondary" size="md" onClick={P.handleSearch}>
               検索
-            </button>
+            </AppButton>
 
-            <button type="button" onClick={P.clearSearch} className="btn-clear">
+            <AppButton variant="secondary" size="md" onClick={P.clearSearch}>
               クリア
-            </button>
-          </div>
+            </AppButton>
+          </FormBar>
         ) : (
-          <form
-            className={styles.formBar}
+          /* Register Mode */
+          <FormBar
+            as="form"
             onSubmit={(e) => {
               e.preventDefault();
               P.handleRegister();
@@ -88,6 +98,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               />
             </div>
 
+            {/* 初期レートは number 入力（usePlayers に合わせる） */}
             <Input
               type="number"
               placeholder="初期レート (例: 1500)"
@@ -95,20 +106,21 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               onChange={(e) => P.setInitialRate(e.target.value)}
               min={1000}
               max={9999}
-              width={200}
+              width={180}
             />
 
-            <button type="submit" className="btn-primary">
+            <AppButton variant="primary" size="md" type="submit">
               新規登録
-            </button>
-          </form>
+            </AppButton>
+          </FormBar>
         )}
       </div>
 
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <DataTable
-            tableClass={styles.table}
+          <Table
+            className={styles.table}
             rows={P.filteredPlayers}
             columns={[
               { header: "プレイヤー名", render: (p) => p.name },
@@ -118,13 +130,13 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
                 header: "操作",
                 render: (p) =>
                   p.id !== P.currentUserId && (
-                    <button
-                      type="button"
-                      className="btn-danger"
+                    <AppButton
+                      variant="danger"
+                      size="md"
                       onClick={() => P.handleSoftDelete(p.id)}
                     >
                       出禁
-                    </button>
+                    </AppButton>
                   ),
               },
             ]}
