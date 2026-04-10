@@ -3,14 +3,12 @@
 import { ReactNode } from "react";
 import styles from "./FormBar.module.css";
 
-/* ① as="form" のときだけ onSubmit を許可 */
 type FormProps = {
   as: "form";
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
 };
 
-/* ② as="div" のときは onSubmit を禁止 */
 type DivProps = {
   as?: "div";
   onSubmit?: never;
@@ -19,12 +17,18 @@ type DivProps = {
 
 type Props = FormProps | DivProps;
 
-export default function FormBar({ as = "div", onSubmit, children }: Props) {
-  const Component = as;
+export default function FormBar(props: Props) {
+  const { as = "div", children } = props;
 
-  return (
-    <Component className={styles.formBar} onSubmit={onSubmit as any}>
-      {children}
-    </Component>
-  );
+  if (as === "form") {
+    // form のときだけ onSubmit を渡す
+    return (
+      <form className={styles.formBar} onSubmit={props.onSubmit}>
+        {children}
+      </form>
+    );
+  }
+
+  // div のときは onSubmit を渡さない
+  return <div className={styles.formBar}>{children}</div>;
 }
