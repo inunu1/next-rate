@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import styles from "./Admin.module.css";
 
-import DataTable from "@/components/Table/Table";
+import Table from "@/components/Table/Table";
 import PlayerSelect from "@/components/PlayerSelect";
 import Input from "@/components/DateInput/DateInput";
+import AppButton from "@/components/Button/Button";
+import FormBar from "@/components/FormBar/FormBar";
 
 import { useAdmin } from "./useAdmin";
 
@@ -15,13 +17,13 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
   useEffect(() => {
     A.init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!A.mounted) return null;
 
   return (
     <div className={styles.container}>
+      {/* Header */}
       <header className={styles.header}>
         <h1 className={styles.title}>管理者管理</h1>
         <Link href="/dashboard" className={styles.backLink}>
@@ -29,11 +31,15 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         </Link>
       </header>
 
+      {/* Form Card */}
       <div className={styles.formCard}>
+        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
-            className={`${styles.tabButton} ${A.activeTab === "search" ? styles.tabActive : ""}`}
+            className={`${styles.tabButton} ${
+              A.activeTab === "search" ? styles.tabActive : ""
+            }`}
             onClick={() => A.setActiveTab("search")}
           >
             🔍 検索
@@ -41,15 +47,18 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
           <button
             type="button"
-            className={`${styles.tabButton} ${A.activeTab === "register" ? styles.tabActive : ""}`}
+            className={`${styles.tabButton} ${
+              A.activeTab === "register" ? styles.tabActive : ""
+            }`}
             onClick={() => A.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
+        {/* Search Mode */}
         {A.activeTab === "search" ? (
-          <div className={styles.formBar}>
+          <FormBar>
             <div className={styles.selectWrapper}>
               <PlayerSelect
                 options={A.adminOptions}
@@ -61,17 +70,18 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
               />
             </div>
 
-            <button type="button" onClick={A.handleSearch} className="btn-ghost">
+            <AppButton variant="secondary" size="md" onClick={A.handleSearch}>
               検索
-            </button>
+            </AppButton>
 
-            <button type="button" onClick={A.clearSearch} className="btn-clear">
+            <AppButton variant="secondary" size="md" onClick={A.clearSearch}>
               クリア
-            </button>
-          </div>
+            </AppButton>
+          </FormBar>
         ) : (
-          <form
-            className={styles.formBar}
+          /* Register Mode */
+          <FormBar
+            as="form"
             onSubmit={(e) => {
               e.preventDefault();
               A.handleRegister();
@@ -104,17 +114,18 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
               width={260}
             />
 
-            <button type="submit" className="btn-primary">
+            <AppButton variant="primary" size="md" type="submit">
               新規登録
-            </button>
-          </form>
+            </AppButton>
+          </FormBar>
         )}
       </div>
 
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <DataTable
-            tableClass={styles.table}
+          <Table
+            className={styles.table}
             rows={A.filteredUsers}
             columns={[
               { header: "Email", render: (u) => u.email },
@@ -123,13 +134,13 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
                 header: "操作",
                 render: (u) =>
                   u.id !== A.currentUserId && (
-                    <button
-                      type="button"
-                      className="btn-danger"
+                    <AppButton
+                      variant="danger"
+                      size="md"
                       onClick={() => A.handleDelete(u.id)}
                     >
                       削除
-                    </button>
+                    </AppButton>
                   ),
               },
             ]}
