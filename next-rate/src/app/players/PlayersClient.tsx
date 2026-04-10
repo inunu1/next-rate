@@ -6,7 +6,7 @@ import styles from "./Players.module.css";
 
 import DataTable from "@/components/DataTable";
 import PlayerSelect from "@/components/PlayerSelect";
-import Input from "@/components/Input";
+import Input from "@/components/DateInput/DateInput";
 
 import { usePlayers } from "./usePlayers";
 

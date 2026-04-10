@@ -1,0 +1,37 @@
+.dateInput {
+  height: 38px;
+  padding: 0 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* hover */
+.dateInput:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* focus */
+.dateInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+/* placeholder（必要なら） */
+.dateInput::placeholder {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* FormBar で幅を揃えるための wrapper（任意） */
+.dateInputWrapper {
+  min-width: 180px;
+  flex-shrink: 0;
+}

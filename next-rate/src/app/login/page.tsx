@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./Login.module.css";
-import Input from "@/components/Input";
+import Input from "@/components/DateInput/DateInput";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

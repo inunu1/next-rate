@@ -5,7 +5,7 @@ import Link from "next/link";
 import styles from "./Results.module.css";
 
 import Select from "@/components/Select/Select";
-import Input from "@/components/Input";
+import Input from "@/components/DateInput/DateInput";
 import DataTable from "@/components/DataTable";
 import AppButton from "@/components/AppButton/AppButton";
 

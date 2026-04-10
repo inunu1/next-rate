@@ -6,7 +6,7 @@ import styles from "./Admin.module.css";
 
 import DataTable from "@/components/DataTable";
 import PlayerSelect from "@/components/PlayerSelect";
-import Input from "@/components/Input";
+import Input from "@/components/DateInput/DateInput";
 
 import { useAdmin } from "./useAdmin";
 
