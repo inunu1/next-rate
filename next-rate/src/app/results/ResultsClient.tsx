@@ -75,11 +75,11 @@ export default function ResultsClient() {
               width={180}
             />
 
-            <AppButton variant="secondary" size="lg" onClick={R.handleSearch}>
+            <AppButton variant="secondary" size="md" onClick={R.handleSearch}>
               検索
             </AppButton>
 
-            <AppButton variant="secondary" size="lg" onClick={R.clearSearch}>
+            <AppButton variant="secondary" size="md" onClick={R.clearSearch}>
               クリア
             </AppButton>
           </div>
@@ -138,7 +138,7 @@ export default function ResultsClient() {
               />
             </div>
 
-            <AppButton variant="primary" size="lg" type="submit">
+            <AppButton variant="primary" size="md" type="submit">
               登録
             </AppButton>
           </form>
@@ -149,7 +149,7 @@ export default function ResultsClient() {
       <div className={styles.paginationBar}>
         <AppButton
           variant="secondary"
-          size="lg"
+          size="md"
           onClick={() => {
             if (R.nextDate) R.fetchResults({ date: R.nextDate });
           }}
@@ -161,7 +161,7 @@ export default function ResultsClient() {
 
         <AppButton
           variant="secondary"
-          size="lg"
+          size="md"
           onClick={() => {
             if (R.prevDate) R.fetchResults({ date: R.prevDate });
           }}
@@ -198,7 +198,7 @@ export default function ResultsClient() {
                 render: (r) => (
                   <AppButton
                     variant="danger"
-                    size="lg"
+                    size="md"
                     onClick={() => R.handleDelete(r.id)}
                   >
                     削除
