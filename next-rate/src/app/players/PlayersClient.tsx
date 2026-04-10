@@ -5,7 +5,7 @@ import Link from "next/link";
 import styles from "./Players.module.css";
 
 import Table from "@/components/Table/Table";
-import PlayerSelect from "@/components/PlayerSelect";
+import Select from "@/components/Select/Select";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
 import Input from "@/components/DateInput/DateInput"; // number input として使う
@@ -60,7 +60,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         {P.activeTab === "search" ? (
           <FormBar>
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={P.playerOptions}
                 value={P.searchOpt}
                 onChange={P.setSearchOpt}
@@ -88,7 +88,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
             }}
           >
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={P.playerOptions}
                 value={P.registerOpt}
                 onChange={P.setRegisterOpt}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import styles from "./Admin.module.css";
 
 import Table from "@/components/Table/Table";
-import PlayerSelect from "@/components/PlayerSelect";
+import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
@@ -60,13 +60,12 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         {A.activeTab === "search" ? (
           <FormBar>
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={A.adminOptions}
                 value={A.searchOpt}
                 onChange={A.setSearchOpt}
                 placeholder="管理者で絞り込み"
                 width="260px"
-                mode="select"
               />
             </div>
 
@@ -88,7 +87,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
             }}
           >
             <div className={styles.selectWrapper}>
-              <PlayerSelect
+              <Select
                 options={A.adminOptions}
                 value={A.registerOpt}
                 onChange={A.setRegisterOpt}
