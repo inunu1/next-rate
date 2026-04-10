@@ -67,7 +67,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
                 value={P.searchOpt}
                 onChange={P.setSearchOpt}
                 placeholder="プレイヤーで絞り込み"
-                width="260px"
+                width="auto"
                 mode="select"
               />
             </div>
@@ -95,7 +95,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
                 value={P.registerOpt}
                 onChange={P.setRegisterOpt}
                 placeholder="新規プレイヤー名を入力"
-                width="260px"
+                width="auto"
                 mode="creatable"
               />
             </div>

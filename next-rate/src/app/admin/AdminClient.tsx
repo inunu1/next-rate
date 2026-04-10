@@ -65,7 +65,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
                 value={A.searchOpt}
                 onChange={A.setSearchOpt}
                 placeholder="管理者で絞り込み"
-                width="260px"
+                width="auto"
               />
             </div>
 
@@ -92,7 +92,7 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
                 value={A.registerOpt}
                 onChange={A.setRegisterOpt}
                 placeholder="新規管理者の名前を入力"
-                width="260px"
+                width="auto"
                 mode="creatable"
               />
             </div>

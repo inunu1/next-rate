@@ -67,7 +67,7 @@ export default function ResultsClient() {
                 value={R.playerOpt}
                 onChange={R.handlePlayerChange}
                 placeholder="プレイヤーで絞り込み"
-                width="260px"
+                width="auto"
               />
             </div>
 
@@ -94,7 +94,7 @@ export default function ResultsClient() {
                 value={R.winnerOpt}
                 onChange={R.setWinnerOpt}
                 placeholder="勝者を選択"
-                width="260px"
+                width="auto"
               />
             </div>
 
@@ -104,7 +104,7 @@ export default function ResultsClient() {
                 value={R.loserOpt}
                 onChange={R.setLoserOpt}
                 placeholder="敗者を選択"
-                width="260px"
+                width="auto"
               />
             </div>
 
@@ -130,7 +130,7 @@ export default function ResultsClient() {
                 }
                 onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
                 placeholder="ラウンド"
-                width="180px"
+                width="auto"
                 searchable={false}
               />
             </div>
