@@ -88,14 +88,6 @@
 /* ============================================================================
  * Form Bar
  * ========================================================================== */
-.formBar {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
 .selectWrapper {
   min-width: 250px;
   flex-shrink: 0;
