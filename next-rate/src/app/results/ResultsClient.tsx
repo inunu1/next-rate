@@ -7,7 +7,7 @@ import styles from "./Results.module.css";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import DataTable from "@/components/DataTable";
-import AppButton from "@/components/AppButton/AppButton";
+import AppButton from "@/components/Button/Button";
 
 import FormBar from "@/components/FormBar/FormBar"; // ← 追加
 import { useResults } from "./useResults";

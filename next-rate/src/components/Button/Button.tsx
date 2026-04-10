@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "./AppButton.module.css";
+import styles from "./Button.module.css";
 
 type ButtonProps = {
   children: React.ReactNode;
