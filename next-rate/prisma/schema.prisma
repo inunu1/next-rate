@@ -7,37 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  owner
+  admin
+}
+
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  name            String?
-  hashedPassword  String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String?
+  hashedPassword String
+  role           Role
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Player {
-  id              String    @id @default(uuid())
-  name            String    @unique   // ★ ユニーク制約を追加
-  initialRate     Int
-  currentRate     Int
-  createdAt       DateTime  @default(now())
-  deletedAt       DateTime?
+  id          String    @id @default(uuid())
+  userId      String
+  name        String
+  initialRate Int
+  currentRate Int
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
 }
 
 model Result {
-  id              String    @id @default(uuid())
-  winnerId        String
-  winnerName      String
-  winnerRate      Int
-  loserId         String
-  loserName       String
-  loserRate       Int
-  matchDate       Int
-  roundIndex      Int
-  updatedAt       DateTime  @updatedAt
-
-  @@unique([winnerId, loserId, matchDate, roundIndex])
-  @@unique([matchDate, roundIndex, winnerId])
-  @@unique([matchDate, roundIndex, loserId])
+  id         String   @id @default(uuid())
+  userId     String
+  winnerId   String
+  winnerName String
+  winnerRate Int
+  loserId    String
+  loserName  String
+  loserRate  Int
+  matchDate  Int
+  roundIndex Int
+  updatedAt  DateTime @updatedAt
+  @@unique([userId, matchDate, roundIndex, winnerId])
+  @@unique([userId, matchDate, roundIndex, loserId])
 }
