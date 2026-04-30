@@ -1,35 +1,26 @@
 /**
  * ============================================================
  * 【機能概要】
- * 管理ユーザー（Admin）を扱う REST API。
+ * 団体ユーザー（User）を扱う REST API。
  * 以下の 3 種類の処理を提供する。
  *
- * ① GET    /api/private/admin
- *      - 管理ユーザー一覧を取得する
- *      - 削除概念は存在しないため全件取得
+ * ① GET    /api/private/user
+ *      - 団体ユーザー一覧を取得する
  *
- * ② POST   /api/private/admin
- *      - 管理ユーザーの新規登録を行う
+ * ② POST   /api/private/user
+ *      - 団体ユーザーの新規登録を行う
  *      - email の重複チェックを実施
  *      - パスワードは bcrypt にてハッシュ化して保存
+ *      - role（owner / admin）を入力で指定可能
  *
- * ③ DELETE /api/private/admin
- *      - 管理ユーザーの物理削除を行う
- *      - 関連データが存在しない前提で物理削除を許可
+ * ③ DELETE /api/private/user
+ *      - 団体ユーザーの物理削除を行う
  *
  * 【前提条件】
- * ・email はユニークであること（DB 制約推奨）
+ * ・User.role は Prisma の enum により必須（owner / admin）
+ * ・email はユニーク
  * ・パスワードは平文で保存しない
- * ・管理ユーザーは論理削除を行わない（業務要件）
  *
- * 【例外処理方針】
- * ・業務エラー：400 番台
- * ・システムエラー：500 番台
- * ・ログには詳細を出力し、レスポンスは簡易メッセージとする
- *
- * 【設計方針】
- * ・API は DB アクセスの唯一の入口とする
- * ・Client Component は fetch のみを行い、DB には直接触れない
  * ============================================================
  */
 
@@ -41,7 +32,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /* ============================================================
- * GET: 管理ユーザー全件取得
+ * GET: 団体ユーザー全件取得
  * ============================================================ */
 export async function GET() {
   try {
@@ -51,26 +42,34 @@ export async function GET() {
 
     return NextResponse.json(users);
   } catch (err) {
-    console.error('GET /api/private/admin error:', err);
+    console.error('GET /api/private/user error:', err);
     return NextResponse.json(
-      { error: '管理ユーザー取得に失敗しました' },
+      { error: '団体ユーザー取得に失敗しました' },
       { status: 500 }
     );
   }
 }
 
 /* ============================================================
- * POST: 管理ユーザー新規登録処理
+ * POST: 団体ユーザー新規登録処理（owner/admin 両対応）
  * ============================================================ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password } = body;
+    const { name, email, password, role } = body;
 
-    // ▼ 入力チェック（SIer では必須）
-    if (!name || !email || !password) {
+    // ▼ 入力チェック
+    if (!name || !email || !password || !role) {
       return NextResponse.json(
-        { error: 'name, email, password は必須です' },
+        { error: 'name, email, password, role は必須です' },
+        { status: 400 }
+      );
+    }
+
+    // ▼ role の妥当性チェック
+    if (!['owner', 'admin'].includes(role)) {
+      return NextResponse.json(
+        { error: 'role は owner または admin のみ指定可能です' },
         { status: 400 }
       );
     }
@@ -90,27 +89,28 @@ export async function POST(req: Request) {
     // ▼ パスワードハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ▼ 新規登録
+    // ▼ 新規登録（owner/admin 両対応）
     const created = await prisma.user.create({
       data: {
         name,
         email,
         hashedPassword,
+        role, // ★ ここが重要
       },
     });
 
     return NextResponse.json(created);
   } catch (err) {
-    console.error('POST /api/private/admin error:', err);
+    console.error('POST /api/private/user error:', err);
     return NextResponse.json(
-      { error: '管理ユーザー登録に失敗しました' },
+      { error: '団体ユーザー登録に失敗しました' },
       { status: 500 }
     );
   }
 }
 
 /* ============================================================
- * DELETE: 管理ユーザー物理削除処理
+ * DELETE: 団体ユーザー物理削除処理
  * ============================================================ */
 export async function DELETE(req: Request) {
   try {
@@ -125,16 +125,16 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // ▼ 物理削除（関連データがない前提）
+    // ▼ 物理削除
     const deleted = await prisma.user.delete({
       where: { id },
     });
 
     return NextResponse.json(deleted);
   } catch (err) {
-    console.error('DELETE /api/private/admin error:', err);
+    console.error('DELETE /api/private/user error:', err);
     return NextResponse.json(
-      { error: '管理ユーザー削除に失敗しました' },
+      { error: '団体ユーザー削除に失敗しました' },
       { status: 500 }
     );
   }
