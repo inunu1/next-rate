@@ -2,53 +2,38 @@
  * ============================================================================
  * 【機能概要】
  * プレイヤー（Player）情報を扱う REST API。
- *
- * 【設計方針】
- * ・API は常に targetUserId を基準にデータを操作する。
- * ・targetUserId の決定ルール：
- *      ① admin（団体オーナー）
- *          - リクエストパラメータの userId は無視する
- *          - セッションの user.id を強制使用
- *
- *      ② owner（SaaS 運営者）
- *          - リクエストパラメータの userId を必須とする
- *          - 画面側で「どの団体か」を選択してから操作する
- *
- * 【提供機能】
- * ① GET    /api/private/player
- *      - プレイヤー一覧取得
- *
- * ② POST   /api/private/player
- *      - プレイヤー新規登録
- *
- * ③ DELETE /api/private/player
- *      - プレイヤー論理削除
- *
- * 【例外処理方針】
- * ・認証エラー：401
- * ・認可エラー：403
- * ・業務エラー：400 / 404
- * ・システムエラー：500
  * ============================================================================
  */
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Player } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
- * 認証結果型定義（成功/失敗の明確な型分岐）
+ * 型定義
  * ========================================================================== */
-type AuthSuccess = { session: any };
+type AuthSuccess = { session: Session };
 type AuthError = { error: string; status: number };
 type AuthResult = AuthSuccess | AuthError;
 
+type PostPlayerBody = {
+  name: string;
+  initialRate: number;
+  userId?: string;
+};
+
+type DeletePlayerBody = {
+  id: string;
+  userId?: string;
+};
+
 /* ============================================================================
- * 認証チェック（owner/admin 共通）
+ * 認証チェック
  * ========================================================================== */
 async function requireAuth(): Promise<AuthResult> {
   const session = await getServerSession(authOptions);
@@ -61,14 +46,10 @@ async function requireAuth(): Promise<AuthResult> {
 }
 
 /* ============================================================================
- * targetUserId の決定ロジック（本 API の中核）
- * ============================================================================
- * 【仕様】
- * ・admin：セッションの user.id を強制使用（他団体アクセス禁止）
- * ・owner：リクエストパラメータの userId を必須とする
+ * targetUserId の決定ロジック
  * ========================================================================== */
 function resolveTargetUserId(
-  session: any,
+  session: Session,
   userIdParam: string | null
 ): string | AuthError {
   const role = session.user.role;
@@ -86,18 +67,14 @@ function resolveTargetUserId(
 
 /* ============================================================================
  * GET: プレイヤー一覧取得
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 該当団体のプレイヤー一覧を取得
  * ========================================================================== */
 export async function GET(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const session = auth.session;
 
+  const session = auth.session;
   const { searchParams } = new URL(req.url);
   const userIdParam = searchParams.get("userId");
 
@@ -127,20 +104,16 @@ export async function GET(req: Request) {
 
 /* ============================================================================
  * POST: プレイヤー新規登録
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 入力チェック
- * ③ プレイヤー登録
  * ========================================================================== */
 export async function POST(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
   const session = auth.session;
 
-  const body = await req.json();
+  const body = (await req.json()) as PostPlayerBody;
   const { name, initialRate, userId } = body;
 
   const target = resolveTargetUserId(session, userId ?? null);
@@ -177,28 +150,20 @@ export async function POST(req: Request) {
 
 /* ============================================================================
  * DELETE: プレイヤー論理削除
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 対象プレイヤーの存在確認
- * ③ 権限チェック（他団体アクセス禁止）
- * ④ 論理削除
  * ========================================================================== */
 export async function DELETE(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
   const session = auth.session;
 
-  const body = await req.json();
+  const body = (await req.json()) as DeletePlayerBody;
   const { id, userId } = body;
 
   if (!id) {
-    return NextResponse.json(
-      { error: "id は必須です" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "id は必須です" }, { status: 400 });
   }
 
   const target = resolveTargetUserId(session, userId ?? null);

@@ -2,52 +2,36 @@
  * ============================================================================
  * 【機能概要】
  * 対局結果（Result）を扱う REST API。
- *
- * 【設計方針】
- * ・API は常に targetUserId を基準にデータを操作する。
- * ・targetUserId の決定ルール：
- *      ① admin（団体オーナー）
- *          - リクエストパラメータの userId は無視する
- *          - セッションの user.id を強制使用
- *
- *      ② owner（SaaS 運営者）
- *          - リクエストパラメータの userId を必須とする
- *          - 画面側で「どの団体か」を選択してから操作する
- *
- * 【提供機能】
- * ① GET    /api/private/result
- *      - 対局結果の検索（date / playerId）
- *      - 前後日付の取得
- *
- * ② POST   /api/private/result
- *      - 対局結果の新規登録
- *
- * ③ DELETE /api/private/result
- *      - 対局結果の削除
- *
- * 【例外処理方針】
- * ・認証エラー：401
- * ・認可エラー：403
- * ・業務エラー：400 / 404 / 409
- * ・システムエラー：500
  * ============================================================================
  */
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Result } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { Result, Player } from "@prisma/client";
+import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
- * 認証結果型定義
+ * 型定義
  * ========================================================================== */
-type AuthSuccess = { session: any };
+type AuthSuccess = { session: Session };
 type AuthError = { error: string; status: number };
 type AuthResult = AuthSuccess | AuthError;
+
+type PostResultBody = {
+  winnerId: string;
+  winnerName: string;
+  winnerRate: number;
+  loserId: string;
+  loserName: string;
+  loserRate: number;
+  matchDate: number;
+  roundIndex: number;
+  userId?: string;
+};
 
 /* ============================================================================
  * 認証チェック
@@ -61,10 +45,10 @@ async function requireAuth(): Promise<AuthResult> {
 }
 
 /* ============================================================================
- * targetUserId の決定ロジック（本 API の中核）
+ * targetUserId の決定ロジック
  * ========================================================================== */
 function resolveTargetUserId(
-  session: any,
+  session: Session,
   userIdParam: string | null
 ): string | AuthError {
   const role = session.user.role;
@@ -81,14 +65,7 @@ function resolveTargetUserId(
 }
 
 /* ============================================================================
- * GET: 対局結果検索処理
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 検索対象日付の決定
- * ③ 対象日の対局一覧取得
- * ④ 前後日付の取得
- * ⑤ 整形して返却
+ * GET: 対局結果検索
  * ========================================================================== */
 export async function GET(req: Request) {
   const auth = await requireAuth();
@@ -113,19 +90,13 @@ export async function GET(req: Request) {
   if (dateStr) {
     targetMatchDate = Number(dateStr.replaceAll("-", ""));
   } else {
-    let sql = `
+    const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
       SELECT DISTINCT "matchDate"
       FROM "Result"
       WHERE "userId" = '${target}'
-    `;
-
-    if (playerId) {
-      sql += ` AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}') `;
-    }
-
-    sql += ` ORDER BY "matchDate" DESC LIMIT 1`;
-
-    const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(sql);
+      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+      ORDER BY "matchDate" DESC LIMIT 1
+    `);
 
     if (latest.length === 0) {
       return NextResponse.json({
@@ -140,51 +111,33 @@ export async function GET(req: Request) {
   }
 
   /* ② 対象日の対局一覧取得 */
-  let sqlResults = `
+  const results = await prisma.$queryRawUnsafe<Result[]>(`
     SELECT *
     FROM "Result"
     WHERE "matchDate" = ${targetMatchDate}
       AND "userId" = '${target}'
-  `;
-
-  if (playerId) {
-    sqlResults += ` AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}') `;
-  }
-
-  sqlResults += ` ORDER BY "roundIndex" ASC`;
-
-  const results = await prisma.$queryRawUnsafe<Result[]>(sqlResults);
+      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+    ORDER BY "roundIndex" ASC
+  `);
 
   /* ③ 前後日付の取得 */
-  let sqlPrev = `
+  const prev = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" < ${targetMatchDate}
       AND "userId" = '${target}'
-  `;
+      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+    ORDER BY "matchDate" DESC LIMIT 1
+  `);
 
-  if (playerId) {
-    sqlPrev += ` AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}') `;
-  }
-
-  sqlPrev += ` ORDER BY "matchDate" DESC LIMIT 1`;
-
-  const prev = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(sqlPrev);
-
-  let sqlNext = `
+  const next = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" > ${targetMatchDate}
       AND "userId" = '${target}'
-  `;
-
-  if (playerId) {
-    sqlNext += ` AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}') `;
-  }
-
-  sqlNext += ` ORDER BY "matchDate" ASC LIMIT 1`;
-
-  const next = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(sqlNext);
+      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+    ORDER BY "matchDate" ASC LIMIT 1
+  `);
 
   /* ④ 整形して返却 */
   const fmt = (n: number | undefined) => {
@@ -202,14 +155,7 @@ export async function GET(req: Request) {
 }
 
 /* ============================================================================
- * POST: 対局結果登録処理
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 入力チェック
- * ③ 自団体プレイヤーの存在確認
- * ④ 同一ラウンド重複チェック
- * ⑤ 登録処理
+ * POST: 対局結果登録
  * ========================================================================== */
 export async function POST(req: Request) {
   const auth = await requireAuth();
@@ -218,7 +164,8 @@ export async function POST(req: Request) {
   }
   const session = auth.session;
 
-  const body = await req.json();
+  const body = (await req.json()) as PostResultBody;
+
   const {
     winnerId,
     winnerName,
@@ -236,7 +183,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: target.error }, { status: target.status });
   }
 
-  /* ① 入力チェック */
+  /* 入力チェック */
   if (!winnerId || !loserId || !matchDate || !roundIndex) {
     return NextResponse.json(
       { error: "必須項目が不足しています" },
@@ -244,7 +191,7 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ② 自団体プレイヤーの存在確認 */
+  /* 自団体プレイヤーの存在確認 */
   const winner = await prisma.player.findUnique({ where: { id: winnerId } });
   const loser = await prisma.player.findUnique({ where: { id: loserId } });
 
@@ -262,7 +209,7 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ③ 同一ラウンド重複チェック */
+  /* 同一ラウンド重複チェック */
   const conflict = await prisma.result.findFirst({
     where: {
       matchDate,
@@ -279,7 +226,7 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ④ 登録処理 */
+  /* 登録処理 */
   const result = await prisma.result.create({
     data: {
       winnerId,
@@ -298,13 +245,7 @@ export async function POST(req: Request) {
 }
 
 /* ============================================================================
- * DELETE: 対局結果削除処理
- * ============================================================================
- * 【処理概要】
- * ① targetUserId の決定
- * ② 対象データの存在確認
- * ③ 権限チェック
- * ④ 削除処理
+ * DELETE: 対局結果削除
  * ========================================================================== */
 export async function DELETE(req: Request) {
   const auth = await requireAuth();
@@ -318,10 +259,7 @@ export async function DELETE(req: Request) {
   const userIdParam = searchParams.get("userId");
 
   if (!id) {
-    return NextResponse.json(
-      { error: "id が必要です" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "id が必要です" }, { status: 400 });
   }
 
   const target = resolveTargetUserId(session, userIdParam);
@@ -329,7 +267,6 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: target.error }, { status: target.status });
   }
 
-  /* ① 対象データの存在確認 */
   const result = await prisma.result.findUnique({ where: { id } });
 
   if (!result) {
@@ -339,7 +276,6 @@ export async function DELETE(req: Request) {
     );
   }
 
-  /* ② 権限チェック */
   if (result.userId !== target) {
     return NextResponse.json(
       { error: "他団体の対局結果は削除できません" },
@@ -347,7 +283,6 @@ export async function DELETE(req: Request) {
     );
   }
 
-  /* ③ 削除処理 */
   await prisma.result.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
