@@ -1,6 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+/**
+ * ============================================================================
+ * 【画面名称】
+ * 対局者管理画面（PlayersClient）
+ *
+ * 【設計方針】
+ * ・owner：団体選択 UI を表示し、選択した団体の userId を使用
+ * ・admin：currentUserId を固定使用
+ * ・Select コンポーネントは Option 型を使用するため、value/onChange を Option に統一
+ * ============================================================================
+ */
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./Players.module.css";
 
@@ -8,17 +20,46 @@ import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
-import Input from "@/components/DateInput/DateInput"; // number input として使う
+import Input from "@/components/DateInput/DateInput";
 import PageHeader from "@/components/PageHeader/PageHeader";
 
 import { usePlayers } from "./usePlayers";
 
-export default function PlayersClient({ currentUserId }: { currentUserId: string }) {
-  const P = usePlayers(currentUserId);
+// Select の Option 型（あなたの Select コンポーネントに合わせる）
+type Option = { label: string; value: string };
+
+export default function PlayersClient({
+  currentUserId,
+  role,
+  allUsers,
+}: {
+  currentUserId: string;
+  role: "owner" | "admin";
+  allUsers?: { id: string; name: string }[];
+}) {
+  /**
+   * --------------------------------------------------------------------------
+   * 【団体選択 state】
+   * ・Select は Option 型を要求するため Option | null を保持する
+   * ・admin は団体選択 UI を持たないため currentUserId を Option 化して固定
+   * --------------------------------------------------------------------------
+   */
+  const [selectedUser, setSelectedUser] = useState<Option>({
+    label: "自団体",
+    value: currentUserId,
+  });
+
+  /**
+   * --------------------------------------------------------------------------
+   * usePlayers は userId(string) を受け取るため、
+   * selectedUser.value を渡す
+   * --------------------------------------------------------------------------
+   */
+  const P = usePlayers(selectedUser.value);
 
   useEffect(() => {
     P.init();
-  }, []);
+  }, [selectedUser.value]);
 
   if (!P.mounted) return null;
 
@@ -33,9 +74,29 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         }
       />
 
-      {/* Form Card */}
+      {/* ----------------------------------------------------------------------
+       * owner のみ団体選択 UI を表示
+       * -------------------------------------------------------------------- */}
+      {role === "owner" && allUsers && (
+        <div className={styles.orgSelector}>
+          <Select
+            options={allUsers.map((u) => ({
+              label: u.name,
+              value: u.id,
+            }))}
+            value={selectedUser}
+            onChange={(opt) => opt && setSelectedUser(opt)}
+            placeholder="団体を選択"
+            width={260}
+            mode="select"
+          />
+        </div>
+      )}
+
+      {/* ----------------------------------------------------------------------
+       * 入力フォーム（検索 / 新規登録）
+       * -------------------------------------------------------------------- */}
       <div className={styles.formCard}>
-        {/* Tabs */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -58,7 +119,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
           </button>
         </div>
 
-        {/* Search Mode */}
+        {/* 検索モード */}
         {P.activeTab === "search" ? (
           <FormBar>
             <div className={styles.selectWrapper}>
@@ -81,7 +142,7 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
             </AppButton>
           </FormBar>
         ) : (
-          /* Register Mode */
+          /* 新規登録モード */
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -100,7 +161,6 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               />
             </div>
 
-            {/* 初期レートは number 入力（usePlayers に合わせる） */}
             <Input
               type="number"
               placeholder="初期レート (例: 1500)"
@@ -118,7 +178,9 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
         )}
       </div>
 
-      {/* Table */}
+      {/* ----------------------------------------------------------------------
+       * プレイヤー一覧テーブル
+       * -------------------------------------------------------------------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
@@ -130,16 +192,15 @@ export default function PlayersClient({ currentUserId }: { currentUserId: string
               { header: "初期レート", render: (p) => p.initialRate },
               {
                 header: "操作",
-                render: (p) =>
-                  p.id !== P.currentUserId && (
-                    <AppButton
-                      variant="danger"
-                      size="md"
-                      onClick={() => P.handleSoftDelete(p.id)}
-                    >
-                      出禁
-                    </AppButton>
-                  ),
+                render: (p) => (
+                  <AppButton
+                    variant="danger"
+                    size="md"
+                    onClick={() => P.handleSoftDelete(p.id)}
+                  >
+                    出禁
+                  </AppButton>
+                ),
               },
             ]}
           />

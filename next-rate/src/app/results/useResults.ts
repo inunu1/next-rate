@@ -1,11 +1,46 @@
 "use client";
 
+/**
+ * ============================================================================
+ * 【フック名称】
+ * useResults（対局結果管理ロジック）
+ *
+ * 【機能概要】
+ * ・団体（userId）に紐づく対局結果の取得・検索・登録・削除を行う。
+ *
+ * 【設計方針】
+ * ① API は userId パラメータ方式を採用するため、
+ *    本フックは常に currentUserId（操作対象団体）を受け取る。
+ *
+ * ② admin（団体オーナー）
+ *      - currentUserId はセッションの user.id
+ *      - API 側で強制的に自団体に制限される
+ *
+ * ③ owner（SaaS 運営者）
+ *      - 画面側で団体選択 UI により currentUserId を切り替える
+ *      - API に userId を渡すことで任意団体を操作可能
+ *
+ * ④ Select コンポーネントは Option 型を使用するため、
+ *    playerOpt / winnerOpt / loserOpt は Option | null を保持する。
+ *
+ * 【提供機能】
+ * ・対局結果一覧取得
+ * ・対局結果検索（日付・プレイヤー）
+ * ・対局結果新規登録
+ * ・対局結果削除
+ *
+ * 【例外処理方針】
+ * ・API エラーは呼び出し元でハンドリング
+ * ・本フックでは最低限の alert のみ実施
+ * ============================================================================
+ */
+
 import { useEffect, useState } from "react";
 import type { Player, Result } from "@prisma/client";
 
 export type PlayerOption = { value: string; label: string };
 
-export function useResults() {
+export function useResults(currentUserId: string) {
   /* ==========================================================================
    * 状態管理
    * ======================================================================== */
@@ -46,10 +81,10 @@ export function useResults() {
   };
 
   /* ==========================================================================
-   * プレイヤー一覧取得
+   * プレイヤー一覧取得（userId パラメータ方式）
    * ======================================================================== */
   const fetchPlayers = async () => {
-    const res = await fetch("/api/private/player");
+    const res = await fetch(`/api/private/player?userId=${currentUserId}`);
     const data = await res.json();
     setPlayers(data);
   };
@@ -67,7 +102,7 @@ export function useResults() {
   };
 
   /* ==========================================================================
-   * 対局結果取得
+   * 対局結果取得（userId パラメータ方式）
    * ======================================================================== */
   const fetchResults = async (
     params: Record<string, string | undefined>
@@ -76,7 +111,11 @@ export function useResults() {
       Object.entries(params).filter((entry) => entry[1] !== undefined)
     ) as Record<string, string>;
 
-    const queryString = new URLSearchParams(filteredParams).toString();
+    const queryString = new URLSearchParams({
+      ...filteredParams,
+      userId: currentUserId, // ★ userId を必ず付与
+    }).toString();
+
     const res = await fetch(`/api/private/result?${queryString}`);
     const data = await res.json();
 
@@ -122,11 +161,9 @@ export function useResults() {
   }, [mounted, date]);
 
   /* ==========================================================================
-   * 登録
+   * 登録（userId パラメータ方式）
    * ======================================================================== */
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const handleRegister = async () => {
     if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
       alert("勝者・敗者・対局日・ラウンドは必須です");
       return;
@@ -155,10 +192,14 @@ export function useResults() {
         loserRate: l.currentRate,
         matchDate,
         roundIndex: round,
+        userId: currentUserId, // ★ userId を付与
       }),
     });
 
-    await fetch("/api/private/calculate", { method: "POST" });
+    await fetch("/api/private/calculate", {
+      method: "POST",
+      body: JSON.stringify({ userId: currentUserId }), // ★ 計算も団体単位
+    });
 
     alert("登録が完了しました");
 
@@ -169,7 +210,7 @@ export function useResults() {
   };
 
   /* ==========================================================================
-   * 削除
+   * 削除（userId パラメータ方式）
    * ======================================================================== */
   const handleDelete = async (id: string) => {
     const target = results.find((r) => r.id === id);
@@ -177,8 +218,14 @@ export function useResults() {
 
     if (!confirm("この対局結果を削除しますか？")) return;
 
-    await fetch(`/api/private/result?id=${id}`, { method: "DELETE" });
-    await fetch("/api/private/calculate", { method: "POST" });
+    await fetch(`/api/private/result?id=${id}&userId=${currentUserId}`, {
+      method: "DELETE",
+    });
+
+    await fetch("/api/private/calculate", {
+      method: "POST",
+      body: JSON.stringify({ userId: currentUserId }),
+    });
 
     alert("削除が完了しました");
 

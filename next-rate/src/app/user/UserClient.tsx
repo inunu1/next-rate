@@ -9,7 +9,7 @@ import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";import PageHeader from '@/components/PageHeader/PageHeader';
-import { useAdmin } from "./useAdmin";
+import { useAdmin } from "./useUser";
 
 export default function AdminClient({ currentUserId }: { currentUserId: string }) {
   const A = useAdmin(currentUserId);
