@@ -1,29 +1,62 @@
 "use client";
 
+/**
+ * ============================================================================
+ * 【画面名称】
+ * 団体管理画面（UserClient）
+ *
+ * 【機能概要】
+ * ・SaaS 運営者（owner）が団体（User）を管理する画面。
+ * ・団体の検索・新規登録・削除を行う。
+ *
+ * 【設計方針】
+ * ① admin（団体オーナー）は団体管理を行わないため、この画面は owner 専用。
+ *
+ * ② Select コンポーネントは Option 型を使用するため、
+ *    searchOpt / registerOpt は Option | null を保持する。
+ *
+ * ③ useUser フックは currentUserId を受け取り、
+ *    owner のみ団体一覧を操作可能とする。
+ *
+ * 【非責務】
+ * ・認証チェック（Server Component 側で実施）
+ * ・DB アクセス（API に集約）
+ * ============================================================================
+ */
+
 import { useEffect } from "react";
 import Link from "next/link";
-import styles from "./Admin.module.css";
+import styles from "./User.module.css";
 
 import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
-import FormBar from "@/components/FormBar/FormBar";import PageHeader from '@/components/PageHeader/PageHeader';
-import { useAdmin } from "./useUser";
+import FormBar from "@/components/FormBar/FormBar";
+import PageHeader from "@/components/PageHeader/PageHeader";
 
-export default function AdminClient({ currentUserId }: { currentUserId: string }) {
-  const A = useAdmin(currentUserId);
+import { useUser } from "./useUser";
+
+export default function UserClient({
+  currentUserId,
+}: {
+  currentUserId: string;
+}) {
+  const U = useUser(currentUserId);
 
   useEffect(() => {
-    A.init();
+    U.init();
   }, []);
 
-  if (!A.mounted) return null;
+  if (!U.mounted) return null;
 
   return (
     <div className={styles.container}>
+      {/* ----------------------------------------------------------------------
+       * 画面ヘッダ
+       * -------------------------------------------------------------------- */}
       <PageHeader
-        title="管理者管理"
+        title="団体管理"
         actions={
           <Link href="/dashboard" className={styles.backLink}>
             ← ダッシュボードへ戻る
@@ -31,16 +64,18 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         }
       />
 
-      {/* Form Card */}
+      {/* ----------------------------------------------------------------------
+       * 入力フォーム（検索 / 新規登録）
+       * -------------------------------------------------------------------- */}
       <div className={styles.formCard}>
-        {/* Tabs */}
+        {/* タブ切替 */}
         <div className={styles.tabContainer}>
           <button
             type="button"
             className={`${styles.tabButton} ${
-              A.activeTab === "search" ? styles.tabActive : ""
+              U.activeTab === "search" ? styles.tabActive : ""
             }`}
-            onClick={() => A.setActiveTab("search")}
+            onClick={() => U.setActiveTab("search")}
           >
             🔍 検索
           </button>
@@ -48,50 +83,50 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
           <button
             type="button"
             className={`${styles.tabButton} ${
-              A.activeTab === "register" ? styles.tabActive : ""
+              U.activeTab === "register" ? styles.tabActive : ""
             }`}
-            onClick={() => A.setActiveTab("register")}
+            onClick={() => U.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
-        {/* Search Mode */}
-        {A.activeTab === "search" ? (
+        {/* 検索モード */}
+        {U.activeTab === "search" ? (
           <FormBar>
             <div className={styles.selectWrapper}>
               <Select
-                options={A.adminOptions}
-                value={A.searchOpt}
-                onChange={A.setSearchOpt}
-                placeholder="管理者で絞り込み"
+                options={U.userOptions}
+                value={U.searchOpt}
+                onChange={U.setSearchOpt}
+                placeholder="団体名で絞り込み"
                 width="auto"
               />
             </div>
 
-            <AppButton variant="secondary" size="md" onClick={A.handleSearch}>
+            <AppButton variant="secondary" size="md" onClick={U.handleSearch}>
               検索
             </AppButton>
 
-            <AppButton variant="secondary" size="md" onClick={A.clearSearch}>
+            <AppButton variant="secondary" size="md" onClick={U.clearSearch}>
               クリア
             </AppButton>
           </FormBar>
         ) : (
-          /* Register Mode */
+          /* 新規登録モード */
           <FormBar
             as="form"
             onSubmit={(e) => {
               e.preventDefault();
-              A.handleRegister();
+              U.handleRegister();
             }}
           >
             <div className={styles.selectWrapper}>
               <Select
-                options={A.adminOptions}
-                value={A.registerOpt}
-                onChange={A.setRegisterOpt}
-                placeholder="新規管理者の名前を入力"
+                options={U.userOptions}
+                value={U.registerOpt}
+                onChange={U.setRegisterOpt}
+                placeholder="新規団体名を入力"
                 width="auto"
                 mode="creatable"
               />
@@ -99,17 +134,17 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
 
             <Input
               type="email"
-              placeholder="メールアドレス（新規登録時）"
-              value={A.email}
-              onChange={(e) => A.setEmail(e.target.value)}
+              placeholder="メールアドレス（ログイン用）"
+              value={U.email}
+              onChange={(e) => U.setEmail(e.target.value)}
               width={260}
             />
 
             <Input
               type="password"
-              placeholder="パスワード（新規登録時）"
-              value={A.password}
-              onChange={(e) => A.setPassword(e.target.value)}
+              placeholder="パスワード（ログイン用）"
+              value={U.password}
+              onChange={(e) => U.setPassword(e.target.value)}
               width={260}
             />
 
@@ -120,23 +155,25 @@ export default function AdminClient({ currentUserId }: { currentUserId: string }
         )}
       </div>
 
-      {/* Table */}
+      {/* ----------------------------------------------------------------------
+       * 団体一覧テーブル
+       * -------------------------------------------------------------------- */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
             className={styles.table}
-            rows={A.filteredUsers}
+            rows={U.filteredUsers}
             columns={[
               { header: "Email", render: (u) => u.email },
-              { header: "Name", render: (u) => u.name ?? "未設定" },
+              { header: "団体名", render: (u) => u.name ?? "未設定" },
               {
                 header: "操作",
                 render: (u) =>
-                  u.id !== A.currentUserId && (
+                  u.id !== U.currentUserId && (
                     <AppButton
                       variant="danger"
                       size="md"
-                      onClick={() => A.handleDelete(u.id)}
+                      onClick={() => U.handleDelete(u.id)}
                     >
                       削除
                     </AppButton>

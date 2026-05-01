@@ -1,30 +1,53 @@
 "use client";
 
+/**
+ * ============================================================================
+ * 【フック名称】
+ * useUser（団体管理ロジック）
+ *
+ * 【機能概要】
+ * ・SaaS 運営者（owner）が団体（User）を管理するためのロジック。
+ * ・団体の検索・新規登録・削除を行う。
+ *
+ * 【設計方針】
+ * ① admin（団体オーナー）は団体管理を行わないため、このフックは owner 専用。
+ *
+ * ② Select コンポーネントは Option 型を使用するため、
+ *    searchOpt / registerOpt は Option | null を保持する。
+ *
+ * ③ API は /api/private/user を使用し、団体（User）を CRUD する。
+ *
+ * 【非責務】
+ * ・認証チェック（Server Component 側で実施）
+ * ・対局者・対局結果の管理（別フックで実施）
+ * ============================================================================
+ */
+
 import { useState } from "react";
 
-export type AdminOption = {
+export type UserOption = {
   value: string;
   label: string;
   __isNew__?: boolean;
 };
 
-export type AdminUser = {
+export type ManagedUser = {
   id: string;
   name: string | null;
   email: string;
 };
 
-export function useAdmin(currentUserId: string) {
+export function useUser(currentUserId: string) {
   /* ==========================================================================
    * 状態管理
    * ======================================================================== */
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<ManagedUser[]>([]);
 
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
-  const [searchOpt, setSearchOpt] = useState<AdminOption | null>(null);
-  const [registerOpt, setRegisterOpt] = useState<AdminOption | null>(null);
+  const [searchOpt, setSearchOpt] = useState<UserOption | null>(null);
+  const [registerOpt, setRegisterOpt] = useState<UserOption | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,10 +63,10 @@ export function useAdmin(currentUserId: string) {
   };
 
   /* ==========================================================================
-   * 管理者一覧取得
+   * 団体一覧取得
    * ======================================================================== */
   const fetchUsers = async () => {
-    const res = await fetch("/api/private/admin");
+    const res = await fetch("/api/private/user");
     const data = await res.json();
 
     setUsers(data);
@@ -53,7 +76,7 @@ export function useAdmin(currentUserId: string) {
   /* ==========================================================================
    * セレクトボックス用オプション
    * ======================================================================== */
-  const adminOptions: AdminOption[] = users.map((u) => ({
+  const userOptions: UserOption[] = users.map((u) => ({
     value: u.id,
     label: u.name ?? "(名前なし)",
   }));
@@ -61,12 +84,12 @@ export function useAdmin(currentUserId: string) {
   /* ==========================================================================
    * API 呼び出し
    * ======================================================================== */
-  const postAdmin = async (data: {
+  const postUser = async (data: {
     name: string;
     email: string;
     password: string;
   }) => {
-    const res = await fetch("/api/private/admin", {
+    const res = await fetch("/api/private/user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -74,8 +97,8 @@ export function useAdmin(currentUserId: string) {
     return res.json();
   };
 
-  const deleteAdmin = async (id: string) => {
-    const res = await fetch("/api/private/admin", {
+  const deleteUser = async (id: string) => {
+    const res = await fetch("/api/private/user", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -88,7 +111,7 @@ export function useAdmin(currentUserId: string) {
    * ======================================================================== */
   const handleRegister = async () => {
     if (!registerOpt || !registerOpt.__isNew__) {
-      alert("新規管理者の名前を入力してください");
+      alert("新規団体名を入力してください");
       return;
     }
     if (!email) {
@@ -100,7 +123,7 @@ export function useAdmin(currentUserId: string) {
       return;
     }
 
-    await postAdmin({
+    await postUser({
       name: registerOpt.label,
       email,
       password,
@@ -134,9 +157,9 @@ export function useAdmin(currentUserId: string) {
    * 削除
    * ======================================================================== */
   const handleDelete = async (id: string) => {
-    if (!confirm("この管理者を削除しますか？")) return;
+    if (!confirm("この団体を削除しますか？")) return;
 
-    await deleteAdmin(id);
+    await deleteUser(id);
 
     alert("削除が完了しました");
     await fetchUsers();
@@ -167,7 +190,7 @@ export function useAdmin(currentUserId: string) {
     password,
     setPassword,
 
-    adminOptions,
+    userOptions,
 
     handleSearch,
     clearSearch,
