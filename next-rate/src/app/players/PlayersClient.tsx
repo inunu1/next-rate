@@ -6,25 +6,26 @@
  * 対局者管理画面（PlayersClient）
  *
  * 【機能概要】
- * ・団体（userId）に紐づくプレイヤーの登録・一覧・削除を行う。
+ * ・団体（userId）に紐づくプレイヤーの登録・検索・削除を行う。
  *
- * 【設計方針】
- * ① admin：自団体のみ操作
- * ② owner：団体選択 UI を表示し、選択団体を操作
- * ③ usePlayers は userId を受け取り、API に userId を付与
- * ④ UI は ResultsClient とデザインを統一
+ * 【UI 方針】
+ * ・ResultsClient と UI/構造を統一
+ *   - タブ（検索 / 新規登録）
+ *   - FormBar による横並びフォーム
+ *   - tableWrapper + Table
+ * ・検索はクライアント側フィルタで実装（usePlayers はそのまま）
  * ============================================================================
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./Players.module.css";
 
-import Select from "@/components/Select/Select";
-import Table from "@/components/Table/Table";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
 import PageHeader from "@/components/PageHeader/PageHeader";
+import Table from "@/components/Table/Table";
+import Select from "@/components/Select/Select";
 
 import { usePlayers } from "./usePlayers";
 
@@ -39,9 +40,9 @@ export default function PlayersClient({
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
-  // ---------------------------------------------------------------------------
-  // 団体選択（owner のみ有効）
-  // ---------------------------------------------------------------------------
+  /* ------------------------------------------------------------
+   * 団体選択（owner のみ）
+   * ------------------------------------------------------------ */
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
     value: currentUserId,
@@ -52,6 +53,22 @@ export default function PlayersClient({
   useEffect(() => {
     P.init();
   }, [P.init]);
+
+  /* ------------------------------------------------------------
+   * タブ状態（検索 / 新規登録）
+   * ------------------------------------------------------------ */
+  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
+
+  /* ------------------------------------------------------------
+   * 検索用ローカル state（クライアント側フィルタ）
+   * ------------------------------------------------------------ */
+  const [searchName, setSearchName] = useState("");
+
+  const filteredPlayers = useMemo(() => {
+    if (!searchName.trim()) return P.players;
+    const keyword = searchName.trim().toLowerCase();
+    return P.players.filter((p) => p.name.toLowerCase().includes(keyword));
+  }, [P.players, searchName]);
 
   if (!P.mounted) return null;
 
@@ -87,57 +104,105 @@ export default function PlayersClient({
       )}
 
       {/* ------------------------------------------------------------
-       * プレイヤー登録フォーム（ResultsClient と同系統のカード＋FormBar）
+       * タブ（検索 / 新規登録）＋フォームカード
        * ------------------------------------------------------------ */}
       <div className={styles.formCard}>
-        <div className={styles.formHeader}>プレイヤー新規登録</div>
+        <div className={styles.tabContainer}>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${
+              activeTab === "search" ? styles.tabActive : ""
+            }`}
+            onClick={() => setActiveTab("search")}
+          >
+            🔍 検索
+          </button>
 
-        <FormBar
-          as="form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            P.handleRegister();
-          }}
-        >
-          <input
-            className={styles.textInput}
-            type="text"
-            placeholder="プレイヤー名"
-            value={P.name}
-            onChange={(e) => P.setName(e.target.value)}
-          />
+          <button
+            type="button"
+            className={`${styles.tabButton} ${
+              activeTab === "register" ? styles.tabActive : ""
+            }`}
+            onClick={() => setActiveTab("register")}
+          >
+            ✍️ 新規登録
+          </button>
+        </div>
 
-          <input
-            className={styles.numberInput}
-            type="number"
-            placeholder="初期レート"
-            value={P.initialRate}
-            onChange={(e) => P.setInitialRate(e.target.value)}
-          />
+        {/* 検索タブ */}
+        {activeTab === "search" && (
+          <FormBar>
+            <input
+              className={styles.textInput}
+              type="text"
+              placeholder="プレイヤー名で絞り込み"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+            />
 
-          <AppButton variant="primary" size="md" type="submit">
-            登録
-          </AppButton>
-        </FormBar>
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                // クライアント側フィルタなので何もしない（入力で即反映）
+              }}
+            >
+              検索
+            </AppButton>
+
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => setSearchName("")}
+            >
+              クリア
+            </AppButton>
+          </FormBar>
+        )}
+
+        {/* 新規登録タブ */}
+        {activeTab === "register" && (
+          <FormBar
+            as="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              P.handleRegister();
+            }}
+          >
+            <input
+              className={styles.textInput}
+              type="text"
+              placeholder="プレイヤー名"
+              value={P.name}
+              onChange={(e) => P.setName(e.target.value)}
+            />
+
+            <input
+              className={styles.numberInput}
+              type="number"
+              placeholder="初期レート"
+              value={P.initialRate}
+              onChange={(e) => P.setInitialRate(e.target.value)}
+            />
+
+            <AppButton variant="primary" size="md" type="submit">
+              登録
+            </AppButton>
+          </FormBar>
+        )}
       </div>
 
       {/* ------------------------------------------------------------
-       * プレイヤー一覧テーブル（ResultsClient と同じテーブル構造に寄せる）
+       * テーブル（ResultsClient と同じ構造）
        * ------------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
             className={styles.table}
-            rows={P.players}
+            rows={filteredPlayers}
             columns={[
-              {
-                header: "名前",
-                render: (p) => p.name,
-              },
-              {
-                header: "レート",
-                render: (p) => p.currentRate,
-              },
+              { header: "名前", render: (p) => p.name },
+              { header: "レート", render: (p) => p.currentRate },
               {
                 header: "操作",
                 render: (p) => (
