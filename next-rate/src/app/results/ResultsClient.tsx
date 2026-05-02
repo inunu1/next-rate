@@ -63,24 +63,6 @@ export default function ResultsClient({
         }
       />
 
-      {role === "owner" && allUsers && (
-        <div className={styles.orgSelector}>
-          <Select
-            options={allUsers.map((u) => ({
-              label: u.name,
-              value: u.id,
-            }))}
-            value={selectedUser}
-            onChange={(opt) => opt && setSelectedUser(opt)}
-            width={260}
-          />
-        </div>
-      )}
-
-      {/* 以下、あなたの元 UI をそのまま保持 */}
-      {/* 検索 / 登録 / ページネーション / テーブル */}
-      {/* ------------------------------------------------------------ */}
-
       {/* Form Card */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
@@ -107,6 +89,18 @@ export default function ResultsClient({
 
         {R.activeTab === "search" ? (
           <FormBar>
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width={260}
+              />
+            )}
+
             <Select
               options={R.playerOptions}
               value={R.playerOpt}
@@ -137,6 +131,18 @@ export default function ResultsClient({
               R.handleRegister();
             }}
           >
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width={260}
+              />
+            )}
+
             <Select
               options={R.playerOptions}
               value={R.winnerOpt}

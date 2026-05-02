@@ -71,20 +71,6 @@ export default function PlayersClient({
         }
       />
 
-      {role === "owner" && allUsers && (
-        <div className={styles.orgSelector}>
-          <Select
-            options={allUsers.map((u) => ({
-              label: u.name,
-              value: u.id,
-            }))}
-            value={selectedUser}
-            onChange={(opt) => opt && setSelectedUser(opt)}
-            width={260}
-          />
-        </div>
-      )}
-
       {/* Form Card */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
@@ -111,6 +97,18 @@ export default function PlayersClient({
 
         {P.activeTab === "search" ? (
           <FormBar>
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width={260}
+              />
+            )}
+
             <Select
               options={P.playerOptions}
               value={P.playerOpt}
@@ -139,12 +137,31 @@ export default function PlayersClient({
               P.handleRegister();
             }}
           >
-            <input
-              className={styles.textInput}
-              type="text"
-              placeholder="プレイヤー名"
-              value={P.name}
-              onChange={(e) => P.setName(e.target.value)}
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width={260}
+              />
+            )}
+
+            <Select
+              options={P.playerOptions}
+              value={null}
+              onChange={(opt) => {
+                if (opt) {
+                  P.setName(opt.label);
+                } else {
+                  P.setName("");
+                }
+              }}
+              placeholder="新規プレイヤー名"
+              width="auto"
+              mode="creatable"
             />
 
             <input
