@@ -12,8 +12,8 @@
  * ・ResultsClient と UI/構造を統一
  *   - タブ（検索 / 新規登録）
  *   - FormBar による横並びフォーム
- *   - tableWrapper + Table
- * ・検索はクライアント側フィルタで実装（usePlayers はそのまま）
+ *   - Select / Table / Button / PageHeader の共通コンポーネント利用
+ *   - 初期レートもテーブルに表示
  * ============================================================================
  */
 
@@ -40,9 +40,7 @@ export default function PlayersClient({
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
-  /* ------------------------------------------------------------
-   * 団体選択（owner のみ）
-   * ------------------------------------------------------------ */
+  // 団体選択（owner のみ）
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
     value: currentUserId,
@@ -54,16 +52,11 @@ export default function PlayersClient({
     P.init();
   }, [P.init]);
 
-  /* ------------------------------------------------------------
-   * タブ状態（検索 / 新規登録）
-   * ------------------------------------------------------------ */
+  // タブ状態
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
-  /* ------------------------------------------------------------
-   * 検索用ローカル state（クライアント側フィルタ）
-   * ------------------------------------------------------------ */
+  // 検索（クライアント側フィルタ）
   const [searchName, setSearchName] = useState("");
-
   const filteredPlayers = useMemo(() => {
     if (!searchName.trim()) return P.players;
     const keyword = searchName.trim().toLowerCase();
@@ -74,9 +67,6 @@ export default function PlayersClient({
 
   return (
     <div className={styles.container}>
-      {/* ------------------------------------------------------------
-       * ヘッダー
-       * ------------------------------------------------------------ */}
       <PageHeader
         title="対局者管理"
         actions={
@@ -86,9 +76,6 @@ export default function PlayersClient({
         }
       />
 
-      {/* ------------------------------------------------------------
-       * owner のみ団体選択
-       * ------------------------------------------------------------ */}
       {role === "owner" && allUsers && (
         <div className={styles.orgSelector}>
           <Select
@@ -103,9 +90,7 @@ export default function PlayersClient({
         </div>
       )}
 
-      {/* ------------------------------------------------------------
-       * タブ（検索 / 新規登録）＋フォームカード
-       * ------------------------------------------------------------ */}
+      {/* タブ＋フォームカード */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -129,7 +114,6 @@ export default function PlayersClient({
           </button>
         </div>
 
-        {/* 検索タブ */}
         {activeTab === "search" && (
           <FormBar>
             <input
@@ -140,13 +124,7 @@ export default function PlayersClient({
               onChange={(e) => setSearchName(e.target.value)}
             />
 
-            <AppButton
-              variant="secondary"
-              size="md"
-              onClick={() => {
-                // クライアント側フィルタなので何もしない（入力で即反映）
-              }}
-            >
+            <AppButton variant="secondary" size="md">
               検索
             </AppButton>
 
@@ -160,7 +138,6 @@ export default function PlayersClient({
           </FormBar>
         )}
 
-        {/* 新規登録タブ */}
         {activeTab === "register" && (
           <FormBar
             as="form"
@@ -192,9 +169,7 @@ export default function PlayersClient({
         )}
       </div>
 
-      {/* ------------------------------------------------------------
-       * テーブル（ResultsClient と同じ構造）
-       * ------------------------------------------------------------ */}
+      {/* 一覧テーブル（初期レートも表示） */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
@@ -202,7 +177,8 @@ export default function PlayersClient({
             rows={filteredPlayers}
             columns={[
               { header: "名前", render: (p) => p.name },
-              { header: "レート", render: (p) => p.currentRate },
+              { header: "初期レート", render: (p) => p.initialRate },
+              { header: "現在レート", render: (p) => p.currentRate },
               {
                 header: "操作",
                 render: (p) => (
