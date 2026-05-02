@@ -25,6 +25,8 @@ export function usePlayers(userId: string) {
    * ------------------------------------------------------------------------ */
   const [mounted, setMounted] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
+  const [searchName, setSearchName] = useState("");
 
   const [name, setName] = useState("");
   const [initialRate, setInitialRate] = useState("1500");
@@ -97,6 +99,10 @@ export function usePlayers(userId: string) {
     mounted,
     init,
 
+    activeTab,
+    setActiveTab,
+    searchName,
+    setSearchName,
     players,
 
     name,

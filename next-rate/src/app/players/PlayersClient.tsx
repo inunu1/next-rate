@@ -52,16 +52,12 @@ export default function PlayersClient({
     P.init();
   }, [P.init]);
 
-  // タブ状態
-  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
-
   // 検索（クライアント側フィルタ）
-  const [searchName, setSearchName] = useState("");
   const filteredPlayers = useMemo(() => {
-    if (!searchName.trim()) return P.players;
-    const keyword = searchName.trim().toLowerCase();
+    if (!P.searchName.trim()) return P.players;
+    const keyword = P.searchName.trim().toLowerCase();
     return P.players.filter((p) => p.name.toLowerCase().includes(keyword));
-  }, [P.players, searchName]);
+  }, [P.players, P.searchName]);
 
   if (!P.mounted) return null;
 
@@ -90,15 +86,15 @@ export default function PlayersClient({
         </div>
       )}
 
-      {/* タブ＋フォームカード */}
+      {/* Form Card */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
             type="button"
             className={`${styles.tabButton} ${
-              activeTab === "search" ? styles.tabActive : ""
+              P.activeTab === "search" ? styles.tabActive : ""
             }`}
-            onClick={() => setActiveTab("search")}
+            onClick={() => P.setActiveTab("search")}
           >
             🔍 検索
           </button>
@@ -106,22 +102,22 @@ export default function PlayersClient({
           <button
             type="button"
             className={`${styles.tabButton} ${
-              activeTab === "register" ? styles.tabActive : ""
+              P.activeTab === "register" ? styles.tabActive : ""
             }`}
-            onClick={() => setActiveTab("register")}
+            onClick={() => P.setActiveTab("register")}
           >
             ✍️ 新規登録
           </button>
         </div>
 
-        {activeTab === "search" && (
+        {P.activeTab === "search" ? (
           <FormBar>
             <input
               className={styles.textInput}
               type="text"
               placeholder="プレイヤー名で絞り込み"
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
+              value={P.searchName}
+              onChange={(e) => P.setSearchName(e.target.value)}
             />
 
             <AppButton variant="secondary" size="md">
@@ -131,14 +127,12 @@ export default function PlayersClient({
             <AppButton
               variant="secondary"
               size="md"
-              onClick={() => setSearchName("")}
+              onClick={() => P.setSearchName("")}
             >
               クリア
             </AppButton>
           </FormBar>
-        )}
-
-        {activeTab === "register" && (
+        ) : (
           <FormBar
             as="form"
             onSubmit={(e) => {
