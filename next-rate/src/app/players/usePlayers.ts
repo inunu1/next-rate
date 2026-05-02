@@ -19,6 +19,8 @@
 import { useState, useCallback } from "react";
 import type { Player } from "@prisma/client";
 
+export type PlayerOption = { value: string; label: string };
+
 export function usePlayers(userId: string) {
   /* --------------------------------------------------------------------------
    * 状態管理
@@ -26,10 +28,15 @@ export function usePlayers(userId: string) {
   const [mounted, setMounted] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
-  const [searchName, setSearchName] = useState("");
+  const [playerOpt, setPlayerOpt] = useState<PlayerOption | null>(null);
 
   const [name, setName] = useState("");
   const [initialRate, setInitialRate] = useState("1500");
+
+  const playerOptions: PlayerOption[] = players.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
 
   /* --------------------------------------------------------------------------
    * プレイヤー一覧取得
@@ -101,8 +108,9 @@ export function usePlayers(userId: string) {
 
     activeTab,
     setActiveTab,
-    searchName,
-    setSearchName,
+    playerOpt,
+    setPlayerOpt,
+    playerOptions,
     players,
 
     name,

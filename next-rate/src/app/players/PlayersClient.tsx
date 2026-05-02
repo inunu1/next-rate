@@ -52,12 +52,11 @@ export default function PlayersClient({
     P.init();
   }, [P.init]);
 
-  // 検索（クライアント側フィルタ）
+  // 検索フォーム（プレイヤー選択）
   const filteredPlayers = useMemo(() => {
-    if (!P.searchName.trim()) return P.players;
-    const keyword = P.searchName.trim().toLowerCase();
-    return P.players.filter((p) => p.name.toLowerCase().includes(keyword));
-  }, [P.players, P.searchName]);
+    if (!P.playerOpt) return P.players;
+    return P.players.filter((p) => p.id === P.playerOpt!.value);
+  }, [P.players, P.playerOpt]);
 
   if (!P.mounted) return null;
 
@@ -112,12 +111,12 @@ export default function PlayersClient({
 
         {P.activeTab === "search" ? (
           <FormBar>
-            <input
-              className={styles.textInput}
-              type="text"
-              placeholder="プレイヤー名で絞り込み"
-              value={P.searchName}
-              onChange={(e) => P.setSearchName(e.target.value)}
+            <Select
+              options={P.playerOptions}
+              value={P.playerOpt}
+              onChange={(opt) => opt && P.setPlayerOpt(opt)}
+              placeholder="プレイヤーで絞り込み"
+              width="auto"
             />
 
             <AppButton variant="secondary" size="md">
@@ -127,7 +126,7 @@ export default function PlayersClient({
             <AppButton
               variant="secondary"
               size="md"
-              onClick={() => P.setSearchName("")}
+              onClick={() => P.setPlayerOpt(null)}
             >
               クリア
             </AppButton>
