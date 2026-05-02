@@ -6,44 +6,25 @@
  * useResults（対局結果管理ロジック）
  *
  * 【機能概要】
- * ・団体（userId）に紐づく対局結果の取得・検索・登録・削除を行う。
+ * ・団体（userId）に紐づく対局結果の検索・登録・削除を行う。
  *
  * 【設計方針】
- * ① API は userId パラメータ方式を採用するため、
- *    本フックは常に currentUserId（操作対象団体）を受け取る。
- *
- * ② admin（団体オーナー）
- *      - currentUserId はセッションの user.id
- *      - API 側で強制的に自団体に制限される
- *
- * ③ owner（SaaS 運営者）
- *      - 画面側で団体選択 UI により currentUserId を切り替える
- *      - API に userId を渡すことで任意団体を操作可能
- *
- * ④ Select コンポーネントは Option 型を使用するため、
- *    playerOpt / winnerOpt / loserOpt は Option | null を保持する。
- *
- * 【提供機能】
- * ・対局結果一覧取得
- * ・対局結果検索（日付・プレイヤー）
- * ・対局結果新規登録
- * ・対局結果削除
- *
- * 【例外処理方針】
- * ・API エラーは呼び出し元でハンドリング
- * ・本フックでは最低限の alert のみ実施
+ * ① API は userId パラメータ方式
+ * ② admin → 自団体固定
+ * ③ owner → 団体選択 UI で userId を切り替え
+ * ④ init は useCallback 化し、useEffect の依存警告を解消
  * ============================================================================
  */
 
-import { useEffect, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Player, Result } from "@prisma/client";
 
 export type PlayerOption = { value: string; label: string };
 
-export function useResults(currentUserId: string) {
-  /* ==========================================================================
+export function useResults(userId: string) {
+  /* --------------------------------------------------------------------------
    * 状態管理
-   * ======================================================================== */
+   * ------------------------------------------------------------------------ */
   const [mounted, setMounted] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -68,117 +49,95 @@ export function useResults(currentUserId: string) {
     playerId?: string;
   }>({});
 
-  /* ==========================================================================
-   * 初期化
-   * ======================================================================== */
-  const init = async () => {
-    await fetchPlayers();
-
-    const data = await fetchResults({});
-    setSearchParams({ date: data.date ?? undefined });
-
-    setMounted(true);
-  };
-
-  /* ==========================================================================
-   * プレイヤー一覧取得（userId パラメータ方式）
-   * ======================================================================== */
-  const fetchPlayers = async () => {
-    const res = await fetch(`/api/private/player?userId=${currentUserId}`);
+  /* --------------------------------------------------------------------------
+   * プレイヤー一覧取得
+   * ------------------------------------------------------------------------ */
+  const fetchPlayers = useCallback(async () => {
+    const res = await fetch(`/api/private/player?userId=${userId}`);
     const data = await res.json();
     setPlayers(data);
-  };
+  }, [userId]);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  /* ==========================================================================
-   * プレイヤー選択変更
-   * ======================================================================== */
-  const handlePlayerChange = (opt: PlayerOption | null) => {
-    setPlayerOpt(opt);
-  };
+  /* --------------------------------------------------------------------------
+   * 対局結果取得
+   * ------------------------------------------------------------------------ */
+  const fetchResults = useCallback(
+    async (params: Record<string, string | undefined>) => {
+      const filtered = Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined)
+      ) as Record<string, string>;
 
-  /* ==========================================================================
-   * 対局結果取得（userId パラメータ方式）
-   * ======================================================================== */
-  const fetchResults = async (
-    params: Record<string, string | undefined>
-  ) => {
-    const filteredParams = Object.fromEntries(
-      Object.entries(params).filter((entry) => entry[1] !== undefined)
-    ) as Record<string, string>;
+      const qs = new URLSearchParams({
+        ...filtered,
+        userId,
+      }).toString();
 
-    const queryString = new URLSearchParams({
-      ...filteredParams,
-      userId: currentUserId, // ★ userId を必ず付与
-    }).toString();
+      const res = await fetch(`/api/private/result?${qs}`);
+      const data = await res.json();
 
-    const res = await fetch(`/api/private/result?${queryString}`);
-    const data = await res.json();
+      setResults(data.results ?? []);
+      setDate(data.date ?? null);
+      setPrevDate(data.prevDate ?? null);
+      setNextDate(data.nextDate ?? null);
 
-    setResults(data.results ?? []);
-    setDate(data.date ?? null);
-    setPrevDate(data.prevDate ?? null);
-    setNextDate(data.nextDate ?? null);
+      return data;
+    },
+    [userId]
+  );
 
-    return data;
-  };
+  /* --------------------------------------------------------------------------
+   * 初期化（useCallback 化）
+   * ------------------------------------------------------------------------ */
+  const init = useCallback(async () => {
+    setMounted(true);
+    await fetchPlayers();
+    const data = await fetchResults({});
+    setSearchParams({ date: data.date ?? undefined });
+  }, [fetchPlayers, fetchResults]);
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
    * 検索
-   * ======================================================================== */
-  const handleSearch = async () => {
+   * ------------------------------------------------------------------------ */
+  const handleSearch = useCallback(async () => {
     const params: Record<string, string> = {};
-
     if (searchDate) params.date = searchDate;
     if (playerOpt) params.playerId = playerOpt.value;
 
     setSearchParams(params);
     await fetchResults(params);
-  };
+  }, [searchDate, playerOpt, fetchResults]);
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
    * 検索クリア
-   * ======================================================================== */
-  const clearSearch = async () => {
+   * ------------------------------------------------------------------------ */
+  const clearSearch = useCallback(async () => {
     setPlayerOpt(null);
     setSearchDate("");
-
     setSearchParams({});
     await fetchResults({});
-  };
+  }, [fetchResults]);
 
-  /* ==========================================================================
-   * 初期ロード後に日付欄へ反映
-   * ======================================================================== */
-  useEffect(() => {
-    if (mounted && date) {
-      setSearchDate(date);
-    }
-  }, [mounted, date]);
-
-  /* ==========================================================================
-   * 登録（userId パラメータ方式）
-   * ======================================================================== */
-  const handleRegister = async () => {
+  /* --------------------------------------------------------------------------
+   * 登録
+   * ------------------------------------------------------------------------ */
+  const handleRegister = useCallback(async () => {
     if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
-      alert("勝者・敗者・対局日・ラウンドは必須です");
+      alert("必須項目が不足しています");
       return;
     }
 
     if (winnerOpt.value === loserOpt.value) {
-      alert("勝者と敗者は別のプレイヤーを選んでください");
+      alert("勝者と敗者は異なる必要があります");
       return;
     }
 
     const w = players.find((p) => p.id === winnerOpt.value)!;
     const l = players.find((p) => p.id === loserOpt.value)!;
-
-    const matchDate = Number(registerDate.replaceAll("-", ""));
-    const round = Number(roundIndex);
 
     await fetch("/api/private/result", {
       method: "POST",
@@ -190,57 +149,67 @@ export function useResults(currentUserId: string) {
         loserId: l.id,
         loserName: l.name,
         loserRate: l.currentRate,
-        matchDate,
-        roundIndex: round,
-        userId: currentUserId, // ★ userId を付与
+        matchDate: Number(registerDate.replaceAll("-", "")),
+        roundIndex: Number(roundIndex),
+        userId,
       }),
     });
 
     await fetch("/api/private/calculate", {
       method: "POST",
-      body: JSON.stringify({ userId: currentUserId }), // ★ 計算も団体単位
+      body: JSON.stringify({ userId }),
     });
 
     alert("登録が完了しました");
 
     const params = { date: registerDate };
     setSearchParams(params);
-
     await fetchResults(params);
-  };
+  }, [
+    winnerOpt,
+    loserOpt,
+    registerDate,
+    roundIndex,
+    players,
+    userId,
+    fetchResults,
+  ]);
 
-  /* ==========================================================================
-   * 削除（userId パラメータ方式）
-   * ======================================================================== */
-  const handleDelete = async (id: string) => {
-    const target = results.find((r) => r.id === id);
-    if (!target) return;
+  /* --------------------------------------------------------------------------
+   * 削除
+   * ------------------------------------------------------------------------ */
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const target = results.find((r) => r.id === id);
+      if (!target) return;
 
-    if (!confirm("この対局結果を削除しますか？")) return;
+      if (!confirm("この対局結果を削除しますか？")) return;
 
-    await fetch(`/api/private/result?id=${id}&userId=${currentUserId}`, {
-      method: "DELETE",
-    });
+      await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
+        method: "DELETE",
+      });
 
-    await fetch("/api/private/calculate", {
-      method: "POST",
-      body: JSON.stringify({ userId: currentUserId }),
-    });
+      await fetch("/api/private/calculate", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      });
 
-    alert("削除が完了しました");
+      alert("削除が完了しました");
 
-    const s = target.matchDate.toString();
-    const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+      const s = target.matchDate.toString();
+      const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-    const params = { ...searchParams, date: dateStr };
-    setSearchParams(params);
+      const params = { ...searchParams, date: dateStr };
+      setSearchParams(params);
 
-    await fetchResults(params);
-  };
+      await fetchResults(params);
+    },
+    [results, userId, searchParams, fetchResults]
+  );
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
    * ラウンド選択肢
-   * ======================================================================== */
+   * ------------------------------------------------------------------------ */
   const maxRound =
     results.length > 0 ? Math.max(...results.map((r) => r.roundIndex)) : 0;
 
@@ -249,9 +218,18 @@ export function useResults(currentUserId: string) {
     (_, i) => i + 1
   );
 
-  /* ==========================================================================
+  /* --------------------------------------------------------------------------
+   * 初期ロード後に日付欄へ反映
+   * ------------------------------------------------------------------------ */
+  useEffect(() => {
+    if (mounted && date) {
+      setSearchDate(date);
+    }
+  }, [mounted, date]);
+
+  /* --------------------------------------------------------------------------
    * 返却
-   * ======================================================================== */
+   * ------------------------------------------------------------------------ */
   return {
     mounted,
     init,
@@ -264,7 +242,7 @@ export function useResults(currentUserId: string) {
     nextDate,
 
     playerOpt,
-    handlePlayerChange,
+    handlePlayerChange: setPlayerOpt,
     searchDate,
     setSearchDate,
 

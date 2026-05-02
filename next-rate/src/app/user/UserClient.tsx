@@ -10,17 +10,8 @@
  * ・団体の検索・新規登録・削除を行う。
  *
  * 【設計方針】
- * ① admin（団体オーナー）は団体管理を行わないため、この画面は owner 専用。
- *
- * ② Select コンポーネントは Option 型を使用するため、
- *    searchOpt / registerOpt は Option | null を保持する。
- *
- * ③ useUser フックは currentUserId を受け取り、
- *    owner のみ団体一覧を操作可能とする。
- *
- * 【非責務】
- * ・認証チェック（Server Component 側で実施）
- * ・DB アクセス（API に集約）
+ * ① admin は団体管理を行わないため、この画面は owner 専用。
+ * ② useUser は userId を受け取り、団体 CRUD を行う。
  * ============================================================================
  */
 
@@ -46,15 +37,12 @@ export default function UserClient({
 
   useEffect(() => {
     U.init();
-  }, []);
+  }, [U.init]);
 
   if (!U.mounted) return null;
 
   return (
     <div className={styles.container}>
-      {/* ----------------------------------------------------------------------
-       * 画面ヘッダ
-       * -------------------------------------------------------------------- */}
       <PageHeader
         title="団体管理"
         actions={
@@ -64,11 +52,8 @@ export default function UserClient({
         }
       />
 
-      {/* ----------------------------------------------------------------------
-       * 入力フォーム（検索 / 新規登録）
-       * -------------------------------------------------------------------- */}
+      {/* Form Card */}
       <div className={styles.formCard}>
-        {/* タブ切替 */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -91,18 +76,15 @@ export default function UserClient({
           </button>
         </div>
 
-        {/* 検索モード */}
         {U.activeTab === "search" ? (
           <FormBar>
-            <div className={styles.selectWrapper}>
-              <Select
-                options={U.userOptions}
-                value={U.searchOpt}
-                onChange={U.setSearchOpt}
-                placeholder="団体名で絞り込み"
-                width="auto"
-              />
-            </div>
+            <Select
+              options={U.userOptions}
+              value={U.searchOpt}
+              onChange={U.setSearchOpt}
+              placeholder="団体名で絞り込み"
+              width="auto"
+            />
 
             <AppButton variant="secondary" size="md" onClick={U.handleSearch}>
               検索
@@ -113,7 +95,6 @@ export default function UserClient({
             </AppButton>
           </FormBar>
         ) : (
-          /* 新規登録モード */
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -121,20 +102,18 @@ export default function UserClient({
               U.handleRegister();
             }}
           >
-            <div className={styles.selectWrapper}>
-              <Select
-                options={U.userOptions}
-                value={U.registerOpt}
-                onChange={U.setRegisterOpt}
-                placeholder="新規団体名を入力"
-                width="auto"
-                mode="creatable"
-              />
-            </div>
+            <Select
+              options={U.userOptions}
+              value={U.registerOpt}
+              onChange={U.setRegisterOpt}
+              placeholder="新規団体名"
+              width="auto"
+              mode="creatable"
+            />
 
             <Input
               type="email"
-              placeholder="メールアドレス（ログイン用）"
+              placeholder="メールアドレス"
               value={U.email}
               onChange={(e) => U.setEmail(e.target.value)}
               width={260}
@@ -142,7 +121,7 @@ export default function UserClient({
 
             <Input
               type="password"
-              placeholder="パスワード（ログイン用）"
+              placeholder="パスワード"
               value={U.password}
               onChange={(e) => U.setPassword(e.target.value)}
               width={260}
@@ -155,9 +134,7 @@ export default function UserClient({
         )}
       </div>
 
-      {/* ----------------------------------------------------------------------
-       * 団体一覧テーブル
-       * -------------------------------------------------------------------- */}
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table

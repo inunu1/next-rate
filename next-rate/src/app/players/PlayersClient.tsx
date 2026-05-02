@@ -5,10 +5,18 @@
  * 【画面名称】
  * 対局者管理画面（PlayersClient）
  *
+ * 【機能概要】
+ * ・団体（userId）に紐づくプレイヤーの検索・登録・削除を行う。
+ *
  * 【設計方針】
- * ・owner：団体選択 UI を表示し、選択した団体の userId を使用
- * ・admin：currentUserId を固定使用
- * ・Select コンポーネントは Option 型を使用するため、value/onChange を Option に統一
+ * ① admin（団体オーナー）
+ *      - 自団体のみ操作可能
+ *      - 団体選択 UI は表示しない
+ *
+ * ② owner（SaaS 運営者）
+ *      - 団体選択 UI を表示し、選択した団体のプレイヤーを操作する
+ *
+ * ③ usePlayers フックは userId を受け取り、API 呼び出し時に userId を付与する
  * ============================================================================
  */
 
@@ -16,16 +24,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./Players.module.css";
 
-import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
 import AppButton from "@/components/Button/Button";
-import FormBar from "@/components/FormBar/FormBar";
-import Input from "@/components/DateInput/DateInput";
 import PageHeader from "@/components/PageHeader/PageHeader";
+import FormBar from "@/components/FormBar/FormBar";
 
 import { usePlayers } from "./usePlayers";
 
-// Select の Option 型（あなたの Select コンポーネントに合わせる）
 type Option = { label: string; value: string };
 
 export default function PlayersClient({
@@ -37,29 +42,16 @@ export default function PlayersClient({
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
-  /**
-   * --------------------------------------------------------------------------
-   * 【団体選択 state】
-   * ・Select は Option 型を要求するため Option | null を保持する
-   * ・admin は団体選択 UI を持たないため currentUserId を Option 化して固定
-   * --------------------------------------------------------------------------
-   */
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
     value: currentUserId,
   });
 
-  /**
-   * --------------------------------------------------------------------------
-   * usePlayers は userId(string) を受け取るため、
-   * selectedUser.value を渡す
-   * --------------------------------------------------------------------------
-   */
   const P = usePlayers(selectedUser.value);
 
   useEffect(() => {
     P.init();
-  }, [selectedUser.value]);
+  }, [P.init]);
 
   if (!P.mounted) return null;
 
@@ -74,136 +66,76 @@ export default function PlayersClient({
         }
       />
 
-      {/* ----------------------------------------------------------------------
-       * owner のみ団体選択 UI を表示
-       * -------------------------------------------------------------------- */}
       {role === "owner" && allUsers && (
         <div className={styles.orgSelector}>
           <Select
-            options={allUsers.map((u) => ({
-              label: u.name,
-              value: u.id,
-            }))}
+            options={allUsers.map((u) => ({ label: u.name, value: u.id }))}
             value={selectedUser}
             onChange={(opt) => opt && setSelectedUser(opt)}
-            placeholder="団体を選択"
             width={260}
-            mode="select"
           />
         </div>
       )}
 
-      {/* ----------------------------------------------------------------------
-       * 入力フォーム（検索 / 新規登録）
-       * -------------------------------------------------------------------- */}
+      {/* 登録フォーム */}
       <div className={styles.formCard}>
-        <div className={styles.tabContainer}>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              P.activeTab === "search" ? styles.tabActive : ""
-            }`}
-            onClick={() => P.setActiveTab("search")}
-          >
-            🔍 検索
-          </button>
+        <FormBar
+          as="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            P.handleRegister();
+          }}
+        >
+          <input
+            className={styles.input}
+            placeholder="プレイヤー名"
+            value={P.name}
+            onChange={(e) => P.setName(e.target.value)}
+          />
 
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              P.activeTab === "register" ? styles.tabActive : ""
-            }`}
-            onClick={() => P.setActiveTab("register")}
-          >
-            ✍️ 新規登録
-          </button>
-        </div>
+          <input
+            className={styles.input}
+            placeholder="初期レート"
+            type="number"
+            value={P.initialRate}
+            onChange={(e) => P.setInitialRate(e.target.value)}
+          />
 
-        {/* 検索モード */}
-        {P.activeTab === "search" ? (
-          <FormBar>
-            <div className={styles.selectWrapper}>
-              <Select
-                options={P.playerOptions}
-                value={P.searchOpt}
-                onChange={P.setSearchOpt}
-                placeholder="プレイヤーで絞り込み"
-                width="auto"
-                mode="select"
-              />
-            </div>
-
-            <AppButton variant="secondary" size="md" onClick={P.handleSearch}>
-              検索
-            </AppButton>
-
-            <AppButton variant="secondary" size="md" onClick={P.clearSearch}>
-              クリア
-            </AppButton>
-          </FormBar>
-        ) : (
-          /* 新規登録モード */
-          <FormBar
-            as="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              P.handleRegister();
-            }}
-          >
-            <div className={styles.selectWrapper}>
-              <Select
-                options={P.playerOptions}
-                value={P.registerOpt}
-                onChange={P.setRegisterOpt}
-                placeholder="新規プレイヤー名を入力"
-                width="auto"
-                mode="creatable"
-              />
-            </div>
-
-            <Input
-              type="number"
-              placeholder="初期レート (例: 1500)"
-              value={P.initialRate}
-              onChange={(e) => P.setInitialRate(e.target.value)}
-              min={1000}
-              max={9999}
-              width={180}
-            />
-
-            <AppButton variant="primary" size="md" type="submit">
-              新規登録
-            </AppButton>
-          </FormBar>
-        )}
+          <AppButton variant="primary" size="md" type="submit">
+            登録
+          </AppButton>
+        </FormBar>
       </div>
 
-      {/* ----------------------------------------------------------------------
-       * プレイヤー一覧テーブル
-       * -------------------------------------------------------------------- */}
+      {/* 一覧 */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <Table
-            className={styles.table}
-            rows={P.filteredPlayers}
-            columns={[
-              { header: "プレイヤー名", render: (p) => p.name },
-              { header: "現在レート", render: (p) => p.currentRate },
-              { header: "初期レート", render: (p) => p.initialRate },
-              {
-                header: "操作",
-                render: (p) => (
-                  <AppButton
-                    variant="danger"
-                    size="md"
-                    onClick={() => P.handleSoftDelete(p.id)}
-                  >
-                    出禁
-                  </AppButton>
-                ),
-              },
-            ]}
-          />
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>レート</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {P.players.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td>{p.currentRate}</td>
+                  <td>
+                    <AppButton
+                      variant="danger"
+                      size="md"
+                      onClick={() => P.handleDelete(p.id)}
+                    >
+                      削除
+                    </AppButton>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>

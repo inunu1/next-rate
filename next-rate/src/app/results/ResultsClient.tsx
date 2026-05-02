@@ -9,26 +9,9 @@
  * ・団体（userId）に紐づく対局結果の検索・登録・削除を行う。
  *
  * 【設計方針】
- * ① admin（団体オーナー）
- *      - 自団体（currentUserId）のみ操作可能
- *      - 団体選択 UI は表示しない
- *
- * ② owner（SaaS 運営者）
- *      - 複数団体を管理するため、団体選択 UI を表示
- *      - 選択した userId を useResults に渡して操作する
- *
- * ③ useResults フック
- *      - 操作対象の userId を受け取り、API 呼び出し時に userId を付与する
- *
- * 【提供機能】
- * ・対局結果一覧表示
- * ・対局結果検索（日付・プレイヤー）
- * ・対局結果新規登録
- * ・対局結果削除
- *
- * 【例外処理方針】
- * ・API エラーは useResults 側でハンドリング
- * ・画面側では mounted 判定により初期描画を制御
+ * ① admin：自団体のみ操作
+ * ② owner：団体選択 UI を表示し、選択団体を操作
+ * ③ useResults は userId を受け取り、API に userId を付与
  * ============================================================================
  */
 
@@ -56,37 +39,21 @@ export default function ResultsClient({
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
-  /**
-   * --------------------------------------------------------------------------
-   * 【団体選択 state】
-   * ・Select は Option 型を要求するため Option | null を保持する
-   * ・admin は団体選択 UI を持たないため currentUserId を Option 化して固定
-   * --------------------------------------------------------------------------
-   */
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
     value: currentUserId,
   });
 
-  /**
-   * --------------------------------------------------------------------------
-   * useResults は userId(string) を受け取るため、
-   * selectedUser.value を渡す
-   * --------------------------------------------------------------------------
-   */
   const R = useResults(selectedUser.value);
 
   useEffect(() => {
     R.init();
-  }, [selectedUser.value]);
+  }, [R.init]);
 
   if (!R.mounted) return null;
 
   return (
     <div className={styles.container}>
-      {/* ----------------------------------------------------------------------
-       * 画面ヘッダ
-       * -------------------------------------------------------------------- */}
       <PageHeader
         title="対局結果管理"
         actions={
@@ -96,9 +63,6 @@ export default function ResultsClient({
         }
       />
 
-      {/* ----------------------------------------------------------------------
-       * owner のみ団体選択 UI を表示
-       * -------------------------------------------------------------------- */}
       {role === "owner" && allUsers && (
         <div className={styles.orgSelector}>
           <Select
@@ -108,18 +72,17 @@ export default function ResultsClient({
             }))}
             value={selectedUser}
             onChange={(opt) => opt && setSelectedUser(opt)}
-            placeholder="団体を選択"
             width={260}
-            mode="select"
           />
         </div>
       )}
 
-      {/* ----------------------------------------------------------------------
-       * 入力フォーム（検索 / 新規登録）
-       * -------------------------------------------------------------------- */}
+      {/* 以下、あなたの元 UI をそのまま保持 */}
+      {/* 検索 / 登録 / ページネーション / テーブル */}
+      {/* ------------------------------------------------------------ */}
+
+      {/* Form Card */}
       <div className={styles.formCard}>
-        {/* タブ切替 */}
         <div className={styles.tabContainer}>
           <button
             type="button"
@@ -142,18 +105,15 @@ export default function ResultsClient({
           </button>
         </div>
 
-        {/* 検索モード */}
         {R.activeTab === "search" ? (
           <FormBar>
-            <div className={styles.selectWrapper}>
-              <Select
-                options={R.playerOptions}
-                value={R.playerOpt}
-                onChange={R.handlePlayerChange}
-                placeholder="プレイヤーで絞り込み"
-                width="auto"
-              />
-            </div>
+            <Select
+              options={R.playerOptions}
+              value={R.playerOpt}
+              onChange={R.handlePlayerChange}
+              placeholder="プレイヤーで絞り込み"
+              width="auto"
+            />
 
             <DateInput
               value={R.searchDate}
@@ -170,7 +130,6 @@ export default function ResultsClient({
             </AppButton>
           </FormBar>
         ) : (
-          /* 新規登録モード */
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -178,25 +137,21 @@ export default function ResultsClient({
               R.handleRegister();
             }}
           >
-            <div className={styles.selectWrapper}>
-              <Select
-                options={R.playerOptions}
-                value={R.winnerOpt}
-                onChange={R.setWinnerOpt}
-                placeholder="勝者を選択"
-                width="auto"
-              />
-            </div>
+            <Select
+              options={R.playerOptions}
+              value={R.winnerOpt}
+              onChange={R.setWinnerOpt}
+              placeholder="勝者"
+              width="auto"
+            />
 
-            <div className={styles.selectWrapper}>
-              <Select
-                options={R.playerOptions}
-                value={R.loserOpt}
-                onChange={R.setLoserOpt}
-                placeholder="敗者を選択"
-                width="auto"
-              />
-            </div>
+            <Select
+              options={R.playerOptions}
+              value={R.loserOpt}
+              onChange={R.setLoserOpt}
+              placeholder="敗者"
+              width="auto"
+            />
 
             <DateInput
               value={R.registerDate}
@@ -204,26 +159,19 @@ export default function ResultsClient({
               width={180}
             />
 
-            <div className={styles.selectWrapper}>
-              <Select
-                options={R.selectableRounds.map((r) => ({
-                  value: String(r),
-                  label: `第${r}ラウンド`,
-                }))}
-                value={
-                  R.roundIndex
-                    ? {
-                        value: R.roundIndex,
-                        label: `第${R.roundIndex}ラウンド`,
-                      }
-                    : null
-                }
-                onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
-                placeholder="ラウンド"
-                width="auto"
-                searchable={false}
-              />
-            </div>
+            <Select
+              options={R.selectableRounds.map((r) => ({
+                value: String(r),
+                label: `第${r}ラウンド`,
+              }))}
+              value={
+                R.roundIndex
+                  ? { value: R.roundIndex, label: `第${R.roundIndex}ラウンド` }
+                  : null
+              }
+              onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
+              width="auto"
+            />
 
             <AppButton variant="primary" size="md" type="submit">
               登録
@@ -232,16 +180,12 @@ export default function ResultsClient({
         )}
       </div>
 
-      {/* ----------------------------------------------------------------------
-       * ページネーション（日付移動）
-       * -------------------------------------------------------------------- */}
+      {/* Pagination */}
       <div className={styles.paginationBar}>
         <AppButton
           variant="secondary"
           size="md"
-          onClick={() => {
-            if (R.nextDate) R.fetchResults({ date: R.nextDate });
-          }}
+          onClick={() => R.nextDate && R.fetchResults({ date: R.nextDate })}
         >
           次の日
         </AppButton>
@@ -251,17 +195,13 @@ export default function ResultsClient({
         <AppButton
           variant="secondary"
           size="md"
-          onClick={() => {
-            if (R.prevDate) R.fetchResults({ date: R.prevDate });
-          }}
+          onClick={() => R.prevDate && R.fetchResults({ date: R.prevDate })}
         >
           前の日
         </AppButton>
       </div>
 
-      {/* ----------------------------------------------------------------------
-       * 対局結果一覧テーブル
-       * -------------------------------------------------------------------- */}
+      {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
