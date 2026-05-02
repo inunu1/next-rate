@@ -12,7 +12,7 @@
  * ① API は userId パラメータ方式
  * ② admin → 自団体固定
  * ③ owner → 団体選択 UI で userId を切り替え
- * ④ init は useCallback 化し、useEffect の依存警告を解消
+ * ④ init / fetchResults / handleRegister / handleDelete を useCallback 化
  * ============================================================================
  */
 

@@ -6,13 +6,13 @@
  * usePlayers（対局者管理ロジック）
  *
  * 【機能概要】
- * ・団体（userId）に紐づくプレイヤーの一覧取得・登録・削除を行う。
+ * ・団体（userId）に紐づくプレイヤー一覧の取得・登録・削除を行う。
  *
  * 【設計方針】
  * ① API は userId パラメータ方式
  * ② admin → 自団体固定
  * ③ owner → 団体選択 UI で userId を切り替え
- * ④ init は useCallback 化し、useEffect の依存警告を解消
+ * ④ init / fetchPlayers / handleRegister / handleDelete を useCallback 化
  * ============================================================================
  */
 

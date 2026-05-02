@@ -12,7 +12,7 @@
  * 【設計方針】
  * ① admin は団体管理を行わないため、このフックは owner 専用。
  * ② API は /api/private/user を使用し、団体 CRUD を行う。
- * ③ init は useCallback 化し、useEffect の依存警告を解消
+ * ③ init / fetchUsers / handleRegister / handleDelete を useCallback 化
  * ============================================================================
  */
 

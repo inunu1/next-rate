@@ -7,7 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Result, Player } from "@prisma/client";
+import { Result} from "@prisma/client";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
