@@ -26,6 +26,7 @@ import FormBar from "@/components/FormBar/FormBar";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
+import Input from "@/components/DateInput/DateInput";
 
 import { usePlayers } from "./usePlayers";
 
@@ -164,12 +165,12 @@ export default function PlayersClient({
               mode="creatable"
             />
 
-            <input
-              className={styles.numberInput}
+            <Input
               type="number"
               placeholder="初期レート"
               value={P.initialRate}
               onChange={(e) => P.setInitialRate(e.target.value)}
+              width={180}
             />
 
             <AppButton variant="primary" size="md" type="submit">
