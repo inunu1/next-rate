@@ -9,9 +9,9 @@
  * ・SaaS 運営者（owner）が団体（User）を管理する画面。
  * ・団体の検索・新規登録・削除を行う。
  *
- * 【設計方針】
- * ① admin は団体管理を行わないため、この画面は owner 専用。
- * ② useUser は userId を受け取り、団体 CRUD を行う。
+ * 【UI 方針】
+ * ・ResultsClient と UI/構造を完全統一
+ * ・role（owner / admin）を選択できるようにする
  * ============================================================================
  */
 
@@ -28,11 +28,7 @@ import PageHeader from "@/components/PageHeader/PageHeader";
 
 import { useUser } from "./useUser";
 
-export default function UserClient({
-  currentUserId,
-}: {
-  currentUserId: string;
-}) {
+export default function UserClient({ currentUserId }: { currentUserId: string }) {
   const U = useUser(currentUserId);
 
   useEffect(() => {
@@ -52,7 +48,9 @@ export default function UserClient({
         }
       />
 
-      {/* Form Card */}
+      {/* ------------------------------------------------------------
+       * タブ + フォームカード
+       * ------------------------------------------------------------ */}
       <div className={styles.formCard}>
         <div className={styles.tabContainer}>
           <button
@@ -76,6 +74,9 @@ export default function UserClient({
           </button>
         </div>
 
+        {/* ------------------------------------------------------------
+         * 検索フォーム
+         * ------------------------------------------------------------ */}
         {U.activeTab === "search" ? (
           <FormBar>
             <Select
@@ -83,7 +84,7 @@ export default function UserClient({
               value={U.searchOpt}
               onChange={U.setSearchOpt}
               placeholder="団体名で絞り込み"
-              width="auto"
+              width={260}
             />
 
             <AppButton variant="secondary" size="md" onClick={U.handleSearch}>
@@ -95,6 +96,9 @@ export default function UserClient({
             </AppButton>
           </FormBar>
         ) : (
+          /* ------------------------------------------------------------
+           * 新規登録フォーム
+           * ------------------------------------------------------------ */
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -102,15 +106,17 @@ export default function UserClient({
               U.handleRegister();
             }}
           >
+            {/* 団体名（creatable） */}
             <Select
               options={U.userOptions}
               value={U.registerOpt}
               onChange={U.setRegisterOpt}
               placeholder="新規団体名"
-              width="auto"
+              width={260}
               mode="creatable"
             />
 
+            {/* メール */}
             <Input
               type="email"
               placeholder="メールアドレス"
@@ -119,12 +125,25 @@ export default function UserClient({
               width={260}
             />
 
+            {/* パスワード */}
             <Input
               type="password"
               placeholder="パスワード"
               value={U.password}
               onChange={(e) => U.setPassword(e.target.value)}
               width={260}
+            />
+
+            {/* ロール選択（owner / admin） */}
+            <Select
+              options={[
+                { label: "owner", value: "owner" },
+                { label: "admin", value: "admin" },
+              ]}
+              value={U.roleOpt}
+              onChange={U.setRoleOpt}
+              placeholder="ロールを選択"
+              width={200}
             />
 
             <AppButton variant="primary" size="md" type="submit">
@@ -134,7 +153,9 @@ export default function UserClient({
         )}
       </div>
 
-      {/* Table */}
+      {/* ------------------------------------------------------------
+       * 団体一覧テーブル
+       * ------------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <Table
@@ -143,6 +164,7 @@ export default function UserClient({
             columns={[
               { header: "Email", render: (u) => u.email },
               { header: "団体名", render: (u) => u.name ?? "未設定" },
+              { header: "ロール", render: (u) => u.role },
               {
                 header: "操作",
                 render: (u) =>

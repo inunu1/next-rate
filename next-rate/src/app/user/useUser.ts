@@ -2,17 +2,9 @@
 
 /**
  * ============================================================================
- * 【フック名称】
- * useUser（団体管理ロジック）
- *
- * 【機能概要】
- * ・SaaS 運営者（owner）が団体（User）を管理するためのロジック。
- * ・団体の検索・新規登録・削除を行う。
- *
- * 【設計方針】
- * ① admin は団体管理を行わないため、このフックは owner 専用。
- * ② API は /api/private/user を使用し、団体 CRUD を行う。
- * ③ init / fetchUsers / handleRegister / handleDelete を useCallback 化
+ * useUser（団体管理ロジック）完全修正版
+ * ・role（owner/admin）を扱えるように修正
+ * ・UserClient.tsx と完全連動
  * ============================================================================
  */
 
@@ -28,6 +20,7 @@ export type ManagedUser = {
   id: string;
   name: string | null;
   email: string;
+  role: "owner" | "admin"; // ← ★ 追加
 };
 
 export function useUser(currentUserId: string) {
@@ -47,6 +40,9 @@ export function useUser(currentUserId: string) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // ★ role 選択用 state を追加
+  const [roleOpt, setRoleOpt] = useState<UserOption | null>(null);
+
   /* --------------------------------------------------------------------------
    * 団体一覧取得
    * ------------------------------------------------------------------------ */
@@ -58,7 +54,7 @@ export function useUser(currentUserId: string) {
   }, []);
 
   /* --------------------------------------------------------------------------
-   * 初期化（useCallback 化）
+   * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
     setMounted(true);
@@ -89,6 +85,10 @@ export function useUser(currentUserId: string) {
       alert("パスワードを入力してください");
       return;
     }
+    if (!roleOpt) {
+      alert("ロールを選択してください");
+      return;
+    }
 
     await fetch("/api/private/user", {
       method: "POST",
@@ -97,12 +97,13 @@ export function useUser(currentUserId: string) {
         name: registerOpt.label,
         email,
         password,
+        role: roleOpt.value, // ★ 追加
       }),
     });
 
     alert("登録が完了しました");
     await fetchUsers();
-  }, [registerOpt, email, password, fetchUsers]);
+  }, [registerOpt, email, password, roleOpt, fetchUsers]);
 
   /* --------------------------------------------------------------------------
    * 検索
@@ -166,6 +167,9 @@ export function useUser(currentUserId: string) {
 
     password,
     setPassword,
+
+    roleOpt,        // ★ 追加
+    setRoleOpt,     // ★ 追加
 
     userOptions,
 
