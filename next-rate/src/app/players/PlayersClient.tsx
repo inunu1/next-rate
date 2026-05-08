@@ -106,7 +106,7 @@ export default function PlayersClient({
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
-                width={260}
+                width="auto"
               />
             )}
 

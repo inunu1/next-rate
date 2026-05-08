@@ -84,7 +84,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               value={U.searchOpt}
               onChange={U.setSearchOpt}
               placeholder="団体名で絞り込み"
-              width={260}
+              width="auto"
             />
 
             <AppButton variant="secondary" size="md" onClick={U.handleSearch}>
@@ -112,7 +112,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               value={U.registerOpt}
               onChange={U.setRegisterOpt}
               placeholder="新規団体名"
-              width={260}
+              width="auto"
               mode="creatable"
             />
 
@@ -143,7 +143,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               value={U.roleOpt}
               onChange={U.setRoleOpt}
               placeholder="ロールを選択"
-              width={200}
+              width="auto"
             />
 
             <AppButton variant="primary" size="md" type="submit">

@@ -97,7 +97,7 @@ export default function ResultsClient({
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
-                width={260}
+                width="auto"
               />
             )}
 
@@ -139,7 +139,7 @@ export default function ResultsClient({
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
-                width={260}
+                width="auto"
               />
             )}
 
