@@ -162,12 +162,25 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
             className={styles.table}
             rows={U.filteredUsers}
             columns={[
-              { header: "Email", render: (u) => u.email },
-              { header: "団体名", render: (u) => u.name ?? "未設定" },
-              { header: "ロール", render: (u) => u.role },
+              {
+                header: "Email",
+                mobileLabel: "Email",
+                render: (u) => u.email
+              },
+              {
+                header: "団体名",
+                mobileLabel: "団体名",
+                render: (u) => u.name ?? "未設定"
+              },
+              {
+                header: "ロール",
+                mobileLabel: "ロール",
+                render: (u) => u.role
+              },
               {
                 header: "操作",
-                render: (u) =>
+                mobileLabel: "操作",
+                render: (u) => (
                   u.id !== U.currentUserId && (
                     <AppButton
                       variant="danger"
@@ -176,7 +189,8 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
                     >
                       削除
                     </AppButton>
-                  ),
+                  )
+                ),
               },
             ]}
           />

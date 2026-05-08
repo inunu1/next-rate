@@ -216,22 +216,30 @@ export default function ResultsClient({
             columns={[
               {
                 header: "日付",
+                mobileLabel: "日付",
                 render: (r) => {
                   const s = r.matchDate.toString();
                   return `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}`;
                 },
               },
-              { header: "ラウンド", render: (r) => `R${r.roundIndex}` },
+              {
+                header: "R",
+                mobileLabel: "ラウンド",
+                render: (r) => `R${r.roundIndex}`
+              },
               {
                 header: "勝者（開始時）",
+                mobileLabel: "勝者",
                 render: (r) => `${r.winnerName} (${r.winnerRate})`,
               },
               {
                 header: "敗者（開始時）",
+                mobileLabel: "敗者",
                 render: (r) => `${r.loserName} (${r.loserRate})`,
               },
               {
                 header: "操作",
+                mobileLabel: "操作",
                 render: (r) => (
                   <AppButton
                     variant="danger"

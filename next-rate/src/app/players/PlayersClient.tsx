@@ -187,11 +187,24 @@ export default function PlayersClient({
             className={styles.table}
             rows={filteredPlayers}
             columns={[
-              { header: "名前", render: (p) => p.name },
-              { header: "初期レート", render: (p) => p.initialRate },
-              { header: "現在レート", render: (p) => p.currentRate },
+              {
+                header: "名前",
+                mobileLabel: "名前",
+                render: (p) => p.name
+              },
+              {
+                header: "初期レート",
+                mobileLabel: "初期レート",
+                render: (p) => p.initialRate
+              },
+              {
+                header: "現在レート",
+                mobileLabel: "現在レート",
+                render: (p) => p.currentRate
+              },
               {
                 header: "操作",
+                mobileLabel: "操作",
                 render: (p) => (
                   <AppButton
                     variant="danger"
