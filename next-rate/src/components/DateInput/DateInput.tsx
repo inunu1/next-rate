@@ -1,6 +1,6 @@
 'use client';
 
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, useEffect, useState } from 'react';
 import styles from './DateInput.module.css';
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
@@ -15,8 +15,28 @@ export default function DateInput({
   style,
   ...props
 }: Props) {
+  // スマートフォンサイズ判定
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // 初期判定
+    setIsMobile(window.innerWidth <= 768);
+
+    // リサイズイベントリスナー
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // width が指定されていればインラインスタイルで適用
-  const customStyle = { ...style, ...(width ? { width } : {}) };
+  // スマートフォンサイズでは100%を強制
+  const customStyle = {
+    ...style,
+    ...(isMobile ? { width: "100%" } : width ? { width } : {}),
+  };
 
   return (
     <div

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import SelectBase from "react-select";
 import CreatableSelect from "react-select/creatable";
 import styles from "./Select.module.css";
@@ -31,6 +32,25 @@ export default function Select({
 }: Props) {
   const Component = mode === "creatable" ? CreatableSelect : SelectBase;
 
+  // スマートフォンサイズ判定
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // 初期判定
+    setIsMobile(window.innerWidth <= 768);
+
+    // リサイズイベントリスナー
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // スマートフォンサイズでは100%、そうでなければwidth propsを使用
+  const containerWidth = isMobile ? "100%" : width;
+
   return (
     <Component
       className={styles.wrapper}
@@ -48,7 +68,7 @@ export default function Select({
       styles={{
         container: (base) => ({
           ...base,
-          width,
+          width: containerWidth,
         }),
       }}
       options={options}

@@ -2,6 +2,13 @@
   font-size: 0.95rem;
 }
 
+/* スマートフォン：全幅 */
+@media (max-width: 768px) {
+  .wrapper {
+    width: 100% !important;
+  }
+}
+
 /* control */
 .control {
   min-height: 42px !important;

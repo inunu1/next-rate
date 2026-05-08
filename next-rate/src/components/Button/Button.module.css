@@ -10,6 +10,14 @@
   min-width: 80px;
 }
 
+/* スマートフォン：全幅 */
+@media (max-width: 768px) {
+  .button {
+    width: 100%;
+    white-space: normal;
+  }
+}
+
 /* サイズ（現行 UI と完全一致） */
 .sm { height: 38px; padding: 0 1.2rem; font-size: 0.85rem; }
 .md { height: 42px; padding: 0 1.5rem; font-size: 0.95rem; }

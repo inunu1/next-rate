@@ -11,6 +11,8 @@
   outline: none;
   appearance: none;
   cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* hover */
@@ -34,4 +36,11 @@
 .dateInputWrapper {
   min-width: 180px;
   flex-shrink: 0;
+}
+
+/* スマートフォン：全幅 */
+@media (max-width: 768px) {
+  .dateInputWrapper {
+    min-width: 100%;
+  }
 }

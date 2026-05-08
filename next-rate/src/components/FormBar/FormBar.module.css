@@ -18,3 +18,13 @@
 
   align-items: flex-end;
 }
+
+/* スマートフォン：縦並び */
+@media (max-width: 768px) {
+  .formBar {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+}
