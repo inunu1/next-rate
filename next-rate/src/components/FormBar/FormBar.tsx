@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import styles from "./FormBar.module.css";
 
 type FormProps = {
@@ -18,17 +18,28 @@ type DivProps = {
 type Props = FormProps | DivProps;
 
 export default function FormBar(props: Props) {
+  const [open, setOpen] = useState(true);
   const { as = "div", children } = props;
 
-  if (as === "form") {
-    // form のときだけ onSubmit を渡す
-    return (
-      <form className={styles.formBar} onSubmit={props.onSubmit}>
-        {children}
-      </form>
-    );
-  }
+  return (
+    <div className={styles.formBarContainer}>
+      <button
+        type="button"
+        className={styles.toggleButton}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {open ? "フォームを閉じる" : "フォームを開く"}
+      </button>
 
-  // div のときは onSubmit を渡さない
-  return <div className={styles.formBar}>{children}</div>;
+      <div className={`${styles.formBarInner} ${!open ? styles.collapsed : ""}`}>
+        {as === "form" ? (
+          <form className={styles.formBar} onSubmit={props.onSubmit}>
+            {children}
+          </form>
+        ) : (
+          <div className={styles.formBar}>{children}</div>
+        )}
+      </div>
+    </div>
+  );
 }
