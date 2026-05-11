@@ -43,6 +43,7 @@ export default function ResultsClient({
     label: "自団体",
     value: currentUserId,
   });
+  const [isFormOpen, setIsFormOpen] = useState(true);
 
   const R = useResults(selectedUser.value);
 
@@ -69,9 +70,12 @@ export default function ResultsClient({
           <button
             type="button"
             className={`${styles.tabButton} ${
-              R.activeTab === "search" ? styles.tabActive : ""
+              R.activeTab === "search" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => R.setActiveTab("search")}
+            onClick={() => {
+              R.setActiveTab("search");
+              setIsFormOpen(true);
+            }}
           >
             🔍 検索
           </button>
@@ -79,15 +83,28 @@ export default function ResultsClient({
           <button
             type="button"
             className={`${styles.tabButton} ${
-              R.activeTab === "register" ? styles.tabActive : ""
+              R.activeTab === "register" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => R.setActiveTab("register")}
+            onClick={() => {
+              R.setActiveTab("register");
+              setIsFormOpen(true);
+            }}
           >
             ✍️ 新規登録
           </button>
+
+          <button
+            type="button"
+            className={`${styles.tabButton} ${
+              !isFormOpen ? styles.tabActive : ""
+            }`}
+            onClick={() => setIsFormOpen(false)}
+          >
+            ✖️ 閉じる
+          </button>
         </div>
 
-        {R.activeTab === "search" ? (
+        {R.activeTab === "search" && isFormOpen ? (
           <FormBar>
             {role === "owner" && allUsers && (
               <Select
@@ -123,7 +140,7 @@ export default function ResultsClient({
               クリア
             </AppButton>
           </FormBar>
-        ) : (
+        ) : R.activeTab === "register" && isFormOpen ? (
           <FormBar
             as="form"
             onSubmit={(e) => {

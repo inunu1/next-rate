@@ -46,6 +46,7 @@ export default function PlayersClient({
     label: "自団体",
     value: currentUserId,
   });
+  const [isFormOpen, setIsFormOpen] = useState(true);
 
   const P = usePlayers(selectedUser.value);
 
@@ -78,9 +79,12 @@ export default function PlayersClient({
           <button
             type="button"
             className={`${styles.tabButton} ${
-              P.activeTab === "search" ? styles.tabActive : ""
+              P.activeTab === "search" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => P.setActiveTab("search")}
+            onClick={() => {
+              P.setActiveTab("search");
+              setIsFormOpen(true);
+            }}
           >
             🔍 検索
           </button>
@@ -88,15 +92,28 @@ export default function PlayersClient({
           <button
             type="button"
             className={`${styles.tabButton} ${
-              P.activeTab === "register" ? styles.tabActive : ""
+              P.activeTab === "register" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => P.setActiveTab("register")}
+            onClick={() => {
+              P.setActiveTab("register");
+              setIsFormOpen(true);
+            }}
           >
             ✍️ 新規登録
           </button>
+
+          <button
+            type="button"
+            className={`${styles.tabButton} ${
+              !isFormOpen ? styles.tabActive : ""
+            }`}
+            onClick={() => setIsFormOpen(false)}
+          >
+            ✖️ 閉じる
+          </button>
         </div>
 
-        {P.activeTab === "search" ? (
+        {P.activeTab === "search" && isFormOpen ? (
           <FormBar>
             {role === "owner" && allUsers && (
               <Select
@@ -130,7 +147,7 @@ export default function PlayersClient({
               クリア
             </AppButton>
           </FormBar>
-        ) : (
+        ) : P.activeTab === "register" && isFormOpen ? (
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -177,7 +194,7 @@ export default function PlayersClient({
               登録
             </AppButton>
           </FormBar>
-        )}
+        ) : null}
       </div>
 
       {/* 一覧テーブル（初期レートも表示） */}

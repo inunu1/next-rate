@@ -15,7 +15,7 @@
  * ============================================================================
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./User.module.css";
 
@@ -30,6 +30,7 @@ import { useUser } from "./useUser";
 
 export default function UserClient({ currentUserId }: { currentUserId: string }) {
   const U = useUser(currentUserId);
+  const [isFormOpen, setIsFormOpen] = useState(true);
 
   useEffect(() => {
     U.init();
@@ -56,9 +57,12 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
           <button
             type="button"
             className={`${styles.tabButton} ${
-              U.activeTab === "search" ? styles.tabActive : ""
+              U.activeTab === "search" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => U.setActiveTab("search")}
+            onClick={() => {
+              U.setActiveTab("search");
+              setIsFormOpen(true);
+            }}
           >
             🔍 検索
           </button>
@@ -66,18 +70,31 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
           <button
             type="button"
             className={`${styles.tabButton} ${
-              U.activeTab === "register" ? styles.tabActive : ""
+              U.activeTab === "register" && isFormOpen ? styles.tabActive : ""
             }`}
-            onClick={() => U.setActiveTab("register")}
+            onClick={() => {
+              U.setActiveTab("register");
+              setIsFormOpen(true);
+            }}
           >
             ✍️ 新規登録
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.tabButton} ${
+              !isFormOpen ? styles.tabActive : ""
+            }`}
+            onClick={() => setIsFormOpen(false)}
+          >
+            ✖️ 閉じる
           </button>
         </div>
 
         {/* ------------------------------------------------------------
          * 検索フォーム
          * ------------------------------------------------------------ */}
-        {U.activeTab === "search" ? (
+        {U.activeTab === "search" && isFormOpen ? (
           <FormBar>
             <Select
               options={U.userOptions}
@@ -95,7 +112,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               クリア
             </AppButton>
           </FormBar>
-        ) : (
+        ) : U.activeTab === "register" && isFormOpen ? (
           /* ------------------------------------------------------------
            * 新規登録フォーム
            * ------------------------------------------------------------ */
@@ -150,7 +167,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               新規登録
             </AppButton>
           </FormBar>
-        )}
+        ) : null}
       </div>
 
       {/* ------------------------------------------------------------
