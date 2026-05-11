@@ -200,7 +200,7 @@ export default function ResultsClient({
               登録
             </AppButton>
           </FormBar>
-        )}
+        ) : null}
       </div>
 
       {/* Pagination */}
