@@ -1,44 +1,95 @@
-'use client';
+"use client";
 
-import { ReactNode, useEffect, useState } from 'react';
-import styles from './Table.module.css';
+import React, { ReactNode, useEffect, useState } from "react";
+import styles from "./Table.module.css";
 
-export type Column<T> = {
+/**
+ * テーブル列定義
+ * - header: 列名（デスクトップ表示）
+ * - render: 行データからセル内容を生成する関数
+ * - mobileLabel: モバイルカード表示時のラベル（任意）
+ * - hideOnMobile: モバイル時に非表示にする列（任意）
+ */
+export interface Column<T> {
   header: string;
   render: (row: T) => ReactNode;
-  mobileLabel?: string; // モバイルカードでのラベル
-  hideOnMobile?: boolean; // モバイルで非表示
-};
+  mobileLabel?: string;
+  hideOnMobile?: boolean;
+}
 
-type Props<T> = {
+/**
+ * Table コンポーネントのプロパティ定義
+ * - columns: 列定義
+ * - rows: 行データ
+ * - className: 追加クラス名（任意）
+ */
+export interface TableProps<T> {
   columns: Column<T>[];
   rows: T[];
   className?: string;
-};
+}
 
-export default function Table<T>({ columns, rows, className }: Props<T>) {
-  const [isMobile, setIsMobile] = useState(false);
+/**
+ * Table コンポーネント
+ * ---------------------------------------------------------
+ * デスクトップ：通常の <table> レイアウト
+ * モバイル：カード型レイアウトに自動切り替え
+ * ---------------------------------------------------------
+ */
+export default function Table<T>(props: TableProps<T>) {
+  const { columns, rows, className } = props;
+
+  /**
+   * スマートフォン判定用ステート
+   * - 初回レンダリング時とリサイズ時に更新
+   */
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    /**
+     * 現在の画面幅からスマホ判定を行う
+     */
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    // 初期判定
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+
+    // リサイズイベント登録
+    window.addEventListener("resize", checkMobile);
+
+    // クリーンアップ
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
+  /**
+   * モバイル表示の場合：カードレイアウトを返す
+   */
   if (isMobile) {
-    // モバイル：カードレイアウト
+    const wrapperClass = [
+      styles.mobileCards,
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
-      <div className={`${styles.mobileCards}${className ? ' ' + className : ''}`}>
-        {rows.map((row, i) => (
-          <div key={i} className={styles.card}>
+      <div className={wrapperClass}>
+        {rows.map((row, rowIndex) => (
+          <div key={rowIndex} className={styles.card}>
             {columns
-              .filter(col => !col.hideOnMobile)
-              .map((col, idx) => (
-                <div key={idx} className={styles.cardRow}>
+              .filter((col) => !col.hideOnMobile)
+              .map((col, colIndex) => (
+                <div key={colIndex} className={styles.cardRow}>
+                  {/* ラベル部分（mobileLabel があれば優先） */}
                   <span className={styles.cardLabel}>
                     {col.mobileLabel || col.header}:
                   </span>
+
+                  {/* 値部分 */}
                   <span className={styles.cardValue}>
                     {col.render(row)}
                   </span>
@@ -50,22 +101,31 @@ export default function Table<T>({ columns, rows, className }: Props<T>) {
     );
   }
 
-  // デスクトップ：通常のテーブル
+  /**
+   * デスクトップ表示の場合：通常のテーブルを返す
+   */
+  const tableClass = [
+    styles.table,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <table className={`${styles.table}${className ? ' ' + className : ''}`}>
+    <table className={tableClass}>
       <thead>
         <tr>
-          {columns.map((col, idx) => (
-            <th key={idx}>{col.header}</th>
+          {columns.map((col, colIndex) => (
+            <th key={colIndex}>{col.header}</th>
           ))}
         </tr>
       </thead>
 
       <tbody>
-        {rows.map((row, i) => (
-          <tr key={i}>
-            {columns.map((col, idx) => (
-              <td key={idx}>{col.render(row)}</td>
+        {rows.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            {columns.map((col, colIndex) => (
+              <td key={colIndex}>{col.render(row)}</td>
             ))}
           </tr>
         ))}

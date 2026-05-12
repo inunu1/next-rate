@@ -1,16 +1,39 @@
+/******************************************************
+ * 共通ボタンスタイル
+ * - 全ボタンで共通となる基本設定
+ * - 角丸、カーソル、フォント、トランジション等
+ ******************************************************/
 .button {
+  /* ボーダーは基本非表示（variant により付与） */
   border: none;
-  cursor: pointer;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast), border-color var(--transition-fast), opacity 0.15s ease;
 
-  /* ★ 追加：スマホで縦割れ防止 */
+  /* ホバー可能であることを明示 */
+  cursor: pointer;
+
+  /* ボタンの視認性向上 */
+  font-weight: 600;
+
+  /* 角丸はアプリ共通の小サイズを使用 */
+  border-radius: var(--radius-sm);
+
+  /* 背景色・枠線・透明度の変化を滑らかに */
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    opacity 0.15s ease;
+
+  /* スマホでの文字折返し防止（PC時） */
   white-space: nowrap;
+
+  /* 最低幅を確保（ボタンが潰れないように） */
   min-width: 80px;
 }
 
-/* スマートフォン：全幅 */
+/******************************************************
+ * スマートフォン向けレイアウト調整
+ * - ボタンを全幅に広げる
+ * - 文字折返しを許可
+ ******************************************************/
 @media (max-width: 768px) {
   .button {
     width: 100%;
@@ -18,37 +41,76 @@
   }
 }
 
-/* サイズ（現行 UI と完全一致） */
-.sm { height: 38px; padding: 0 1.2rem; font-size: 0.85rem; }
-.md { height: 42px; padding: 0 1.5rem; font-size: 0.95rem; }
-.lg { height: 46px; padding: 0 1.8rem; font-size: 1rem; }
+/******************************************************
+ * ボタンサイズ定義
+ * - sm: 小サイズ
+ * - md: 中サイズ（デフォルト）
+ * - lg: 大サイズ
+ * ※ height / padding / font-size を明示的に設定
+ ******************************************************/
+.sm {
+  height: 38px;
+  padding: 0 1.2rem;
+  font-size: 0.85rem;
+}
 
-/* PRIMARY（青） */
+.md {
+  height: 42px;
+  padding: 0 1.5rem;
+  font-size: 0.95rem;
+}
+
+.lg {
+  height: 46px;
+  padding: 0 1.8rem;
+  font-size: 1rem;
+}
+
+/******************************************************
+ * PRIMARY ボタン（主要操作）
+ * - 青系のブランドカラーを使用
+ * - 白文字で視認性を確保
+ ******************************************************/
 .primary {
   background: var(--color-primary);
   color: #fff;
 }
+
 .primary:hover {
   background: var(--color-primary-hover);
 }
 
-/* SECONDARY（黒系） */
+/******************************************************
+ * SECONDARY ボタン（副次操作）
+ * - 背景はサーフェス色
+ * - 枠線を付けてボタンとしての識別性を確保
+ ******************************************************/
 .secondary {
   background: var(--color-bg-surface);
   color: var(--color-text-main);
+
+  /* セカンダリは枠線あり */
   border: 1px solid var(--color-border);
 }
+
 .secondary:hover {
   background-color: var(--color-bg-app);
   border-color: var(--color-border);
 }
 
-/* DANGER（削除） */
+/******************************************************
+ * DANGER ボタン（削除・危険操作）
+ * - 赤系の薄い背景色
+ * - hover 時に濃くして注意喚起
+ ******************************************************/
 .danger {
   background-color: rgba(220, 38, 38, 0.1);
   color: var(--color-danger);
+
+  /* danger は枠線なし */
   border: none;
 }
+
 .danger:hover {
   background-color: rgba(220, 38, 38, 0.2);
 }

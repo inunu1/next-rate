@@ -1,59 +1,109 @@
+/************************************************************
+ * セレクトボックス全体のラッパー
+ * - フォントサイズを統一
+ * - react-select の container に適用される
+ ************************************************************/
 .wrapper {
   font-size: 0.95rem;
 }
 
-/* スマートフォン：全幅 */
+/************************************************************
+ * スマートフォン向けレイアウト調整
+ * - 幅を強制的に 100% にする
+ * - react-select の inline-style を上書きするため !important
+ ************************************************************/
 @media (max-width: 768px) {
   .wrapper {
     width: 100% !important;
   }
 }
 
-/* control */
+/************************************************************
+ * control（入力欄部分）
+ * - 高さを固定し、他のフォーム要素と揃える
+ * - 背景色・枠線・角丸をアプリ共通に統一
+ * - react-select のデフォルト影を無効化
+ ************************************************************/
 .control {
   min-height: 42px !important;
   height: 42px !important;
+
   border-radius: var(--radius-sm) !important;
   border: 1px solid var(--color-border) !important;
+
   background-color: var(--color-bg-surface) !important;
+
+  /* react-select の影を消す */
   box-shadow: none !important;
+
   transition: all var(--transition-fast);
 }
 
-/* menu */
+/************************************************************
+ * menu（選択肢一覧のドロップダウン）
+ * - 背景色と枠線を統一
+ * - 影を付けて浮かせる
+ * - z-index を高めに設定（モーダルや overflow 対策）
+ ************************************************************/
 .menu {
   background-color: var(--color-bg-surface) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-sm) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+
+  /* ドロップダウンの影 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+
   z-index: 9999 !important;
 }
 
-/* option */
+/************************************************************
+ * option（選択肢）
+ * - 背景色と文字色を統一
+ * - ホバー時のカーソルを pointer に
+ ************************************************************/
 .option {
   background-color: var(--color-bg-surface) !important;
   color: var(--color-text-main) !important;
   cursor: pointer !important;
 }
 
+/************************************************************
+ * option（フォーカス時）
+ * - ホバーやキーボード操作時の背景色を変更
+ ************************************************************/
 .optionFocused {
   background-color: var(--color-bg-hover) !important;
   color: var(--color-text-main) !important;
 }
 
-/* value */
+/************************************************************
+ * singleValue（選択済みの値）
+ * - 文字色を統一
+ ************************************************************/
 .singleValue {
   color: var(--color-text-main) !important;
 }
 
+/************************************************************
+ * placeholder（未選択時の表示）
+ * - muted カラーで控えめに
+ ************************************************************/
 .placeholder {
   color: var(--color-text-muted) !important;
 }
 
+/************************************************************
+ * valueContainer（入力欄の内側余白）
+ * - 左右の padding を調整
+ ************************************************************/
 .valueContainer {
   padding: 0 12px !important;
 }
 
+/************************************************************
+ * input（入力中の文字）
+ * - 文字色を統一
+ ************************************************************/
 .input {
   color: var(--color-text-main) !important;
 }
