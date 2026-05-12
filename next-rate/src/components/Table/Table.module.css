@@ -1,88 +1,39 @@
 /************************************************************
- * デスクトップ用テーブルレイアウト
- * - 横幅は常に 100%
- * - 最低幅を 600px に設定し、列が潰れないようにする
- * - border-collapse により枠線を一体化
- ************************************************************/
-.table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-}
-
-/************************************************************
- * テーブルヘッダー（th）
- * - 背景色はアプリ全体の背景色に合わせる
- * - 文字色は muted（控えめ）
- * - 大文字化と letter-spacing で見出し感を強調
- ************************************************************/
-.table th {
-  background-color: var(--color-bg-app);
-  color: var(--color-text-muted);
-
-  font-weight: 600;
-  font-size: 0.85rem;
-
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-
-  padding: 1rem;
-  text-align: left;
-
-  border-bottom: 1px solid var(--color-border);
-}
-
-/************************************************************
- * テーブルセル（td）
- * - 行データの表示部分
- * - 下線で行を区切る
- ************************************************************/
-.table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--color-border);
-
-  color: var(--color-text-main);
-  font-size: 0.95rem;
-}
-
-/************************************************************
- * 最終行の下線を削除
- ************************************************************/
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-/************************************************************
- * モバイルカードレイアウト
- * - テーブルをカード形式に変換
- * - 行ごとにカードを生成し、縦に並べる
+ * カード一覧（PC：グリッド、SP：1カラム）
+ * - PC では 2〜3 カラムの自動グリッド
+ * - SP では 1 カラム
+ * - 画面幅に応じて自然に並ぶ令和 SaaS レイアウト
  ************************************************************/
 .mobileCards {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  gap: 1.25rem;
+
+  /* PC：カードを横に並べる（自動で2〜3カラム） */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+
+  /* 画面幅いっぱいを使う */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /************************************************************
  * カード本体
  * - 背景色・枠線・影を統一
- * - padding で内部余白を確保
+ * - グリッド内で自然に広がる
  ************************************************************/
 .card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-
   padding: 1rem;
-
-  /* 軽い影でカード感を出す */
   box-shadow: var(--shadow-xs);
+
+  /* 長い文字列がはみ出さないように */
+  word-break: break-word;
 }
 
 /************************************************************
  * カード内の 1 行（ラベル＋値）
- * - 左右に配置
- * - 下線で区切る
  ************************************************************/
 .cardRow {
   display: flex;
@@ -90,28 +41,20 @@
   align-items: center;
 
   padding: 0.5rem 0;
-
   border-bottom: 1px solid var(--color-border-light);
 }
 
-/************************************************************
- * 最終行の下線を削除
- ************************************************************/
 .cardRow:last-child {
   border-bottom: none;
 }
 
 /************************************************************
- * カード内のラベル部分
- * - 大文字化して見出し感を出す
- * - flex-shrink: 0 で縮まないようにする
+ * ラベル部分
  ************************************************************/
 .cardLabel {
   font-weight: 600;
   color: var(--color-text-muted);
-
   font-size: 0.85rem;
-
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
@@ -120,17 +63,11 @@
 }
 
 /************************************************************
- * カード内の値部分
- * - 右寄せ
- * - 長い文字列は折り返し
+ * 値部分
  ************************************************************/
 .cardValue {
   color: var(--color-text-main);
   font-size: 0.95rem;
-
   text-align: right;
   flex: 1;
-
-  /* 長い文字列がはみ出さないように */
-  word-break: break-word;
 }
