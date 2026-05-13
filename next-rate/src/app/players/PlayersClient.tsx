@@ -158,19 +158,12 @@ export default function PlayersClient({
               />
             )}
 
-            <Select
-              options={P.playerOptions}
-              value={null}
-              onChange={(opt) => {
-                if (opt) {
-                  P.setName(opt.label);
-                } else {
-                  P.setName("");
-                }
-              }}
+            <Input
+              type="text"
               placeholder="新規プレイヤー名"
+              value={P.name}
+              onChange={(e) => P.setName(e.target.value)}
               width="auto"
-              mode="creatable"
             />
 
             <Input

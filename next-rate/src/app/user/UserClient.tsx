@@ -114,14 +114,13 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               U.handleRegister();
             }}
           >
-            {/* 団体名（creatable） */}
-            <Select
-              options={U.userOptions}
-              value={U.registerOpt}
-              onChange={U.setRegisterOpt}
+            {/* 団体名（テキストインプット） */}
+            <Input
+              type="text"
               placeholder="新規団体名"
-              width="auto"
-              mode="creatable"
+              value={U.registerName}
+              onChange={(e) => U.setRegisterName(e.target.value)}
+              width={260}
             />
 
             {/* メール */}

@@ -35,7 +35,7 @@ export function useUser(currentUserId: string) {
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
   const [searchOpt, setSearchOpt] = useState<UserOption | null>(null);
-  const [registerOpt, setRegisterOpt] = useState<UserOption | null>(null);
+  const [registerName, setRegisterName] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,7 +73,7 @@ export function useUser(currentUserId: string) {
    * 新規登録
    * ------------------------------------------------------------------------ */
   const handleRegister = useCallback(async () => {
-    if (!registerOpt || !registerOpt.__isNew__) {
+    if (!registerName.trim()) {
       alert("新規団体名を入力してください");
       return;
     }
@@ -94,7 +94,7 @@ export function useUser(currentUserId: string) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: registerOpt.label,
+        name: registerName.trim(),
         email,
         password,
         role: roleOpt.value, // ★ 追加
@@ -102,8 +102,12 @@ export function useUser(currentUserId: string) {
     });
 
     alert("登録が完了しました");
+    setRegisterName("");
+    setEmail("");
+    setPassword("");
+    setRoleOpt(null);
     await fetchUsers();
-  }, [registerOpt, email, password, roleOpt, fetchUsers]);
+  }, [registerName, email, password, roleOpt, fetchUsers]);
 
   /* --------------------------------------------------------------------------
    * 検索
@@ -159,8 +163,8 @@ export function useUser(currentUserId: string) {
     searchOpt,
     setSearchOpt,
 
-    registerOpt,
-    setRegisterOpt,
+    registerName,
+    setRegisterName,
 
     email,
     setEmail,
