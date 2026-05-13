@@ -25,6 +25,7 @@ import Table from "@/components/Table/Table";
 import AppButton from "@/components/Button/Button";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import FormBar from "@/components/FormBar/FormBar";
+import Tabs from "@/components/Tabs/Tabs";
 
 import { useResults } from "./useResults";
 
@@ -66,43 +67,33 @@ export default function ResultsClient({
 
       {/* Form Card */}
       <div className={styles.formCard}>
-        <div className={styles.tabContainer}>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              R.activeTab === "search" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              R.setActiveTab("search");
-              setIsFormOpen(true);
-            }}
-          >
-            🔍 検索
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              R.activeTab === "register" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              R.setActiveTab("register");
-              setIsFormOpen(true);
-            }}
-          >
-            ✍️ 新規登録
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              !isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => setIsFormOpen(false)}
-          >
-            ✖️ 閉じる
-          </button>
-        </div>
+        <Tabs
+          tabs={[
+            {
+              id: "search",
+              label: "🔍 検索",
+              active: R.activeTab === "search" && isFormOpen,
+              onClick: () => {
+                R.setActiveTab("search");
+                setIsFormOpen(true);
+              },
+            },
+            {
+              id: "register",
+              label: "✍️ 新規登録",
+              active: R.activeTab === "register" && isFormOpen,
+              onClick: () => {
+                R.setActiveTab("register");
+                setIsFormOpen(true);
+              },
+            },
+          ]}
+          closeButton={{
+            label: "✖️ 閉じる",
+            active: !isFormOpen,
+            onClick: () => setIsFormOpen(false),
+          }}
+        />
 
         {R.activeTab === "search" && isFormOpen ? (
           <FormBar>

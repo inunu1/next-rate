@@ -27,6 +27,7 @@ import PageHeader from "@/components/PageHeader/PageHeader";
 import Table from "@/components/Table/Table";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
+import Tabs from "@/components/Tabs/Tabs";
 
 import { usePlayers } from "./usePlayers";
 
@@ -75,43 +76,33 @@ export default function PlayersClient({
 
       {/* Form Card */}
       <div className={styles.formCard}>
-        <div className={styles.tabContainer}>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              P.activeTab === "search" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              P.setActiveTab("search");
-              setIsFormOpen(true);
-            }}
-          >
-            🔍 検索
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              P.activeTab === "register" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              P.setActiveTab("register");
-              setIsFormOpen(true);
-            }}
-          >
-            ✍️ 新規登録
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              !isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => setIsFormOpen(false)}
-          >
-            ✖️ 閉じる
-          </button>
-        </div>
+        <Tabs
+          tabs={[
+            {
+              id: "search",
+              label: "🔍 検索",
+              active: P.activeTab === "search" && isFormOpen,
+              onClick: () => {
+                P.setActiveTab("search");
+                setIsFormOpen(true);
+              },
+            },
+            {
+              id: "register",
+              label: "✍️ 新規登録",
+              active: P.activeTab === "register" && isFormOpen,
+              onClick: () => {
+                P.setActiveTab("register");
+                setIsFormOpen(true);
+              },
+            },
+          ]}
+          closeButton={{
+            label: "✖️ 閉じる",
+            active: !isFormOpen,
+            onClick: () => setIsFormOpen(false),
+          }}
+        />
 
         {P.activeTab === "search" && isFormOpen ? (
           <FormBar>

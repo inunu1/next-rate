@@ -25,6 +25,7 @@ import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
 import PageHeader from "@/components/PageHeader/PageHeader";
+import Tabs from "@/components/Tabs/Tabs";
 
 import { useUser } from "./useUser";
 
@@ -53,43 +54,33 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
        * タブ + フォームカード
        * ------------------------------------------------------------ */}
       <div className={styles.formCard}>
-        <div className={styles.tabContainer}>
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              U.activeTab === "search" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              U.setActiveTab("search");
-              setIsFormOpen(true);
-            }}
-          >
-            🔍 検索
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              U.activeTab === "register" && isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => {
-              U.setActiveTab("register");
-              setIsFormOpen(true);
-            }}
-          >
-            ✍️ 新規登録
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabButton} ${
-              !isFormOpen ? styles.tabActive : ""
-            }`}
-            onClick={() => setIsFormOpen(false)}
-          >
-            ✖️ 閉じる
-          </button>
-        </div>
+        <Tabs
+          tabs={[
+            {
+              id: "search",
+              label: "🔍 検索",
+              active: U.activeTab === "search" && isFormOpen,
+              onClick: () => {
+                U.setActiveTab("search");
+                setIsFormOpen(true);
+              },
+            },
+            {
+              id: "register",
+              label: "✍️ 新規登録",
+              active: U.activeTab === "register" && isFormOpen,
+              onClick: () => {
+                U.setActiveTab("register");
+                setIsFormOpen(true);
+              },
+            },
+          ]}
+          closeButton={{
+            label: "✖️ 閉じる",
+            active: !isFormOpen,
+            onClick: () => setIsFormOpen(false),
+          }}
+        />
 
         {/* ------------------------------------------------------------
          * 検索フォーム
