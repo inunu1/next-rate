@@ -21,7 +21,7 @@ import styles from "./Results.module.css";
 
 import Select from "@/components/Select/Select";
 import DateInput from "@/components/DateInput/DateInput";
-import Table from "@/components/Table/Table";
+import DataGrid from "@/components/DataGrid/DataGrid";
 import AppButton from "@/components/Button/Button";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import FormBar from "@/components/FormBar/FormBar";
@@ -218,7 +218,7 @@ export default function ResultsClient({
       {/* Table */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <Table
+          <DataGrid
             className={styles.table}
             rows={R.results}
             columns={[

@@ -24,7 +24,7 @@ import styles from "./Players.module.css";
 import AppButton from "@/components/Button/Button";
 import FormBar from "@/components/FormBar/FormBar";
 import PageHeader from "@/components/PageHeader/PageHeader";
-import Table from "@/components/Table/Table";
+import DataGrid from "@/components/DataGrid/DataGrid";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import Tabs from "@/components/Tabs/Tabs";
@@ -184,7 +184,7 @@ export default function PlayersClient({
       {/* 一覧テーブル（初期レートも表示） */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <Table
+          <DataGrid
             className={styles.table}
             rows={filteredPlayers}
             columns={[

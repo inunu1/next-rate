@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./User.module.css";
 
-import Table from "@/components/Table/Table";
+import DataGrid from "@/components/DataGrid/DataGrid";
 import Select from "@/components/Select/Select";
 import Input from "@/components/DateInput/DateInput";
 import AppButton from "@/components/Button/Button";
@@ -165,7 +165,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
        * ------------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
-          <Table
+          <DataGrid
             className={styles.table}
             rows={U.filteredUsers}
             columns={[

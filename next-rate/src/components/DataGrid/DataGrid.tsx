@@ -1,7 +1,7 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import styles from "./Table.module.css";
+import styles from "./DataGrid.module.css";
 
 export interface Column<T> {
   header: string;
@@ -10,18 +10,18 @@ export interface Column<T> {
   hideOnMobile?: boolean;
 }
 
-export interface TableProps<T> {
+export interface DataGridProps<T> {
   columns: Column<T>[];
   rows: T[];
   className?: string;
 }
 
 /**
- * Table（カードレイアウト統一版）
+ * DataGrid（カードレイアウト統一版）
  * - PC / モバイル問わずカード形式で表示
  * - レイアウト差異がなくなるためコードが大幅に簡略化
  */
-export default function Table<T>({ columns, rows, className }: TableProps<T>) {
+export default function DataGrid<T>({ columns, rows, className }: DataGridProps<T>) {
   const wrapperClass = [
     styles.mobileCards,
     className,
