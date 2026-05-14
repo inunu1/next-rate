@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner"; // ★ トースト追加
 import styles from "./Results.module.css";
 
 import Select from "@/components/Select/Select";
@@ -51,6 +52,29 @@ export default function ResultsClient({
   useEffect(() => {
     R.init();
   }, [R.init]);
+
+  // ------------------------------------------------------------
+  // トースト通知：useResults の lastAction を監視
+  // ------------------------------------------------------------
+  useEffect(() => {
+    switch (R.lastAction) {
+      case "search":
+        toast.success("検索が完了しました");
+        break;
+      case "register-success":
+        toast.success("対局結果を登録しました");
+        break;
+      case "register-error":
+        toast.error("登録に失敗しました");
+        break;
+      case "delete-success":
+        toast.success("削除しました");
+        break;
+      case "delete-error":
+        toast.error("削除に失敗しました");
+        break;
+    }
+  }, [R.lastAction]);
 
   if (!R.mounted) return null;
 
@@ -123,7 +147,13 @@ export default function ResultsClient({
               width={180}
             />
 
-            <AppButton variant="secondary" size="md" onClick={R.handleSearch}>
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                R.handleSearch();
+              }}
+            >
               検索
             </AppButton>
 
@@ -233,7 +263,7 @@ export default function ResultsClient({
               {
                 header: "R",
                 mobileLabel: "ラウンド",
-                render: (r) => `R${r.roundIndex}`
+                render: (r) => `R${r.roundIndex}`,
               },
               {
                 header: "勝者（開始時）",

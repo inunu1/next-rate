@@ -55,10 +55,15 @@ export default function RootLayout({
 
         {/* ------------------------------------------------------------
             トースト通知（sonner）
+            - position: 表示位置（右上）
             - richColors: 成功/失敗の色を強調
             - closeButton: 閉じるボタンを表示
            ------------------------------------------------------------ */}
-        <Toaster richColors closeButton />
+        <Toaster
+          position="top-right"   // ★ 右上に変更
+          richColors
+          closeButton
+        />
       </body>
     </html>
   );

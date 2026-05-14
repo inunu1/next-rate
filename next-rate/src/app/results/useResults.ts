@@ -2,17 +2,10 @@
 
 /**
  * ============================================================================
- * 【フック名称】
- * useResults（対局結果管理ロジック）
- *
- * 【機能概要】
- * ・団体（userId）に紐づく対局結果の検索・登録・削除を行う。
- *
- * 【設計方針】
- * ① API は userId パラメータ方式
- * ② admin → 自団体固定
- * ③ owner → 団体選択 UI で userId を切り替え
- * ④ init / fetchResults / handleRegister / handleDelete を useCallback 化
+ * useResults（対局結果管理ロジック）完全修正版
+ * ・トースト通知用 lastAction を追加
+ * ・alert() を全廃し、UI 側で toast を出せる構造に統一
+ * ・UserClient と同じ設計思想で責務分離
  * ============================================================================
  */
 
@@ -49,13 +42,20 @@ export function useResults(userId: string) {
     playerId?: string;
   }>({});
 
+  // ★ トースト通知用
+  const [lastAction, setLastAction] = useState<string | null>(null);
+
   /* --------------------------------------------------------------------------
    * プレイヤー一覧取得
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
-    const res = await fetch(`/api/private/player?userId=${userId}`);
-    const data = await res.json();
-    setPlayers(data);
+    try {
+      const res = await fetch(`/api/private/player?userId=${userId}`);
+      const data = await res.json();
+      setPlayers(data);
+    } catch {
+      setLastAction("fetch-error");
+    }
   }, [userId]);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
@@ -68,36 +68,40 @@ export function useResults(userId: string) {
    * ------------------------------------------------------------------------ */
   const fetchResults = useCallback(
     async (params: Record<string, string | undefined>) => {
-      const filtered = Object.fromEntries(
-        Object.entries(params).filter(([, v]) => v !== undefined)
-      ) as Record<string, string>;
+      try {
+        const filtered = Object.fromEntries(
+          Object.entries(params).filter(([, v]) => v !== undefined)
+        ) as Record<string, string>;
 
-      const qs = new URLSearchParams({
-        ...filtered,
-        userId,
-      }).toString();
+        const qs = new URLSearchParams({
+          ...filtered,
+          userId,
+        }).toString();
 
-      const res = await fetch(`/api/private/result?${qs}`);
-      const data = await res.json();
+        const res = await fetch(`/api/private/result?${qs}`);
+        const data = await res.json();
 
-      setResults(data.results ?? []);
-      setDate(data.date ?? null);
-      setPrevDate(data.prevDate ?? null);
-      setNextDate(data.nextDate ?? null);
+        setResults(data.results ?? []);
+        setDate(data.date ?? null);
+        setPrevDate(data.prevDate ?? null);
+        setNextDate(data.nextDate ?? null);
 
-      return data;
+        return data;
+      } catch {
+        setLastAction("fetch-error");
+      }
     },
     [userId]
   );
 
   /* --------------------------------------------------------------------------
-   * 初期化（useCallback 化）
+   * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
     setMounted(true);
     await fetchPlayers();
     const data = await fetchResults({});
-    setSearchParams({ date: data.date ?? undefined });
+    setSearchParams({ date: data?.date ?? undefined });
   }, [fetchPlayers, fetchResults]);
 
   /* --------------------------------------------------------------------------
@@ -110,6 +114,8 @@ export function useResults(userId: string) {
 
     setSearchParams(params);
     await fetchResults(params);
+
+    setLastAction("search");
   }, [searchDate, playerOpt, fetchResults]);
 
   /* --------------------------------------------------------------------------
@@ -120,6 +126,8 @@ export function useResults(userId: string) {
     setSearchDate("");
     setSearchParams({});
     await fetchResults({});
+
+    setLastAction("search");
   }, [fetchResults]);
 
   /* --------------------------------------------------------------------------
@@ -127,44 +135,48 @@ export function useResults(userId: string) {
    * ------------------------------------------------------------------------ */
   const handleRegister = useCallback(async () => {
     if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
-      alert("必須項目が不足しています");
+      setLastAction("register-error");
       return;
     }
 
     if (winnerOpt.value === loserOpt.value) {
-      alert("勝者と敗者は異なる必要があります");
+      setLastAction("register-error");
       return;
     }
 
-    const w = players.find((p) => p.id === winnerOpt.value)!;
-    const l = players.find((p) => p.id === loserOpt.value)!;
+    try {
+      const w = players.find((p) => p.id === winnerOpt.value)!;
+      const l = players.find((p) => p.id === loserOpt.value)!;
 
-    await fetch("/api/private/result", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        winnerId: w.id,
-        winnerName: w.name,
-        winnerRate: w.currentRate,
-        loserId: l.id,
-        loserName: l.name,
-        loserRate: l.currentRate,
-        matchDate: Number(registerDate.replaceAll("-", "")),
-        roundIndex: Number(roundIndex),
-        userId,
-      }),
-    });
+      await fetch("/api/private/result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          winnerId: w.id,
+          winnerName: w.name,
+          winnerRate: w.currentRate,
+          loserId: l.id,
+          loserName: l.name,
+          loserRate: l.currentRate,
+          matchDate: Number(registerDate.replaceAll("-", "")),
+          roundIndex: Number(roundIndex),
+          userId,
+        }),
+      });
 
-    await fetch("/api/private/calculate", {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    });
+      await fetch("/api/private/calculate", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      });
 
-    alert("登録が完了しました");
+      setLastAction("register-success");
 
-    const params = { date: registerDate };
-    setSearchParams(params);
-    await fetchResults(params);
+      const params = { date: registerDate };
+      setSearchParams(params);
+      await fetchResults(params);
+    } catch {
+      setLastAction("register-error");
+    }
   }, [
     winnerOpt,
     loserOpt,
@@ -185,24 +197,28 @@ export function useResults(userId: string) {
 
       if (!confirm("この対局結果を削除しますか？")) return;
 
-      await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
-        method: "DELETE",
-      });
+      try {
+        await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
+          method: "DELETE",
+        });
 
-      await fetch("/api/private/calculate", {
-        method: "POST",
-        body: JSON.stringify({ userId }),
-      });
+        await fetch("/api/private/calculate", {
+          method: "POST",
+          body: JSON.stringify({ userId }),
+        });
 
-      alert("削除が完了しました");
+        setLastAction("delete-success");
 
-      const s = target.matchDate.toString();
-      const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+        const s = target.matchDate.toString();
+        const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-      const params = { ...searchParams, date: dateStr };
-      setSearchParams(params);
+        const params = { ...searchParams, date: dateStr };
+        setSearchParams(params);
 
-      await fetchResults(params);
+        await fetchResults(params);
+      } catch {
+        setLastAction("delete-error");
+      }
     },
     [results, userId, searchParams, fetchResults]
   );
@@ -267,5 +283,7 @@ export function useResults(userId: string) {
     clearSearch,
     handleRegister,
     handleDelete,
+
+    lastAction, // ★ トースト通知用
   };
 }

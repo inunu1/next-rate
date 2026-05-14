@@ -10,15 +10,13 @@
  *
  * 【UI 方針】
  * ・ResultsClient と UI/構造を統一
- *   - タブ（検索 / 新規登録）
- *   - FormBar による横並びフォーム
- *   - Select / Table / Button / PageHeader の共通コンポーネント利用
- *   - 初期レートもテーブルに表示
+ * ・操作結果はトースト通知でフィードバック
  * ============================================================================
  */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner"; // ★ トースト追加
 import styles from "./Players.module.css";
 
 import AppButton from "@/components/Button/Button";
@@ -42,7 +40,6 @@ export default function PlayersClient({
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
-  // 団体選択（owner のみ）
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
     value: currentUserId,
@@ -54,6 +51,29 @@ export default function PlayersClient({
   useEffect(() => {
     P.init();
   }, [P.init]);
+
+  // ------------------------------------------------------------
+  // トースト通知：usePlayers の lastAction を監視
+  // ------------------------------------------------------------
+  useEffect(() => {
+    switch (P.lastAction) {
+      case "search":
+        toast.success("検索が完了しました");
+        break;
+      case "register-success":
+        toast.success("プレイヤーを登録しました");
+        break;
+      case "register-error":
+        toast.error("登録に失敗しました");
+        break;
+      case "delete-success":
+        toast.success("削除しました");
+        break;
+      case "delete-error":
+        toast.error("削除に失敗しました");
+        break;
+    }
+  }, [P.lastAction]);
 
   // 検索フォーム（プレイヤー選択）
   const filteredPlayers = useMemo(() => {
@@ -126,14 +146,21 @@ export default function PlayersClient({
               width="auto"
             />
 
-            <AppButton variant="secondary" size="md">
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => P.handleSearch()}
+            >
               検索
             </AppButton>
 
             <AppButton
               variant="secondary"
               size="md"
-              onClick={() => P.setPlayerOpt(null)}
+              onClick={() => {
+                P.setPlayerOpt(null);
+                P.handleSearch();
+              }}
             >
               クリア
             </AppButton>
@@ -181,7 +208,7 @@ export default function PlayersClient({
         ) : null}
       </div>
 
-      {/* 一覧テーブル（初期レートも表示） */}
+      {/* 一覧テーブル */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataGrid
@@ -191,17 +218,17 @@ export default function PlayersClient({
               {
                 header: "名前",
                 mobileLabel: "名前",
-                render: (p) => p.name
+                render: (p) => p.name,
               },
               {
                 header: "初期レート",
                 mobileLabel: "初期レート",
-                render: (p) => p.initialRate
+                render: (p) => p.initialRate,
               },
               {
                 header: "現在レート",
                 mobileLabel: "現在レート",
-                render: (p) => p.currentRate
+                render: (p) => p.currentRate,
               },
               {
                 header: "操作",

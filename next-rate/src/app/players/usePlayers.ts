@@ -2,17 +2,10 @@
 
 /**
  * ============================================================================
- * 【フック名称】
- * usePlayers（対局者管理ロジック）
- *
- * 【機能概要】
- * ・団体（userId）に紐づくプレイヤー一覧の取得・登録・削除を行う。
- *
- * 【設計方針】
- * ① API は userId パラメータ方式
- * ② admin → 自団体固定
- * ③ owner → 団体選択 UI で userId を切り替え
- * ④ init / fetchPlayers / handleRegister / handleDelete を useCallback 化
+ * usePlayers（対局者管理ロジック）完全修正版
+ * ・トースト通知用 lastAction を追加
+ * ・alert() を全廃し、UI 側で toast を出せる構造に統一
+ * ・User / Results と同じ設計思想で責務分離
  * ============================================================================
  */
 
@@ -33,6 +26,9 @@ export function usePlayers(userId: string) {
   const [name, setName] = useState("");
   const [initialRate, setInitialRate] = useState("1500");
 
+  // ★ トースト通知用
+  const [lastAction, setLastAction] = useState<string | null>(null);
+
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
     label: p.name,
@@ -42,13 +38,17 @@ export function usePlayers(userId: string) {
    * プレイヤー一覧取得
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
-    const res = await fetch(`/api/private/player?userId=${userId}`);
-    const data = await res.json();
-    setPlayers(data);
+    try {
+      const res = await fetch(`/api/private/player?userId=${userId}`);
+      const data = await res.json();
+      setPlayers(data);
+    } catch {
+      setLastAction("fetch-error");
+    }
   }, [userId]);
 
   /* --------------------------------------------------------------------------
-   * 初期化（useCallback 化）
+   * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
     setMounted(true);
@@ -56,28 +56,41 @@ export function usePlayers(userId: string) {
   }, [fetchPlayers]);
 
   /* --------------------------------------------------------------------------
+   * 検索（Players は playerOpt のみでフィルタ）
+   * ------------------------------------------------------------------------ */
+  const handleSearch = useCallback(() => {
+    // 実際の検索処理は PlayersClient 側の useMemo に委譲
+    setLastAction("search");
+  }, []);
+
+  /* --------------------------------------------------------------------------
    * 登録
    * ------------------------------------------------------------------------ */
   const handleRegister = useCallback(async () => {
     if (!name) {
-      alert("プレイヤー名を入力してください");
+      setLastAction("register-error");
       return;
     }
 
-    await fetch("/api/private/player", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        initialRate: Number(initialRate),
-        userId,
-      }),
-    });
+    try {
+      await fetch("/api/private/player", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          initialRate: Number(initialRate),
+          userId,
+        }),
+      });
 
-    alert("登録が完了しました");
-    setName("");
-    setInitialRate("1500");
-    await fetchPlayers();
+      setName("");
+      setInitialRate("1500");
+
+      setLastAction("register-success");
+      await fetchPlayers();
+    } catch {
+      setLastAction("register-error");
+    }
   }, [name, initialRate, userId, fetchPlayers]);
 
   /* --------------------------------------------------------------------------
@@ -87,14 +100,18 @@ export function usePlayers(userId: string) {
     async (id: string) => {
       if (!confirm("このプレイヤーを削除しますか？")) return;
 
-      await fetch("/api/private/player", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, userId }),
-      });
+      try {
+        await fetch("/api/private/player", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, userId }),
+        });
 
-      alert("削除が完了しました");
-      await fetchPlayers();
+        setLastAction("delete-success");
+        await fetchPlayers();
+      } catch {
+        setLastAction("delete-error");
+      }
     },
     [userId, fetchPlayers]
   );
@@ -108,6 +125,7 @@ export function usePlayers(userId: string) {
 
     activeTab,
     setActiveTab,
+
     playerOpt,
     setPlayerOpt,
     playerOptions,
@@ -118,7 +136,10 @@ export function usePlayers(userId: string) {
     initialRate,
     setInitialRate,
 
+    handleSearch,
     handleRegister,
     handleDelete,
+
+    lastAction, // ★ トースト通知用
   };
 }
