@@ -3,8 +3,9 @@
 /**
  * ============================================================================
  * useUser（団体管理ロジック）完全修正版
- * ・role（owner/admin）を扱えるように修正
- * ・UserClient.tsx と完全連動
+ * ・role（owner/admin）対応
+ * ・UserClient.tsx のトースト通知と完全連動
+ * ・lastAction により UI 側で成功/失敗を判定可能
  * ============================================================================
  */
 
@@ -20,7 +21,7 @@ export type ManagedUser = {
   id: string;
   name: string | null;
   email: string;
-  role: "owner" | "admin"; // ← ★ 追加
+  role: "owner" | "admin";
 };
 
 export function useUser(currentUserId: string) {
@@ -40,17 +41,23 @@ export function useUser(currentUserId: string) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ★ role 選択用 state を追加
   const [roleOpt, setRoleOpt] = useState<UserOption | null>(null);
+
+  // ★ トースト通知用のアクション状態
+  const [lastAction, setLastAction] = useState<string | null>(null);
 
   /* --------------------------------------------------------------------------
    * 団体一覧取得
    * ------------------------------------------------------------------------ */
   const fetchUsers = useCallback(async () => {
-    const res = await fetch("/api/private/user");
-    const data = await res.json();
-    setUsers(data);
-    setFilteredUsers(data);
+    try {
+      const res = await fetch("/api/private/user");
+      const data = await res.json();
+      setUsers(data);
+      setFilteredUsers(data);
+    } catch {
+      setLastAction("fetch-error");
+    }
   }, []);
 
   /* --------------------------------------------------------------------------
@@ -74,39 +81,44 @@ export function useUser(currentUserId: string) {
    * ------------------------------------------------------------------------ */
   const handleRegister = useCallback(async () => {
     if (!registerName.trim()) {
-      alert("新規団体名を入力してください");
+      setLastAction("register-error");
       return;
     }
     if (!email) {
-      alert("メールアドレスを入力してください");
+      setLastAction("register-error");
       return;
     }
     if (!password) {
-      alert("パスワードを入力してください");
+      setLastAction("register-error");
       return;
     }
     if (!roleOpt) {
-      alert("ロールを選択してください");
+      setLastAction("register-error");
       return;
     }
 
-    await fetch("/api/private/user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: registerName.trim(),
-        email,
-        password,
-        role: roleOpt.value, // ★ 追加
-      }),
-    });
+    try {
+      await fetch("/api/private/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: registerName.trim(),
+          email,
+          password,
+          role: roleOpt.value,
+        }),
+      });
 
-    alert("登録が完了しました");
-    setRegisterName("");
-    setEmail("");
-    setPassword("");
-    setRoleOpt(null);
-    await fetchUsers();
+      setRegisterName("");
+      setEmail("");
+      setPassword("");
+      setRoleOpt(null);
+
+      setLastAction("register-success");
+      await fetchUsers();
+    } catch {
+      setLastAction("register-error");
+    }
   }, [registerName, email, password, roleOpt, fetchUsers]);
 
   /* --------------------------------------------------------------------------
@@ -115,9 +127,12 @@ export function useUser(currentUserId: string) {
   const handleSearch = useCallback(() => {
     if (!searchOpt || searchOpt.__isNew__) {
       setFilteredUsers(users);
+      setLastAction("search");
       return;
     }
+
     setFilteredUsers(users.filter((u) => u.id === searchOpt.value));
+    setLastAction("search");
   }, [searchOpt, users]);
 
   /* --------------------------------------------------------------------------
@@ -126,6 +141,7 @@ export function useUser(currentUserId: string) {
   const clearSearch = useCallback(() => {
     setSearchOpt(null);
     setFilteredUsers(users);
+    setLastAction("search");
   }, [users]);
 
   /* --------------------------------------------------------------------------
@@ -135,14 +151,18 @@ export function useUser(currentUserId: string) {
     async (id: string) => {
       if (!confirm("この団体を削除しますか？")) return;
 
-      await fetch("/api/private/user", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
+      try {
+        await fetch("/api/private/user", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
 
-      alert("削除が完了しました");
-      await fetchUsers();
+        setLastAction("delete-success");
+        await fetchUsers();
+      } catch {
+        setLastAction("delete-error");
+      }
     },
     [fetchUsers]
   );
@@ -172,8 +192,8 @@ export function useUser(currentUserId: string) {
     password,
     setPassword,
 
-    roleOpt,        // ★ 追加
-    setRoleOpt,     // ★ 追加
+    roleOpt,
+    setRoleOpt,
 
     userOptions,
 
@@ -182,6 +202,7 @@ export function useUser(currentUserId: string) {
     handleRegister,
     handleDelete,
 
+    lastAction, // ★ 追加：UserClient でトースト通知に使う
     currentUserId,
   };
 }

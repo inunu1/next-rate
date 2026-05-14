@@ -12,11 +12,13 @@
  * 【UI 方針】
  * ・ResultsClient と UI/構造を完全統一
  * ・role（owner / admin）を選択できるようにする
+ * ・操作結果はトースト通知でフィードバック
  * ============================================================================
  */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner"; // ← ★ 追加：トースト通知
 import styles from "./User.module.css";
 
 import DataGrid from "@/components/DataGrid/DataGrid";
@@ -36,6 +38,27 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
   useEffect(() => {
     U.init();
   }, [U.init]);
+
+  // ------------------------------------------------------------
+  // トースト通知：検索・登録・削除の結果を監視
+  // ------------------------------------------------------------
+  useEffect(() => {
+    if (U.lastAction === "search") {
+      toast.success("検索が完了しました");
+    }
+    if (U.lastAction === "register-success") {
+      toast.success("団体を登録しました");
+    }
+    if (U.lastAction === "register-error") {
+      toast.error("登録に失敗しました");
+    }
+    if (U.lastAction === "delete-success") {
+      toast.success("削除しました");
+    }
+    if (U.lastAction === "delete-error") {
+      toast.error("削除に失敗しました");
+    }
+  }, [U.lastAction]);
 
   if (!U.mounted) return null;
 
@@ -95,7 +118,14 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               width="auto"
             />
 
-            <AppButton variant="secondary" size="md" onClick={U.handleSearch}>
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                U.handleSearch();
+                toast("検索中…");
+              }}
+            >
               検索
             </AppButton>
 
@@ -114,7 +144,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               U.handleRegister();
             }}
           >
-            {/* 団体名（テキストインプット） */}
+            {/* 団体名 */}
             <Input
               type="text"
               placeholder="新規団体名"
@@ -141,7 +171,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               width={260}
             />
 
-            {/* ロール選択（owner / admin） */}
+            {/* ロール選択 */}
             <Select
               options={[
                 { label: "owner", value: "owner" },
@@ -172,32 +202,33 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               {
                 header: "Email",
                 mobileLabel: "Email",
-                render: (u) => u.email
+                render: (u) => u.email,
               },
               {
                 header: "団体名",
                 mobileLabel: "団体名",
-                render: (u) => u.name ?? "未設定"
+                render: (u) => u.name ?? "未設定",
               },
               {
                 header: "ロール",
                 mobileLabel: "ロール",
-                render: (u) => u.role
+                render: (u) => u.role,
               },
               {
                 header: "操作",
                 mobileLabel: "操作",
-                render: (u) => (
+                render: (u) =>
                   u.id !== U.currentUserId && (
                     <AppButton
                       variant="danger"
                       size="md"
-                      onClick={() => U.handleDelete(u.id)}
+                      onClick={() => {
+                        U.handleDelete(u.id);
+                      }}
                     >
                       削除
                     </AppButton>
-                  )
-                ),
+                  ),
               },
             ]}
           />
