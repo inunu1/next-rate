@@ -11,6 +11,7 @@
 
 import { useState, useCallback } from "react";
 import type { Player } from "@prisma/client";
+import { parseApiResponse } from "@/lib/fetchJson";
 
 export type PlayerOption = { value: string; label: string };
 
@@ -40,7 +41,7 @@ export function usePlayers(userId: string) {
   const fetchPlayers = useCallback(async () => {
     try {
       const res = await fetch(`/api/private/player?userId=${userId}`);
-      const data = await res.json();
+      const data = await parseApiResponse<Player[]>(res);
       setPlayers(data);
     } catch {
       setLastAction("fetch-error");
@@ -73,7 +74,7 @@ export function usePlayers(userId: string) {
     }
 
     try {
-      await fetch("/api/private/player", {
+      const res = await fetch("/api/private/player", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,6 +83,8 @@ export function usePlayers(userId: string) {
           userId,
         }),
       });
+
+      await parseApiResponse(res);
 
       setName("");
       setInitialRate("1500");
@@ -101,11 +104,13 @@ export function usePlayers(userId: string) {
       if (!confirm("このプレイヤーを削除しますか？")) return;
 
       try {
-        await fetch("/api/private/player", {
+        const res = await fetch("/api/private/player", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, userId }),
         });
+
+        await parseApiResponse(res);
 
         setLastAction("delete-success");
         await fetchPlayers();

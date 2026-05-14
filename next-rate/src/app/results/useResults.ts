@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Player, Result } from "@prisma/client";
+import { parseApiResponse } from "@/lib/fetchJson";
 
 export type PlayerOption = { value: string; label: string };
 
@@ -51,7 +52,7 @@ export function useResults(userId: string) {
   const fetchPlayers = useCallback(async () => {
     try {
       const res = await fetch(`/api/private/player?userId=${userId}`);
-      const data = await res.json();
+      const data = await parseApiResponse<Player[]>(res);
       setPlayers(data);
     } catch {
       setLastAction("fetch-error");
@@ -79,7 +80,12 @@ export function useResults(userId: string) {
         }).toString();
 
         const res = await fetch(`/api/private/result?${qs}`);
-        const data = await res.json();
+        const data = await parseApiResponse<{
+          date: string | null;
+          prevDate: string | null;
+          nextDate: string | null;
+          results: Result[];
+        }>(res);
 
         setResults(data.results ?? []);
         setDate(data.date ?? null);
@@ -148,7 +154,7 @@ export function useResults(userId: string) {
       const w = players.find((p) => p.id === winnerOpt.value)!;
       const l = players.find((p) => p.id === loserOpt.value)!;
 
-      await fetch("/api/private/result", {
+      const res = await fetch("/api/private/result", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,6 +169,7 @@ export function useResults(userId: string) {
           userId,
         }),
       });
+      await parseApiResponse(res);
 
       await fetch("/api/private/calculate", {
         method: "POST",
@@ -198,9 +205,10 @@ export function useResults(userId: string) {
       if (!confirm("この対局結果を削除しますか？")) return;
 
       try {
-        await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
+        const res = await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
           method: "DELETE",
         });
+        await parseApiResponse(res);
 
         await fetch("/api/private/calculate", {
           method: "POST",

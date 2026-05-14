@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { parseApiResponse } from "@/lib/fetchJson";
 
 export type UserOption = {
   value: string;
@@ -52,7 +53,7 @@ export function useUser(currentUserId: string) {
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/private/user");
-      const data = await res.json();
+      const data = await parseApiResponse<ManagedUser[]>(res);
       setUsers(data);
       setFilteredUsers(data);
     } catch {
@@ -98,7 +99,7 @@ export function useUser(currentUserId: string) {
     }
 
     try {
-      await fetch("/api/private/user", {
+      const res = await fetch("/api/private/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -108,6 +109,7 @@ export function useUser(currentUserId: string) {
           role: roleOpt.value,
         }),
       });
+      await parseApiResponse(res);
 
       setRegisterName("");
       setEmail("");
@@ -152,11 +154,12 @@ export function useUser(currentUserId: string) {
       if (!confirm("この団体を削除しますか？")) return;
 
       try {
-        await fetch("/api/private/user", {
+        const res = await fetch("/api/private/user", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id }),
         });
+        await parseApiResponse(res);
 
         setLastAction("delete-success");
         await fetchUsers();

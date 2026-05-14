@@ -73,6 +73,9 @@ export default function ResultsClient({
       case "delete-error":
         toast.error("削除に失敗しました");
         break;
+      case "fetch-error":
+        toast.error("通信エラーが発生しました");
+        break;
     }
   }, [R.lastAction]);
 

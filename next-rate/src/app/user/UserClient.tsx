@@ -58,6 +58,9 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
     if (U.lastAction === "delete-error") {
       toast.error("削除に失敗しました");
     }
+    if (U.lastAction === "fetch-error") {
+      toast.error("通信エラーが発生しました");
+    }
   }, [U.lastAction]);
 
   if (!U.mounted) return null;

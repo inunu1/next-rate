@@ -22,19 +22,21 @@
  * ============================================================
  */
 
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { jsonOk, jsonError } from '@/lib/apiResponse';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type AuthOwnerResult = { session: Awaited<ReturnType<typeof getServerSession>> } | { error: string; status: number };
+
 /* ============================================================
  * owner 専用チェック
  * ============================================================ */
-async function requireOwner() {
+async function requireOwner(): Promise<AuthOwnerResult> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -53,8 +55,8 @@ async function requireOwner() {
  * ============================================================ */
 export async function GET() {
   const auth = await requireOwner();
-  if (auth.error) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if ('error' in auth) {
+    return jsonError(auth.error, auth.status);
   }
 
   try {
@@ -62,13 +64,10 @@ export async function GET() {
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json(users);
+    return jsonOk(users);
   } catch (err) {
     console.error('GET /api/private/user error:', err);
-    return NextResponse.json(
-      { error: '団体ユーザー取得に失敗しました' },
-      { status: 500 }
-    );
+    return jsonError('団体ユーザー取得に失敗しました', 500);
   }
 }
 
@@ -77,8 +76,8 @@ export async function GET() {
  * ============================================================ */
 export async function POST(req: Request) {
   const auth = await requireOwner();
-  if (auth.error) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if ('error' in auth) {
+    return jsonError(auth.error, auth.status);
   }
 
   try {
@@ -86,25 +85,16 @@ export async function POST(req: Request) {
     const { name, email, password, role } = body;
 
     if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { error: 'name, email, password, role は必須です' },
-        { status: 400 }
-      );
+      return jsonError('name, email, password, role は必須です', 400);
     }
 
     if (!['owner', 'admin'].includes(role)) {
-      return NextResponse.json(
-        { error: 'role は owner または admin のみ指定可能です' },
-        { status: 400 }
-      );
+      return jsonError('role は owner または admin のみ指定可能です', 400);
     }
 
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) {
-      return NextResponse.json(
-        { error: '既に登録済みの email です' },
-        { status: 400 }
-      );
+      return jsonError('既に登録済みの email です', 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -118,13 +108,10 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(created);
+    return jsonOk(created);
   } catch (err) {
     console.error('POST /api/private/user error:', err);
-    return NextResponse.json(
-      { error: '団体ユーザー登録に失敗しました' },
-      { status: 500 }
-    );
+    return jsonError('団体ユーザー登録に失敗しました', 500);
   }
 }
 
@@ -133,8 +120,8 @@ export async function POST(req: Request) {
  * ============================================================ */
 export async function DELETE(req: Request) {
   const auth = await requireOwner();
-  if (auth.error) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if ('error' in auth) {
+    return jsonError(auth.error, auth.status);
   }
 
   try {
@@ -142,22 +129,16 @@ export async function DELETE(req: Request) {
     const { id } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'id は必須です' },
-        { status: 400 }
-      );
+      return jsonError('id は必須です', 400);
     }
 
     const deleted = await prisma.user.delete({
       where: { id },
     });
 
-    return NextResponse.json(deleted);
+    return jsonOk(deleted);
   } catch (err) {
     console.error('DELETE /api/private/user error:', err);
-    return NextResponse.json(
-      { error: '団体ユーザー削除に失敗しました' },
-      { status: 500 }
-    );
+    return jsonError('団体ユーザー削除に失敗しました', 500);
   }
 }

@@ -1,21 +1,25 @@
 /**
  * ============================================================================
  * 【機能概要】
- * プレイヤー（Player）情報を扱う REST API。
+ * プレイヤー（Player）情報を扱う REST API（完全リファクタ版）
+ *
+ * 【設計方針】
+ * 1. 認証必須（next-auth）
+ * 2. owner / admin で操作可能な userId を制御
+ * 3. レスポンス形式を { ok, data?, error? } に統一
+ * 4. バリデーションとエラーハンドリングを明確化
+ * 5. Prisma アクセスは責務ごとに整理
  * ============================================================================
  */
 
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { jsonOk, jsonError } from "@/lib/apiResponse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* ============================================================================
- * 型定義
- * ========================================================================== */
 type AuthSuccess = { session: Session };
 type AuthError = { error: string; status: number };
 type AuthResult = AuthSuccess | AuthError;
@@ -32,6 +36,9 @@ type DeletePlayerBody = {
 };
 
 /* ============================================================================
+ * 共通レスポンスヘルパ
+ * ========================================================================== */
+/* ============================================================================
  * 認証チェック
  * ========================================================================== */
 async function requireAuth(): Promise<AuthResult> {
@@ -46,6 +53,8 @@ async function requireAuth(): Promise<AuthResult> {
 
 /* ============================================================================
  * targetUserId の決定ロジック
+ *  - admin: 自分自身の userId 固定
+ *  - owner: userIdParam が必須
  * ========================================================================== */
 function resolveTargetUserId(
   session: Session,
@@ -58,10 +67,32 @@ function resolveTargetUserId(
   }
 
   if (!userIdParam) {
-    return { error: "userId が指定されていません（owner のみ必須）", status: 400 };
+    return {
+      error: "userId が指定されていません（owner のみ必須）",
+      status: 400,
+    };
   }
 
   return userIdParam;
+}
+
+/* ============================================================================
+ * バリデーション
+ * ========================================================================== */
+function validatePlayerInput(name: string, initialRate: number) {
+  if (!name || !name.trim()) {
+    return "プレイヤー名は必須です";
+  }
+  if (!Number.isFinite(initialRate)) {
+    return "initialRate は数値である必要があります";
+  }
+  if (initialRate < 0) {
+    return "initialRate は 0 以上である必要があります";
+  }
+  if (name.length > 100) {
+    return "プレイヤー名が長すぎます（100文字以内）";
+  }
+  return null;
 }
 
 /* ============================================================================
@@ -70,7 +101,7 @@ function resolveTargetUserId(
 export async function GET(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return jsonError(auth.error, auth.status);
   }
 
   const session = auth.session;
@@ -79,7 +110,7 @@ export async function GET(req: Request) {
 
   const target = resolveTargetUserId(session, userIdParam);
   if (typeof target !== "string") {
-    return NextResponse.json({ error: target.error }, { status: target.status });
+    return jsonError(target.error, target.status);
   }
 
   try {
@@ -91,13 +122,10 @@ export async function GET(req: Request) {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json(players);
+    return jsonOk(players);
   } catch (err) {
     console.error("GET /api/private/player error:", err);
-    return NextResponse.json(
-      { error: "プレイヤー取得に失敗しました" },
-      { status: 500 }
-    );
+    return jsonError("プレイヤー取得に失敗しました", 500);
   }
 }
 
@@ -107,43 +135,57 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return jsonError(auth.error, auth.status);
   }
 
   const session = auth.session;
 
-  const body = (await req.json()) as PostPlayerBody;
+  let body: PostPlayerBody;
+  try {
+    body = (await req.json()) as PostPlayerBody;
+  } catch {
+    return jsonError("リクエストボディの解析に失敗しました", 400);
+  }
+
   const { name, initialRate, userId } = body;
 
   const target = resolveTargetUserId(session, userId ?? null);
   if (typeof target !== "string") {
-    return NextResponse.json({ error: target.error }, { status: target.status });
+    return jsonError(target.error, target.status);
   }
 
-  if (!name || initialRate == null) {
-    return NextResponse.json(
-      { error: "name と initialRate は必須です" },
-      { status: 400 }
-    );
+  const validationError = validatePlayerInput(name, initialRate);
+  if (validationError) {
+    return jsonError(validationError, 400);
   }
 
   try {
+    // 同一団体内で同名プレイヤーが存在しないかチェック
+    const exists = await prisma.player.findFirst({
+      where: {
+        name,
+        userId: target,
+        deletedAt: null,
+      },
+    });
+
+    if (exists) {
+      return jsonError("同名のプレイヤーが既に存在します", 409);
+    }
+
     const created = await prisma.player.create({
       data: {
-        name,
+        name: name.trim(),
         initialRate,
         currentRate: initialRate,
         userId: target,
       },
     });
 
-    return NextResponse.json(created);
+    return jsonOk(created, { status: 201 });
   } catch (err) {
     console.error("POST /api/private/player error:", err);
-    return NextResponse.json(
-      { error: "プレイヤー登録に失敗しました" },
-      { status: 500 }
-    );
+    return jsonError("プレイヤー登録に失敗しました", 500);
   }
 }
 
@@ -153,31 +195,38 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return jsonError(auth.error, auth.status);
   }
 
   const session = auth.session;
 
-  const body = (await req.json()) as DeletePlayerBody;
+  let body: DeletePlayerBody;
+  try {
+    body = (await req.json()) as DeletePlayerBody;
+  } catch {
+    return jsonError("リクエストボディの解析に失敗しました", 400);
+  }
+
   const { id, userId } = body;
 
   if (!id) {
-    return NextResponse.json({ error: "id は必須です" }, { status: 400 });
+    return jsonError("id は必須です", 400);
   }
 
   const target = resolveTargetUserId(session, userId ?? null);
   if (typeof target !== "string") {
-    return NextResponse.json({ error: target.error }, { status: target.status });
+    return jsonError(target.error, target.status);
   }
 
   try {
     const player = await prisma.player.findUnique({ where: { id } });
 
-    if (!player || player.userId !== target) {
-      return NextResponse.json(
-        { error: "対象プレイヤーが存在しないか、権限がありません" },
-        { status: 404 }
-      );
+    if (!player || player.deletedAt) {
+      return jsonError("対象プレイヤーが存在しません", 404);
+    }
+
+    if (player.userId !== target) {
+      return jsonError("このプレイヤーを削除する権限がありません", 403);
     }
 
     const deleted = await prisma.player.update({
@@ -185,12 +234,9 @@ export async function DELETE(req: Request) {
       data: { deletedAt: new Date() },
     });
 
-    return NextResponse.json(deleted);
+    return jsonOk(deleted);
   } catch (err) {
     console.error("DELETE /api/private/player error:", err);
-    return NextResponse.json(
-      { error: "プレイヤー削除に失敗しました" },
-      { status: 500 }
-    );
+    return jsonError("プレイヤー削除に失敗しました", 500);
   }
 }
