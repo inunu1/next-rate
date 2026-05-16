@@ -43,7 +43,7 @@ async function requireOwner(): Promise<AuthOwnerResult> {
     return { error: 'Unauthorized', status: 401 };
   }
 
-  if (session.user.role !== 'owner') {
+  if (session.user.systemRole !== 'owner') {
     return { error: '権限がありません（owner のみ利用可能）', status: 403 };
   }
 
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
         name,
         email,
         hashedPassword,
-        role,
+        systemRole: role,
       },
     });
 
