@@ -21,17 +21,7 @@ type AuthSuccess = { session: Session };
 type AuthError = { error: string; status: number };
 type AuthResult = AuthSuccess | AuthError;
 
-type PostResultBody = {
-  winnerId: string;
-  winnerName: string;
-  winnerRate: number;
-  loserId: string;
-  loserName: string;
-  loserRate: number;
-  matchDate: number;
-  roundIndex: number;
-  userId?: string;
-};
+import type { PostResultBody } from "@/types/api";
 
 /* ============================================================================
  * 認証チェック
@@ -51,9 +41,10 @@ function resolveTargetUserId(
   session: Session,
   userIdParam: string | null
 ): string | AuthError {
-  const role = session.user.role;
+  const role = session.user.systemRole;
 
   if (role === "admin") {
+    // admin は組織一覧から操作する想定だが既存実装互換のためユーザー id を返す
     return session.user.id;
   }
 
@@ -93,7 +84,7 @@ export async function GET(req: Request) {
       const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
       SELECT DISTINCT "matchDate"
       FROM "Result"
-      WHERE "userId" = '${target}'
+      WHERE "organizationId" = '${target}'
       ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
       ORDER BY "matchDate" DESC LIMIT 1
     `);
@@ -109,7 +100,7 @@ export async function GET(req: Request) {
       SELECT *
       FROM "Result"
       WHERE "matchDate" = ${targetMatchDate}
-        AND "userId" = '${target}'
+        AND "organizationId" = '${target}'
         ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
       ORDER BY "roundIndex" ASC
     `);
@@ -118,7 +109,7 @@ export async function GET(req: Request) {
       SELECT DISTINCT "matchDate"
       FROM "Result"
       WHERE "matchDate" < ${targetMatchDate}
-        AND "userId" = '${target}'
+        AND "organizationId" = '${target}'
         ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
       ORDER BY "matchDate" DESC LIMIT 1
     `);
@@ -127,7 +118,7 @@ export async function GET(req: Request) {
       SELECT DISTINCT "matchDate"
       FROM "Result"
       WHERE "matchDate" > ${targetMatchDate}
-        AND "userId" = '${target}'
+        AND "organizationId" = '${target}'
         ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
       ORDER BY "matchDate" ASC LIMIT 1
     `);
@@ -196,7 +187,7 @@ export async function POST(req: Request) {
       return jsonError("プレイヤーが存在しません", 404);
     }
 
-    if (winner.userId !== target || loser.userId !== target) {
+    if (winner.organizationId !== target || loser.organizationId !== target) {
       return jsonError("他団体のプレイヤーは登録できません", 403);
     }
 
@@ -204,7 +195,7 @@ export async function POST(req: Request) {
       where: {
         matchDate,
         roundIndex,
-        userId: target,
+        organizationId: target,
         OR: [{ winnerId }, { loserId }],
       },
     });
@@ -223,7 +214,7 @@ export async function POST(req: Request) {
         loserRate,
         matchDate,
         roundIndex,
-        userId: target,
+        organizationId: target,
       },
     });
 
@@ -258,13 +249,14 @@ export async function DELETE(req: Request) {
       return jsonError(target.error, target.status);
     }
 
+
     const result = await prisma.result.findUnique({ where: { id } });
 
     if (!result) {
       return jsonError("対局結果が存在しません", 404);
     }
 
-    if (result.userId !== target) {
+    if (result.organizationId !== target) {
       return jsonError("他団体の対局結果は削除できません", 403);
     }
 

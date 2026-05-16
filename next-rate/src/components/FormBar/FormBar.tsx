@@ -1,43 +1,8 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React from "react";
 import styles from "./FormBar.module.css";
-
-/**
- * FormBar の基本プロパティ
- * - children: 内部に配置する要素
- * - open: 開閉状態（true: 開く / false: 閉じる）
- */
-export interface BaseProps {
-  children: ReactNode;
-  open?: boolean;
-}
-
-/**
- * form として利用する場合のプロパティ
- * - as: "form" を指定
- * - onSubmit: フォーム送信時のイベントハンドラ
- */
-export interface FormProps extends BaseProps {
-  as: "form";
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-}
-
-/**
- * div として利用する場合のプロパティ
- * - as: "div"（省略時も div 扱い）
- * - onSubmit は使用不可
- */
-export interface DivProps extends BaseProps {
-  as?: "div";
-  onSubmit?: never;
-}
-
-/**
- * FormBar コンポーネントのプロパティ型
- * - form として使うか div として使うかをユニオン型で表現
- */
-export type FormBarProps = FormProps | DivProps;
+import type { FormBarProps } from "@/types/ui";
 
 /**
  * FormBar コンポーネント

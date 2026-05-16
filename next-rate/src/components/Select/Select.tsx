@@ -4,38 +4,7 @@ import React, { useEffect, useState } from "react";
 import SelectBase from "react-select";
 import CreatableSelect from "react-select/creatable";
 import styles from "./Select.module.css";
-
-/**
- * セレクトボックスの選択肢定義
- * - value: 内部値
- * - label: 表示名
- * - __isNew__: CreatableSelect で新規作成された場合に付与されるフラグ
- */
-export interface Option {
-  value: string;
-  label: string;
-  __isNew__?: boolean;
-}
-
-/**
- * Select コンポーネントのプロパティ定義
- * - value: 現在の選択値
- * - onChange: 選択変更時のコールバック
- * - options: 選択肢一覧
- * - placeholder: プレースホルダー
- * - width: セレクトボックスの幅（PC 時のみ適用）
- * - mode: 通常 select か creatable select か
- * - searchable: 検索可能かどうか
- */
-export interface SelectProps {
-  value: Option | null;
-  onChange: (opt: Option | null) => void;
-  options: Option[];
-  placeholder?: string;
-  width?: string | number;
-  mode?: "select" | "creatable";
-  searchable?: boolean;
-}
+import type { Option, SelectProps } from "@/types/ui";
 
 /**
  * Select コンポーネント

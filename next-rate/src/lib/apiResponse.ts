@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
+import type { ApiSuccess, ApiError, ApiResponse } from "@/types/api";
 
-export type ApiSuccess<T> = { ok: true; data: T };
-export type ApiError = { ok: false; error: string };
-export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+export { ApiSuccess, ApiError, ApiResponse };
 
 export function jsonOk<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ ok: true, data }, init);

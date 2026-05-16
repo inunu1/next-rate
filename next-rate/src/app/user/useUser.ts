@@ -11,19 +11,7 @@
 
 import { useState, useCallback } from "react";
 import { parseApiResponse } from "@/lib/fetchJson";
-
-export type UserOption = {
-  value: string;
-  label: string;
-  __isNew__?: boolean;
-};
-
-export type ManagedUser = {
-  id: string;
-  name: string | null;
-  email: string;
-  role: "owner" | "admin";
-};
+import type { UserOption, ManagedUser } from "@/types/domain";
 
 export function useUser(currentUserId: string) {
   /* --------------------------------------------------------------------------

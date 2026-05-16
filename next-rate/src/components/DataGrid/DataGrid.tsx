@@ -1,20 +1,8 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React from "react";
 import styles from "./DataGrid.module.css";
-
-export interface Column<T> {
-  header: string;
-  render: (row: T) => ReactNode;
-  mobileLabel?: string;
-  hideOnMobile?: boolean;
-}
-
-export interface DataGridProps<T> {
-  columns: Column<T>[];
-  rows: T[];
-  className?: string;
-}
+import type { Column, DataGridProps } from "@/types/ui";
 
 /**
  * DataGrid（カードレイアウト統一版）

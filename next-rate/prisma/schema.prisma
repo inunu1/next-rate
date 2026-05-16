@@ -1,3 +1,22 @@
+// ============================================================================
+// 【Prisma Schema - SaaS 標準構造（リレーションなし版）】
+// 
+// ■ この構造で解決できる課題
+//   - 複数団体（Organization）を扱える
+//   - 団体ごとにユーザー権限（owner/editor/viewer）を付与できる
+//   - プレイヤーは団体に属するだけで、ログインユーザーとは独立
+//   - プロ棋士など「閲覧だけしたい」ユーザーにも対応
+//   - 今後の拡張（大会機能・チーム戦・分析）にも耐えられる
+//
+// ■ 重要ポイント
+//   - User = ログインユーザー
+//   - Organization = 団体
+//   - Membership = 団体ごとのユーザー権限
+//   - Player = 団体に属する棋士
+//   - Result = 団体に属する対局結果
+//   - Prisma の @relation は使わず、外部キーは String で保持
+// ============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,43 +26,99 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  owner
-  admin
-}
-
+// ============================================================================
+// 【User】ログインユーザー
+// - 団体とは独立した存在
+// - システム全体のロール（systemRole）は admin などを想定
+// ============================================================================
 model User {
   id             String   @id @default(uuid())
   email          String   @unique
   name           String?
   hashedPassword String
-  role           Role
+
+  // システム全体のロール（例: "system_admin" / "user"）
+  systemRole     String   @default("user")
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
 
-model Player {
-  id          String    @id @default(uuid())
-  userId      String
-  name        String
-  initialRate Int
-  currentRate Int
-  createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
+// ============================================================================
+// 【Organization】団体
+// - 複数ユーザーが所属可能
+// - Player / Result の親
+// ============================================================================
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+
+  createdAt DateTime @default(now())
 }
 
+// ============================================================================
+// 【Membership】団体ごとのユーザー権限
+// - owner / editor / viewer をここで管理
+// - User と Organization の多対多を管理する中間テーブル
+// ============================================================================
+model Membership {
+  id             String   @id @default(uuid())
+
+  // 外部キー（Prisma の @relation は貼らない）
+  userId         String
+  organizationId String
+
+  // 団体ごとのロール
+  // owner  : 団体の管理者（プレイヤー管理・結果登録・削除）
+  // editor : 結果登録・編集はできるが団体設定は不可
+  // viewer : 閲覧のみ
+  role           String
+
+  createdAt      DateTime @default(now())
+
+  // 同じユーザーが同じ団体に複数回所属することを禁止
+  @@unique([userId, organizationId])
+}
+
+// ============================================================================
+// 【Player】団体に属する棋士
+// - ログインユーザーとは完全に独立
+// ============================================================================
+model Player {
+  id             String   @id @default(uuid())
+  organizationId String   // Organization.id を参照（論理的に）
+
+  name           String
+  initialRate    Int
+  currentRate    Int
+
+  createdAt      DateTime @default(now())
+  deletedAt      DateTime?
+}
+
+// ============================================================================
+// 【Result】対局結果
+// - 団体に属するデータ
+// - winnerId / loserId は Player.id
+// ============================================================================
 model Result {
-  id         String   @id @default(uuid())
-  userId     String
-  winnerId   String
-  winnerName String
-  winnerRate Int
-  loserId    String
-  loserName  String
-  loserRate  Int
-  matchDate  Int
-  roundIndex Int
-  updatedAt  DateTime @updatedAt
-  @@unique([userId, matchDate, roundIndex, winnerId])
-  @@unique([userId, matchDate, roundIndex, loserId])
+  id             String   @id @default(uuid())
+  organizationId String   // Organization.id を参照（論理的に）
+
+  winnerId       String   // Player.id
+  winnerName     String
+  winnerRate     Int
+
+  loserId        String   // Player.id
+  loserName      String
+  loserRate      Int
+
+  matchDate      Int      // YYYYMMDD
+  roundIndex     Int
+
+  updatedAt      DateTime @updatedAt
+
+  // 同一団体・同一日・同一ラウンドで同じプレイヤーが重複しないように制約
+  @@unique([organizationId, matchDate, roundIndex, winnerId])
+  @@unique([organizationId, matchDate, roundIndex, loserId])
 }

@@ -30,7 +30,7 @@ import Tabs from "@/components/Tabs/Tabs";
 
 import { useResults } from "./useResults";
 
-type Option = { label: string; value: string };
+import type { Option } from "@/types/ui";
 
 export default function ResultsClient({
   currentUserId,

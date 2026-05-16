@@ -29,7 +29,7 @@ import Tabs from "@/components/Tabs/Tabs";
 
 import { usePlayers } from "./usePlayers";
 
-type Option = { label: string; value: string };
+import type { Option } from "@/types/ui";
 
 export default function PlayersClient({
   currentUserId,

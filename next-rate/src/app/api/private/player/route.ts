@@ -60,7 +60,7 @@ function resolveTargetUserId(
   session: Session,
   userIdParam: string | null
 ): string | AuthError {
-  const role = session.user.role;
+  const role = session.user.systemRole;
 
   if (role === "admin") {
     return session.user.id;
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
     const players = await prisma.player.findMany({
       where: {
         deletedAt: null,
-        userId: target,
+        organizationId: target,
       },
       orderBy: { name: "asc" },
     });
@@ -164,7 +164,7 @@ export async function POST(req: Request) {
     const exists = await prisma.player.findFirst({
       where: {
         name,
-        userId: target,
+        organizationId: target,
         deletedAt: null,
       },
     });
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
         name: name.trim(),
         initialRate,
         currentRate: initialRate,
-        userId: target,
+        organizationId: target,
       },
     });
 
@@ -225,7 +225,7 @@ export async function DELETE(req: Request) {
       return jsonError("対象プレイヤーが存在しません", 404);
     }
 
-    if (player.userId !== target) {
+    if (player.organizationId !== target) {
       return jsonError("このプレイヤーを削除する権限がありません", 403);
     }
 

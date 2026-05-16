@@ -1,17 +1,21 @@
 // src/lib/auth.ts
+// ------------------------------------------------------------
+// NextAuth 認証設定（Credentials 認証 + JWT セッション）
+// - 認証：メールアドレス + パスワード
+// - セッション：JWT 方式
+// - コールバック：JWT / Session にユーザ情報 + 所属団体情報を付与
+// ------------------------------------------------------------
+
 import { getServerSession } from "next-auth";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
 
-/**
- * NextAuth 設定
- * - 認証方式：Credentials（メールアドレス + パスワード）
- * - セッション方式：JWT
- * - コールバック：JWT / Session にユーザ情報を付与
- */
 export const authOptions: NextAuthOptions = {
+  // ------------------------------------------------------------
+  // 認証プロバイダ設定（Credentials 認証）
+  // ------------------------------------------------------------
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -31,38 +35,40 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // ユーザ検索
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
+        if (!user) return null;
 
-        if (!user) {
-          return null;
-        }
-
+        // パスワード検証
         const isValid = await bcrypt.compare(
           credentials.password,
           user.hashedPassword
         );
+        if (!isValid) return null;
 
-        if (!isValid) {
-          return null;
-        }
-
-        // ★ role を含めて返却（session に載せるため）
+        // 認証成功 → JWT に格納する情報を返却
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          systemRole: user.systemRole, // SaaS 全体の権限
         };
       },
     }),
   ],
 
+  // ------------------------------------------------------------
+  // セッション方式（JWT）
+  // ------------------------------------------------------------
   session: {
     strategy: "jwt",
   },
 
+  // ------------------------------------------------------------
+  // コールバック設定
+  // ------------------------------------------------------------
   callbacks: {
     /**
      * JWT 作成時のコールバック
@@ -71,8 +77,9 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.systemRole = user.systemRole;
         token.name = user.name;
+        token.email = user.email; // ★ email を追加
       }
       return token;
     },
@@ -80,13 +87,30 @@ export const authOptions: NextAuthOptions = {
     /**
      * セッション生成時のコールバック
      * - JWT の内容を session.user に反映
+     * - 追加で Membership（所属団体情報）を付与
      */
     async session({ session, token }) {
       if (token?.id) {
+        // 基本ユーザ情報
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.systemRole = token.systemRole as string;
         session.user.name = token.name as string;
+        session.user.email = token.email as string | null;
+
+        // ------------------------------------------------------------
+        // 所属団体情報（Membership）を取得
+        // ------------------------------------------------------------
+        const memberships = await prisma.membership.findMany({
+          where: { userId: token.id as string },
+        });
+
+        // session.user.organizations に格納
+        session.user.organizations = memberships.map((m) => ({
+          id: m.organizationId,
+          role: m.role,
+        }));
       }
+
       return session;
     },
   },
