@@ -11,12 +11,5 @@ declare module "next/server" {
   export const headers: any;
 }
 
-declare module "next" {
-  const next: any;
-  export default next;
-}
-
-declare module "next/router" {
-  const router: any;
-  export default router;
-}
+// Do not declare `module "next"` here — prefer official Next.js types when available.
+// If you need router shims for environments without Next types, add targeted shims instead.
