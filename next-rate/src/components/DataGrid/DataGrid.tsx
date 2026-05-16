@@ -2,7 +2,7 @@
 
 import React from "react";
 import styles from "./DataGrid.module.css";
-import type { Column, DataGridProps } from "@/types/ui";
+import type { DataGridProps } from "@/types/ui";
 
 /**
  * DataGrid（カードレイアウト統一版）

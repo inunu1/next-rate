@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "next/link" {
   import * as React from "react";
   const Link: React.ComponentType<any>;
