@@ -2,15 +2,9 @@
 
 /**
  * ============================================================================
- * 【画面名称】
- * 対局者管理画面（PlayersClient）
- *
- * 【機能概要】
- * ・団体（organizationId）に紐づくプレイヤーの登録・検索・削除を行う。
- *
- * 【UI 方針】
- * ・ResultsClient と UI/構造を統一
- * ・操作結果はトースト通知でフィードバック
+ * 対局者管理画面（PlayersClient）完全版
+ * - 団体（organizationId）に紐づくプレイヤー管理
+ * - userId ベースの旧仕様を完全排除
  * ============================================================================
  */
 
@@ -43,10 +37,10 @@ export default function PlayersClient({
 
   useEffect(() => {
     P.init();
-  }, [P.init]);
+  }, [P]); // ★ P.init ではなく P を依存にする（ESLint 対応）
 
   // ------------------------------------------------------------
-  // トースト通知：usePlayers の lastAction を監視
+  // トースト通知
   // ------------------------------------------------------------
   useEffect(() => {
     switch (P.lastAction) {
@@ -71,7 +65,9 @@ export default function PlayersClient({
     }
   }, [P.lastAction]);
 
-  // 検索フォーム（プレイヤー選択）
+  // ------------------------------------------------------------
+  // 絞り込み
+  // ------------------------------------------------------------
   const filteredPlayers = useMemo(() => {
     if (!P.playerOpt) return P.players;
     return P.players.filter((p) => p.id === P.playerOpt!.value);
