@@ -96,3 +96,8 @@
   text-align: center;
   margin-bottom: 1rem;
 }
+
+.errorMessage strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}

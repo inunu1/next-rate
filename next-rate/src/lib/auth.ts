@@ -32,6 +32,7 @@ export const authOptions: NextAuthOptions = {
        */
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
+          console.warn("Credentials authorize failed: missing email or password");
           return null;
         }
 
@@ -39,14 +40,20 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-        if (!user) return null;
+        if (!user) {
+          console.warn("Credentials authorize failed: user not found", credentials.email);
+          return null;
+        }
 
         // パスワード検証
         const isValid = await bcrypt.compare(
           credentials.password,
           user.hashedPassword
         );
-        if (!isValid) return null;
+        if (!isValid) {
+          console.warn("Credentials authorize failed: invalid password", credentials.email);
+          return null;
+        }
 
         // 認証成功 → JWT に格納する情報を返却
         return {

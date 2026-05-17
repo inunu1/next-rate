@@ -8,10 +8,12 @@ import styles from "./Login.module.css";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
 
     const res = await signIn("credentials", {
       email,
@@ -21,9 +23,12 @@ export default function LoginPage() {
 
     if (res?.ok) {
       router.push("/dashboard");
-    } else {
-      alert("ログインに失敗しました");
+      return;
     }
+
+    const message = res?.error ?? "ログインに失敗しました";
+    setErrorMessage(message);
+    console.warn("signIn error:", message, res);
   };
 
   return (
@@ -58,6 +63,10 @@ export default function LoginPage() {
               required
             />
           </div>
+
+          {errorMessage ? (
+            <div className={styles.errorMessage}>{errorMessage}</div>
+          ) : null}
 
           <button type="submit" className={styles.button}>
             Login
