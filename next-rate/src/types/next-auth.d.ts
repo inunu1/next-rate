@@ -1,27 +1,17 @@
 /**
- * ============================================================
- *  NextAuth 型拡張定義ファイル（Application Customization）
- * ============================================================
+ * ============================================================================
+ * NextAuth 型拡張定義ファイル（SIer 風・完全版）
+ * ============================================================================
  *
  * 【目的】
- * 本アプリケーションで利用する認証情報（Session / User / JWT）に対し、
- * NextAuth のデフォルト型では不足する項目（id / systemRole / organizations 等）を追加し、
- * 型安全性および保守性を確保する。
+ * 本アプリケーションの認証情報構造（User / Session / JWT）を NextAuth に適用し、
+ * 型安全性・保守性・整合性を確保する。
  *
- * 【背景】
- * NextAuth の標準 User / Session / JWT 型は最小構成であり、
- * Prisma.User モデルおよび Membership モデルと整合しないため、
- * アプリ側で必要な情報が欠落する。
- *
- * 【適用範囲】
- * - UI（useSession）で参照される Session.user
- * - 認証処理（authorize / callbacks）で扱う User
- * - middleware / API で参照される JWT
- *
- * 【効果】
- * - session.user.id / session.user.systemRole が型エラーにならない
- * - session.user.organizations[] に団体情報を安全に格納可能
- * - token.id / token.systemRole を middleware で安全に利用可能
+ * 【重要ポイント】
+ * - organizations を「必須」にする（undefined を許容しない）
+ * - organizations[].role を union 型に限定（owner / editor / viewer）
+ * - API 層で undefined が発生しない構造を保証
+ * ============================================================================
  */
 
 import "next-auth";
@@ -29,18 +19,23 @@ import "next-auth/jwt";
 
 declare module "next-auth" {
   /**
-   * ------------------------------------------------------------
-   *  Session 型拡張
-   * ------------------------------------------------------------
-   * UI（Client Component）で useSession() により参照されるデータ構造。
+   * --------------------------------------------------------------------------
+   * Session 型拡張
+   * --------------------------------------------------------------------------
+   * UI（useSession）および API（getServerSession）で参照される認証情報。
    * JWT の内容が user にコピーされるため、JWT と同等のフィールドを定義する。
    */
   interface Session {
     user: {
-      id: string;                 // ログインユーザーの識別子（User.id）
-      systemRole: string;         // SaaS 全体の権限（admin / user）
-      // 既存コードとの互換性のためのエイリアス
+      /** ログインユーザー識別子（Prisma.User.id） */
+      id: string;
+
+      /** SaaS 全体の権限（admin / user） */
+      systemRole: string;
+
+      /** 既存コード互換用（任意） */
       role?: string;
+
       email?: string | null;
       name?: string | null;
       image?: string | null;
@@ -48,25 +43,28 @@ declare module "next-auth" {
       /**
        * 所属団体情報（Membership）
        * - id: Organization.id
-       * - role: 団体内の権限（owner / editor / viewer）
+       * - role: 団体内権限（owner / editor / viewer）
+       *
+       * ※必須項目として定義することで、
+       *   API 層で undefined が発生しない構造を保証する。
        */
       organizations: {
         id: string;
-        role: string;
+        role: "owner" | "editor" | "viewer";
       }[];
     };
   }
 
   /**
-   * ------------------------------------------------------------
-   *  User 型拡張
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * User 型拡張
+   * --------------------------------------------------------------------------
    * 認証直後（authorize / callbacks.user）で扱われるユーザー情報。
-   * Prisma.User モデルと整合性を取るため、systemRole を含めて定義する。
+   * Prisma.User モデルと整合性を取る。
    */
   interface User {
     id: string;
-    systemRole: string;           // Prisma.User.systemRole と一致
+    systemRole: string;
     email?: string | null;
     name?: string | null;
     image?: string | null;
@@ -75,15 +73,15 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   /**
-   * ------------------------------------------------------------
-   *  JWT 型拡張
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * JWT 型拡張
+   * --------------------------------------------------------------------------
    * middleware（getToken）や API（getServerSession）で参照されるトークン。
    * 認可判定に利用するため、systemRole を必須項目として定義する。
    */
   interface JWT {
-    id: string;                   // ログインユーザーの識別子
-    systemRole: string;           // SaaS 全体の権限
+    id: string;
+    systemRole: string;
     email?: string | null;
     name?: string | null;
   }
