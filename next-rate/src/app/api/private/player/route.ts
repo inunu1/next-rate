@@ -14,6 +14,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
+ * リクエストボディ型
+ * ========================================================================== */
+type PostBody = {
+  name: string;
+  initialRate: number;
+  organizationId: string;
+};
+
+type DeleteBody = {
+  id: string;
+  organizationId: string;
+};
+
+/* ============================================================================
  * 認証チェック
  * ========================================================================== */
 async function requireAuth(): Promise<{ session: Session } | { error: string; status: number }> {
@@ -51,7 +65,7 @@ export async function GET(req: Request) {
 
   const org = searchParams.get("organizationId");
   if (!org) return jsonError("organizationId は必須です", 400);
-  const organizationId: string = org; // narrow 完了
+  const organizationId: string = org;
 
   const role = requireOrgPermission(session, organizationId);
   if (typeof role !== "string") return jsonError(role.error, role.status);
@@ -78,16 +92,14 @@ export async function POST(req: Request) {
 
   const session = auth.session;
 
-  let body: any;
+  let body: PostBody;
   try {
-    body = await req.json();
+    body = (await req.json()) as PostBody;
   } catch {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const { name, initialRate, organizationId: org } = body;
-  if (!org) return jsonError("organizationId は必須です", 400);
-  const organizationId: string = org; // narrow 完了
+  const { name, initialRate, organizationId } = body;
 
   const role = requireOrgPermission(session, organizationId);
   if (typeof role !== "string") return jsonError(role.error, role.status);
@@ -128,16 +140,14 @@ export async function DELETE(req: Request) {
 
   const session = auth.session;
 
-  let body: any;
+  let body: DeleteBody;
   try {
-    body = await req.json();
+    body = (await req.json()) as DeleteBody;
   } catch {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const { id, organizationId: org } = body;
-  if (!id || !org) return jsonError("id と organizationId は必須です", 400);
-  const organizationId: string = org; // narrow 完了
+  const { id, organizationId } = body;
 
   const role = requireOrgPermission(session, organizationId);
   if (typeof role !== "string") return jsonError(role.error, role.status);
