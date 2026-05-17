@@ -6,7 +6,7 @@
  * 対局者管理画面（PlayersClient）
  *
  * 【機能概要】
- * ・団体（userId）に紐づくプレイヤーの登録・検索・削除を行う。
+ * ・団体（organizationId）に紐づくプレイヤーの登録・検索・削除を行う。
  *
  * 【UI 方針】
  * ・ResultsClient と UI/構造を統一
@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner"; // ★ トースト追加
+import { toast } from "sonner";
 import styles from "./Players.module.css";
 
 import AppButton from "@/components/Button/Button";
@@ -29,24 +29,17 @@ import Tabs from "@/components/Tabs/Tabs";
 
 import { usePlayers } from "./usePlayers";
 
-import type { Option } from "@/types/ui";
-
 export default function PlayersClient({
-  currentUserId,
+  organizationId,
   role,
-  allUsers,
 }: {
-  currentUserId: string;
-  role: "owner" | "admin";
-  allUsers?: { id: string; name: string }[];
+  organizationId: string;
+  role: "owner" | "editor" | "viewer";
 }) {
-  const [selectedUser, setSelectedUser] = useState<Option>({
-    label: "自団体",
-    value: currentUserId,
-  });
   const [isFormOpen, setIsFormOpen] = useState(true);
 
-  const P = usePlayers(selectedUser.value);
+  // ★ usePlayers は organizationId を受け取る
+  const P = usePlayers(organizationId);
 
   useEffect(() => {
     P.init();
@@ -129,18 +122,6 @@ export default function PlayersClient({
 
         {P.activeTab === "search" && isFormOpen ? (
           <FormBar>
-            {role === "owner" && allUsers && (
-              <Select
-                options={allUsers.map((u) => ({
-                  label: u.name,
-                  value: u.id,
-                }))}
-                value={selectedUser}
-                onChange={(opt) => opt && setSelectedUser(opt)}
-                width="auto"
-              />
-            )}
-
             <Select
               options={P.playerOptions}
               value={P.playerOpt}
@@ -176,18 +157,6 @@ export default function PlayersClient({
               P.handleRegister();
             }}
           >
-            {role === "owner" && allUsers && (
-              <Select
-                options={allUsers.map((u) => ({
-                  label: u.name,
-                  value: u.id,
-                }))}
-                value={selectedUser}
-                onChange={(opt) => opt && setSelectedUser(opt)}
-                width={260}
-              />
-            )}
-
             <Input
               type="text"
               placeholder="新規プレイヤー名"
