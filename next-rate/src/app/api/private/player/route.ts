@@ -30,7 +30,9 @@ type DeleteBody = {
 /* ============================================================================
  * 認証チェック
  * ========================================================================== */
-async function requireAuth(): Promise<{ session: Session } | { error: string; status: number }> {
+async function requireAuth(): Promise<
+  { session: Session } | { error: string; status: number }
+> {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return { error: "Unauthorized", status: 401 };
