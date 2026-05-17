@@ -165,6 +165,7 @@ export async function POST(req: Request) {
       where: {
         name,
         organizationId: target,
+        userId: target,
         deletedAt: null,
       },
     });
@@ -179,6 +180,7 @@ export async function POST(req: Request) {
         initialRate,
         currentRate: initialRate,
         organizationId: target,
+        userId: target,
       },
     });
 
