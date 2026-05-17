@@ -2,9 +2,21 @@
 
 /**
  * ============================================================================
- * 対局者管理画面（PlayersClient）完全版
- * - 団体（organizationId）に紐づくプレイヤー管理
- * - userId ベースの旧仕様を完全排除
+ * 【画面名称】
+ * 対局者管理画面（PlayersClient）
+ *
+ * 【機能概要】
+ * ・団体（organizationId）に紐づくプレイヤーの検索・登録・削除を行う。
+ *
+ * 【ロール仕様】
+ * ・owner / editor：検索・登録・削除が可能
+ * ・viewer：検索のみ可能（登録タブ非表示、削除ボタン非表示）
+ *
+ * 【UI 方針】
+ * ・検索 / 新規登録 / 閉じる を “タブ” として扱う
+ * ・閉じるはボタンではなく “タブ” として表示する
+ * ・ResultsClient と UI/構造を統一
+ * ・操作結果はトースト通知でフィードバック
  * ============================================================================
  */
 
@@ -35,13 +47,12 @@ export default function PlayersClient({
   // ★ usePlayers は organizationId を受け取る
   const P = usePlayers(organizationId);
 
+  // 初期ロード
   useEffect(() => {
     P.init();
-  }, [P]); // ★ P.init ではなく P を依存にする（ESLint 対応）
+  }, [P]);
 
-  // ------------------------------------------------------------
   // トースト通知
-  // ------------------------------------------------------------
   useEffect(() => {
     switch (P.lastAction) {
       case "search":
@@ -65,9 +76,10 @@ export default function PlayersClient({
     }
   }, [P.lastAction]);
 
-  // ------------------------------------------------------------
+  // ロール判定
+  const canEdit = role === "owner" || role === "editor";
+
   // 絞り込み
-  // ------------------------------------------------------------
   const filteredPlayers = useMemo(() => {
     if (!P.playerOpt) return P.players;
     return P.players.filter((p) => p.id === P.playerOpt!.value);
@@ -99,24 +111,32 @@ export default function PlayersClient({
                 setIsFormOpen(true);
               },
             },
+            ...(canEdit
+              ? [
+                  {
+                    id: "register",
+                    label: "✍️ 新規登録",
+                    active: P.activeTab === "register" && isFormOpen,
+                    onClick: () => {
+                      P.setActiveTab("register");
+                      setIsFormOpen(true);
+                    },
+                  },
+                ]
+              : []),
             {
-              id: "register",
-              label: "✍️ 新規登録",
-              active: P.activeTab === "register" && isFormOpen,
+              id: "close",
+              label: "✖️ 閉じる",
+              active: !isFormOpen,
               onClick: () => {
-                P.setActiveTab("register");
-                setIsFormOpen(true);
+                setIsFormOpen(false);
               },
             },
           ]}
-          closeButton={{
-            label: "✖️ 閉じる",
-            active: !isFormOpen,
-            onClick: () => setIsFormOpen(false),
-          }}
         />
 
-        {P.activeTab === "search" && isFormOpen ? (
+        {/* 検索タブ */}
+        {P.activeTab === "search" && isFormOpen && (
           <FormBar>
             <Select
               options={P.playerOptions}
@@ -145,7 +165,10 @@ export default function PlayersClient({
               クリア
             </AppButton>
           </FormBar>
-        ) : P.activeTab === "register" && isFormOpen ? (
+        )}
+
+        {/* 新規登録タブ（owner / editor のみ） */}
+        {P.activeTab === "register" && isFormOpen && canEdit && (
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -173,7 +196,7 @@ export default function PlayersClient({
               登録
             </AppButton>
           </FormBar>
-        ) : null}
+        )}
       </div>
 
       {/* 一覧テーブル */}
@@ -201,15 +224,18 @@ export default function PlayersClient({
               {
                 header: "操作",
                 mobileLabel: "操作",
-                render: (p) => (
-                  <AppButton
-                    variant="danger"
-                    size="md"
-                    onClick={() => P.handleDelete(p.id)}
-                  >
-                    削除
-                  </AppButton>
-                ),
+                render: (p) =>
+                  canEdit ? (
+                    <AppButton
+                      variant="danger"
+                      size="md"
+                      onClick={() => P.handleDelete(p.id)}
+                    >
+                      削除
+                    </AppButton>
+                  ) : (
+                    <span style={{ opacity: 0.5 }}>閲覧のみ</span>
+                  ),
               },
             ]}
           />
