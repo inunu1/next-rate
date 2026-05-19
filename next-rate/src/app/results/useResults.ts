@@ -90,14 +90,24 @@ export function useResults(organizationId: string) {
   );
 
   /* --------------------------------------------------------------------------
-   * 初期化
+   * 初期化（owner の団体切替にも対応）
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
-    setMounted(true);
-    await fetchPlayers();
-    const data = await fetchResults({});
+    const [_, data] = await Promise.all([
+      fetchPlayers(),
+      fetchResults({}),
+    ]);
+
     setSearchParams({ date: data?.date ?? undefined });
+    setMounted(true);
   }, [fetchPlayers, fetchResults]);
+
+  /* --------------------------------------------------------------------------
+   * organizationId が変わったら再初期化（owner の団体切替対応）
+   * ------------------------------------------------------------------------ */
+  useEffect(() => {
+    init();
+  }, [init, organizationId]);
 
   /* --------------------------------------------------------------------------
    * 検索

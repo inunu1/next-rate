@@ -9,7 +9,7 @@
  * ・団体（organizationId）に紐づく対局結果の検索・登録・削除を行う。
  *
  * 【設計方針】
- * ① admin：自団体のみ操作
+ * ① viewer/editor：自団体のみ操作
  * ② owner：団体選択 UI を表示し、選択団体を操作
  * ③ useResults は organizationId を受け取り、API に organizationId を付与
  * ============================================================================
@@ -38,7 +38,7 @@ export default function ResultsClient({
   allUsers,
 }: {
   currentOrganizationId: string;
-  role: "owner" | "admin";
+  role: "owner" | "editor" | "viewer";   // ← 修正ポイント
   allUsers?: { id: string; name: string }[];
 }) {
   const [selectedUser, setSelectedUser] = useState<Option>({
@@ -126,11 +126,12 @@ export default function ResultsClient({
 
         {R.activeTab === "search" && isFormOpen ? (
           <FormBar>
+            {/* owner のみ団体選択 UI を表示 */}
             {role === "owner" && allUsers && (
               <Select
                 options={allUsers.map((u) => ({
                   label: u.name,
-                  value: u.id, // ★ ここは organizationId
+                  value: u.id,
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
@@ -168,11 +169,12 @@ export default function ResultsClient({
               R.handleRegister();
             }}
           >
+            {/* owner のみ団体選択 UI */}
             {role === "owner" && allUsers && (
               <Select
                 options={allUsers.map((u) => ({
                   label: u.name,
-                  value: u.id, // ★ ここも organizationId
+                  value: u.id,
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
