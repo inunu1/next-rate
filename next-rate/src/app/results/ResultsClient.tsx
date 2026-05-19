@@ -6,18 +6,18 @@
  * 対局結果管理画面（ResultsClient）
  *
  * 【機能概要】
- * ・団体（userId）に紐づく対局結果の検索・登録・削除を行う。
+ * ・団体（organizationId）に紐づく対局結果の検索・登録・削除を行う。
  *
  * 【設計方針】
  * ① admin：自団体のみ操作
  * ② owner：団体選択 UI を表示し、選択団体を操作
- * ③ useResults は userId を受け取り、API に userId を付与
+ * ③ useResults は organizationId を受け取り、API に organizationId を付与
  * ============================================================================
  */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner"; // ★ トースト追加
+import { toast } from "sonner";
 import styles from "./Results.module.css";
 
 import Select from "@/components/Select/Select";
@@ -33,20 +33,22 @@ import { useResults } from "./useResults";
 import type { Option } from "@/types/ui";
 
 export default function ResultsClient({
-  currentUserId,
+  currentOrganizationId,
   role,
   allUsers,
 }: {
-  currentUserId: string;
+  currentOrganizationId: string;
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
-    value: currentUserId,
+    value: currentOrganizationId,
   });
+
   const [isFormOpen, setIsFormOpen] = useState(true);
 
+  // ★ useResults は organizationId を受け取る
   const R = useResults(selectedUser.value);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function ResultsClient({
   }, [R.init]);
 
   // ------------------------------------------------------------
-  // トースト通知：useResults の lastAction を監視
+  // トースト通知
   // ------------------------------------------------------------
   useEffect(() => {
     switch (R.lastAction) {
@@ -128,7 +130,7 @@ export default function ResultsClient({
               <Select
                 options={allUsers.map((u) => ({
                   label: u.name,
-                  value: u.id,
+                  value: u.id, // ★ ここは organizationId
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}
@@ -150,13 +152,7 @@ export default function ResultsClient({
               width={180}
             />
 
-            <AppButton
-              variant="secondary"
-              size="md"
-              onClick={() => {
-                R.handleSearch();
-              }}
-            >
+            <AppButton variant="secondary" size="md" onClick={R.handleSearch}>
               検索
             </AppButton>
 
@@ -176,7 +172,7 @@ export default function ResultsClient({
               <Select
                 options={allUsers.map((u) => ({
                   label: u.name,
-                  value: u.id,
+                  value: u.id, // ★ ここも organizationId
                 }))}
                 value={selectedUser}
                 onChange={(opt) => opt && setSelectedUser(opt)}

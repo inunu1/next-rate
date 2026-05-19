@@ -11,5 +11,5 @@ export type PostResultBody = {
   loserRate: number;
   matchDate: number;
   roundIndex: number;
-  userId?: string;
+  organizationId: string; // ★ 必須
 };
