@@ -93,10 +93,8 @@ export function useResults(organizationId: string) {
    * 初期化（owner の団体切替にも対応）
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
-    const [_, data] = await Promise.all([
-      fetchPlayers(),
-      fetchResults({}),
-    ]);
+    const data = await fetchResults({});
+    await fetchPlayers();
 
     setSearchParams({ date: data?.date ?? undefined });
     setMounted(true);
