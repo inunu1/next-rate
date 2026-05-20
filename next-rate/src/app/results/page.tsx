@@ -1,14 +1,16 @@
 /**
  * ============================================================================
- * 対局結果管理画面（/results）Server Component（完全版）
- * ============================================================================
+ * 対局結果管理画面（/results）Server Component（2ロール構成）
  *
  * 【責務】
- * ・認証チェック（未ログイン時は /login へリダイレクト）
- * ・団体内ロール判定（owner / editor / viewer）
- * ・owner：全団体一覧を取得して Client に渡す
- * ・editor/viewer：自団体のみ操作
- * ・Client Component（ResultsClient）へ props を渡す
+ * ・認証チェック
+ * ・ユーザーのロール判定（saasOwner / orgOwner）
+ * ・団体IDの決定
+ * ・Client Component（ResultsClient）へ必要情報を渡す
+ *
+ * 【ロール仕様】
+ * ・systemRole = "owner" → SaaSオーナー
+ * ・systemRole = "user"  → 団体オーナー
  * ============================================================================
  */
 
@@ -19,63 +21,54 @@ import ResultsClient from "./ResultsClient";
 import { prisma } from "@/lib/prisma";
 
 export default async function ResultsPage() {
-  /* --------------------------------------------------------------------------
-   * 認証チェック
-   * ------------------------------------------------------------------------ */
+  // ------------------------------------------------------------
+  // 認証チェック
+  // ------------------------------------------------------------
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");
   }
 
-  /* --------------------------------------------------------------------------
-   * 団体内ロールを Membership から取得
-   * ------------------------------------------------------------------------ */
-  const membership = session.user.organizations[0];
-  if (!membership) {
-    return <div>所属団体がありません。</div>;
+  const userId = session.user.id;
+
+  // ------------------------------------------------------------
+  // ロール判定（2ロール構成）
+  // ------------------------------------------------------------
+  let role: "saasOwner" | "orgOwner" = "orgOwner";
+
+  if (session.user.systemRole === "owner") {
+    role = "saasOwner";
   }
 
-  const role = membership.role; // "owner" | "editor" | "viewer"
+  // ------------------------------------------------------------
+  // 団体IDの決定
+  // ------------------------------------------------------------
+  let organizationId: string | null = null;
 
-  /* --------------------------------------------------------------------------
-   * owner：全団体を操作可能
-   * editor/viewer：自団体のみ
-   * ------------------------------------------------------------------------ */
-
-  let currentOrganizationId: string | null = null;
-  let allUsers: { id: string; name: string }[] | undefined = undefined;
-
-  if (role === "owner") {
-    // owner は全団体を操作可能
-    const orgs = await prisma.organization.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
+  if (role === "saasOwner") {
+    // SaaSオーナーは複数団体を扱うため、Client 側で選択させる
+    organizationId = null;
+  } else {
+    // 団体オーナーは自分の団体を1つだけ持つ
+    const org = await prisma.organization.findFirst({
+      where: { ownerId: userId },
+      select: { id: true },
     });
 
-    allUsers = orgs.map((o) => ({
-      id: o.id,
-      name: o.name,
-    }));
+    if (!org) {
+      return <div>所属団体がありません。</div>;
+    }
 
-    // 初期選択団体は最初の団体
-    currentOrganizationId = allUsers[0]?.id ?? null;
-  } else {
-    // editor / viewer は自団体のみ
-    currentOrganizationId = membership.id;
+    organizationId = org.id;
   }
 
-  if (!currentOrganizationId) {
-    throw new Error("organizationId を決定できませんでした");
-  }
-
-  /* --------------------------------------------------------------------------
-   * Client Component の描画
-   * ------------------------------------------------------------------------ */
+  // ------------------------------------------------------------
+  // Client Component の描画
+  // ------------------------------------------------------------
   return (
     <ResultsClient
-      currentOrganizationId={currentOrganizationId}
       role={role}
-      allUsers={allUsers}
+      organizationId={organizationId}
     />
   );
 }

@@ -6,21 +6,17 @@
  * ダッシュボード画面（DashboardClient）
  *
  * 【機能概要】
- * ・ログインユーザーのロール（owner / admin）に応じて
+ * ・ログインユーザーのロール（saasOwner / orgOwner）に応じて
  *   表示するメニューを切り替える。
  *
- * 【設計方針】
- * ① admin（団体オーナー）
- *      - 自団体の管理のみ可能
- *      - 表示メニュー：対局者管理 / 対局結果管理
- *      - User 管理（団体管理）は表示しない
+ * 【ロール仕様】
+ * ① saasOwner（SaaSオーナー）
+ *      - 全団体の管理が可能
+ *      - Users / Organizations / Players / Results を表示
  *
- * ② owner（SaaS 運営者）
- *      - 複数団体を管理可能
- *      - 表示メニュー：User 管理 / 対局者管理 / 対局結果管理
- *
- * ③ Server Component（page.tsx）から role を受け取り、
- *    本コンポーネントで UI を出し分ける。
+ * ② orgOwner（団体オーナー）
+ *      - 自団体の管理が可能
+ *      - Organization / Players / Results を表示
  *
  * 【非責務】
  * ・認証チェック（Server Component 側で実施）
@@ -35,7 +31,7 @@ import PageHeader from "@/components/PageHeader/PageHeader";
 export default function DashboardClient({
   role,
 }: {
-  role: "owner" | "admin";
+  role: "saasOwner" | "orgOwner";
 }) {
   return (
     <div className={styles.container}>
@@ -52,44 +48,70 @@ export default function DashboardClient({
       />
 
       <main className={styles.main}>
-        {/* Welcome Section */}
         <section className={styles.welcomeSection}>
           <h1 className={styles.welcomeTitle}>Dashboard</h1>
           <p className={styles.welcomeSubtitle}>管理メニューを選択してください</p>
         </section>
 
-        {/* ----------------------------------------------------------------------
-         * メニューグリッド（ロール別に表示内容を切り替える）
-         * -------------------------------------------------------------------- */}
         <div className={styles.grid}>
-          {/* owner のみ表示：団体管理 */}
-          {role === "owner" && (
-            <Link href="/user" className={styles.card}>
-              <div className={styles.cardIcon}>⚙️</div>
-              <div className={styles.cardTitle}>団体管理</div>
-              <div className={styles.cardDescription}>
-                団体（ユーザー）の追加・編集・削除を行います。
-              </div>
-            </Link>
+          {/* ------------------------------------------------------------------
+           * SaaSオーナー専用メニュー
+           * ---------------------------------------------------------------- */}
+          {role === "saasOwner" && (
+            <>
+              <Link href="/users" className={styles.card}>
+                <div className={styles.cardIcon}>👤</div>
+                <div className={styles.cardTitle}>ユーザー管理</div>
+                <div className={styles.cardDescription}>
+                  ログイン可能なユーザーの追加・編集・削除を行います。
+                </div>
+              </Link>
+
+              <Link href="/organizations" className={styles.card}>
+                <div className={styles.cardIcon}>🏢</div>
+                <div className={styles.cardTitle}>団体管理</div>
+                <div className={styles.cardDescription}>
+                  団体（連盟・大学将棋部など）の管理を行います。
+                </div>
+              </Link>
+            </>
           )}
 
-          {/* 共通：対局者管理 */}
-          <Link href="/players" className={styles.card}>
-            <div className={styles.cardIcon}>👥</div>
-            <div className={styles.cardTitle}>対局者管理</div>
-            <div className={styles.cardDescription}>
-              プレイヤーの登録情報やレートを確認します。
-            </div>
-          </Link>
+          {/* ------------------------------------------------------------------
+           * 団体オーナー専用メニュー
+           * ---------------------------------------------------------------- */}
+          {role === "orgOwner" && (
+            <>
+              <Link href="/organization" className={styles.card}>
+                <div className={styles.cardIcon}>🏢</div>
+                <div className={styles.cardTitle}>団体設定</div>
+                <div className={styles.cardDescription}>
+                  団体名や基本設定を変更します。
+                </div>
+              </Link>
+            </>
+          )}
 
-          {/* 共通：対局結果管理 */}
-          <Link href="/results" className={styles.card}>
-            <div className={styles.cardIcon}>📊</div>
-            <div className={styles.cardTitle}>対局結果管理</div>
-            <div className={styles.cardDescription}>
-              対戦履歴の閲覧と、結果の登録・削除を行います。
-            </div>
-          </Link>
+          {/* ------------------------------------------------------------------
+           * 共通メニュー（SaaSオーナー & 団体オーナー）
+           * ---------------------------------------------------------------- */}
+          <>
+            <Link href="/players" className={styles.card}>
+              <div className={styles.cardIcon}>👥</div>
+              <div className={styles.cardTitle}>対局者管理</div>
+              <div className={styles.cardDescription}>
+                プレイヤーの登録・編集・削除を行います。
+              </div>
+            </Link>
+
+            <Link href="/results" className={styles.card}>
+              <div className={styles.cardIcon}>📊</div>
+              <div className={styles.cardTitle}>対局結果管理</div>
+              <div className={styles.cardDescription}>
+                対局結果の登録・削除を行います。
+              </div>
+            </Link>
+          </>
         </div>
       </main>
     </div>

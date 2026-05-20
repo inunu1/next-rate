@@ -2,63 +2,50 @@
 
 /**
  * ============================================================================
- * 【画面名称】
  * 対局結果管理画面（ResultsClient）
- *
- * 【機能概要】
- * ・団体（organizationId）に紐づく対局結果の検索・登録・削除を行う。
- *
- * 【設計方針】
- * ① viewer/editor：自団体のみ操作
- * ② owner：団体選択 UI を表示し、選択団体を操作
- * ③ useResults は organizationId を受け取り、API に organizationId を付与
+ * 2ロール構成（saasOwner / orgOwner）
+ * useResults.ts の API に完全準拠
  * ============================================================================
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import styles from "./Results.module.css";
 
-import Select from "@/components/Select/Select";
-import DateInput from "@/components/DateInput/DateInput";
-import DataGrid from "@/components/DataGrid/DataGrid";
 import AppButton from "@/components/Button/Button";
-import PageHeader from "@/components/PageHeader/PageHeader";
 import FormBar from "@/components/FormBar/FormBar";
+import PageHeader from "@/components/PageHeader/PageHeader";
+import DataGrid from "@/components/DataGrid/DataGrid";
+import Select from "@/components/Select/Select";
+import Input from "@/components/DateInput/DateInput";
 import Tabs from "@/components/Tabs/Tabs";
 
 import { useResults } from "./useResults";
 
-import type { Option } from "@/types/ui";
-
 export default function ResultsClient({
-  currentOrganizationId,
+  organizationId,
   role,
-  allUsers,
 }: {
-  currentOrganizationId: string;
-  role: "owner" | "editor" | "viewer";   // ← 修正ポイント
-  allUsers?: { id: string; name: string }[];
+  organizationId: string | null;
+  role: "saasOwner" | "orgOwner";
 }) {
-  const [selectedUser, setSelectedUser] = useState<Option>({
-    label: "自団体",
-    value: currentOrganizationId,
-  });
-
   const [isFormOpen, setIsFormOpen] = useState(true);
 
-  // ★ useResults は organizationId を受け取る
-  const R = useResults(selectedUser.value);
+  // ★ SaaSオーナーは団体未選択の可能性がある
+  const R = organizationId ? useResults(organizationId) : null;
 
+  // 初期ロード
   useEffect(() => {
-    R.init();
-  }, [R.init]);
+    if (organizationId && R) {
+      R.init();
+    }
+  }, [R, organizationId]);
 
-  // ------------------------------------------------------------
   // トースト通知
-  // ------------------------------------------------------------
   useEffect(() => {
+    if (!R) return;
+
     switch (R.lastAction) {
       case "search":
         toast.success("検索が完了しました");
@@ -79,7 +66,37 @@ export default function ResultsClient({
         toast.error("通信エラーが発生しました");
         break;
     }
-  }, [R.lastAction]);
+  }, [R?.lastAction]);
+
+  // ロール判定
+  const canEdit = role === "saasOwner" || role === "orgOwner";
+
+  // SaaSオーナーで団体未選択の場合
+  if (!organizationId || !R) {
+    return (
+      <div className={styles.container}>
+        <PageHeader
+          title="対局結果管理"
+          actions={
+            <Link href="/dashboard" className={styles.backLink}>
+              ← ダッシュボードへ戻る
+            </Link>
+          }
+        />
+        <p style={{ padding: "20px" }}>団体を選択してください。</p>
+      </div>
+    );
+  }
+
+  // 絞り込み
+  const filteredResults = useMemo(() => {
+    if (!R.playerOpt) return R.results;
+    return R.results.filter(
+      (r) =>
+        r.winnerId === R.playerOpt!.value ||
+        r.loserId === R.playerOpt!.value
+    );
+  }, [R.results, R.playerOpt]);
 
   if (!R.mounted) return null;
 
@@ -107,61 +124,66 @@ export default function ResultsClient({
                 setIsFormOpen(true);
               },
             },
+            ...(canEdit
+              ? [
+                  {
+                    id: "register",
+                    label: "✍️ 新規登録",
+                    active: R.activeTab === "register" && isFormOpen,
+                    onClick: () => {
+                      R.setActiveTab("register");
+                      setIsFormOpen(true);
+                    },
+                  },
+                ]
+              : []),
             {
-              id: "register",
-              label: "✍️ 新規登録",
-              active: R.activeTab === "register" && isFormOpen,
-              onClick: () => {
-                R.setActiveTab("register");
-                setIsFormOpen(true);
-              },
+              id: "close",
+              label: "✖️ 閉じる",
+              active: !isFormOpen,
+              onClick: () => setIsFormOpen(false),
             },
           ]}
-          closeButton={{
-            label: "✖️ 閉じる",
-            active: !isFormOpen,
-            onClick: () => setIsFormOpen(false),
-          }}
         />
 
-        {R.activeTab === "search" && isFormOpen ? (
+        {/* 検索タブ */}
+        {R.activeTab === "search" && isFormOpen && (
           <FormBar>
-            {/* owner のみ団体選択 UI を表示 */}
-            {role === "owner" && allUsers && (
-              <Select
-                options={allUsers.map((u) => ({
-                  label: u.name,
-                  value: u.id,
-                }))}
-                value={selectedUser}
-                onChange={(opt) => opt && setSelectedUser(opt)}
-                width="auto"
-              />
-            )}
-
             <Select
               options={R.playerOptions}
               value={R.playerOpt}
-              onChange={R.handlePlayerChange}
+              onChange={(opt) => R.handlePlayerChange(opt)}
               placeholder="プレイヤーで絞り込み"
               width="auto"
             />
 
-            <DateInput
+            <Input
+              type="date"
               value={R.searchDate}
               onChange={(e) => R.setSearchDate(e.target.value)}
-              width={180}
+              width="auto"
             />
 
-            <AppButton variant="secondary" size="md" onClick={R.handleSearch}>
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => R.handleSearch()}
+            >
               検索
             </AppButton>
 
-            <AppButton variant="secondary" size="md" onClick={R.clearSearch}>
+            <AppButton
+              variant="secondary"
+              size="md"
+              onClick={() => R.clearSearch()}
+            >
               クリア
             </AppButton>
           </FormBar>
-        ) : R.activeTab === "register" && isFormOpen ? (
+        )}
+
+        {/* 新規登録タブ */}
+        {R.activeTab === "register" && isFormOpen && canEdit && (
           <FormBar
             as="form"
             onSubmit={(e) => {
@@ -169,23 +191,17 @@ export default function ResultsClient({
               R.handleRegister();
             }}
           >
-            {/* owner のみ団体選択 UI */}
-            {role === "owner" && allUsers && (
-              <Select
-                options={allUsers.map((u) => ({
-                  label: u.name,
-                  value: u.id,
-                }))}
-                value={selectedUser}
-                onChange={(opt) => opt && setSelectedUser(opt)}
-                width="auto"
-              />
-            )}
+            <Input
+              type="date"
+              value={R.registerDate}
+              onChange={(e) => R.setRegisterDate(e.target.value)}
+              width="auto"
+            />
 
             <Select
               options={R.playerOptions}
               value={R.winnerOpt}
-              onChange={R.setWinnerOpt}
+              onChange={(opt) => R.setWinnerOpt(opt)}
               placeholder="勝者"
               width="auto"
             />
@@ -193,28 +209,22 @@ export default function ResultsClient({
             <Select
               options={R.playerOptions}
               value={R.loserOpt}
-              onChange={R.setLoserOpt}
+              onChange={(opt) => R.setLoserOpt(opt)}
               placeholder="敗者"
               width="auto"
-            />
-
-            <DateInput
-              value={R.registerDate}
-              onChange={(e) => R.setRegisterDate(e.target.value)}
-              width={180}
             />
 
             <Select
               options={R.selectableRounds.map((r) => ({
                 value: String(r),
-                label: `第${r}ラウンド`,
+                label: `${r}局目`,
               }))}
-              value={
-                R.roundIndex
-                  ? { value: R.roundIndex, label: `第${R.roundIndex}ラウンド` }
-                  : null
-              }
-              onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
+              value={{
+                value: R.roundIndex,
+                label: `${R.roundIndex}局目`,
+              }}
+              onChange={(opt) => opt && R.setRoundIndex(opt.value)}
+              placeholder="ラウンド"
               width="auto"
             />
 
@@ -222,72 +232,54 @@ export default function ResultsClient({
               登録
             </AppButton>
           </FormBar>
-        ) : null}
+        )}
       </div>
 
-      {/* Pagination */}
-      <div className={styles.paginationBar}>
-        <AppButton
-          variant="secondary"
-          size="md"
-          onClick={() => R.nextDate && R.fetchResults({ date: R.nextDate })}
-        >
-          次の日
-        </AppButton>
-
-        <div className={styles.pageDate}>{R.date ?? "----/--/--"}</div>
-
-        <AppButton
-          variant="secondary"
-          size="md"
-          onClick={() => R.prevDate && R.fetchResults({ date: R.prevDate })}
-        >
-          前の日
-        </AppButton>
-      </div>
-
-      {/* Table */}
+      {/* 一覧テーブル */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
           <DataGrid
             className={styles.table}
-            rows={R.results}
+            rows={filteredResults}
             columns={[
               {
                 header: "日付",
                 mobileLabel: "日付",
                 render: (r) => {
                   const s = r.matchDate.toString();
-                  return `${s.slice(0, 4)}/${s.slice(4, 6)}/${s.slice(6, 8)}`;
+                  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
                 },
               },
               {
-                header: "R",
-                mobileLabel: "ラウンド",
-                render: (r) => `R${r.roundIndex}`,
-              },
-              {
-                header: "勝者（開始時）",
+                header: "勝者",
                 mobileLabel: "勝者",
                 render: (r) => `${r.winnerName} (${r.winnerRate})`,
               },
               {
-                header: "敗者（開始時）",
+                header: "敗者",
                 mobileLabel: "敗者",
                 render: (r) => `${r.loserName} (${r.loserRate})`,
               },
               {
+                header: "局",
+                mobileLabel: "局",
+                render: (r) => r.roundIndex,
+              },
+              {
                 header: "操作",
                 mobileLabel: "操作",
-                render: (r) => (
-                  <AppButton
-                    variant="danger"
-                    size="md"
-                    onClick={() => R.handleDelete(r.id)}
-                  >
-                    削除
-                  </AppButton>
-                ),
+                render: (r) =>
+                  canEdit ? (
+                    <AppButton
+                      variant="danger"
+                      size="md"
+                      onClick={() => R.handleDelete(r.id)}
+                    >
+                      削除
+                    </AppButton>
+                  ) : (
+                    <span style={{ opacity: 0.5 }}>閲覧のみ</span>
+                  ),
               },
             ]}
           />

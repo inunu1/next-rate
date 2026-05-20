@@ -1,6 +1,20 @@
 /**
  * ============================================================================
- * NextAuth 設定（SIer 風・完全版）
+ * NextAuth 設定（2ロール構成 / 中間テーブルなし）
+ *
+ * 【仕様】
+ * ・systemRole = "owner" → SaaSオーナー
+ * ・systemRole = "user"  → 団体オーナー
+ *
+ * 【セッション構造】
+ * session.user = {
+ *   id: string;
+ *   email: string | null;
+ *   name: string | null;
+ *   systemRole: "owner" | "user";
+ * }
+ *
+ * ※ 団体所属情報は保持しない（団体オーナーは organization.ownerId で判定）
  * ============================================================================
  */
 
@@ -18,6 +32,12 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
 
+      /**
+       * 認証処理
+       * - email でユーザー検索
+       * - パスワード検証
+       * - 認証成功時は必要な情報のみ返却
+       */
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
 
@@ -36,7 +56,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          systemRole: user.systemRole,
+          systemRole: user.systemRole, // "owner" | "user"
         };
       },
     }),
@@ -47,6 +67,9 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    /**
+     * JWT 作成時
+     */
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -57,20 +80,17 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
+    /**
+     * セッション生成時
+     */
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.systemRole = token.systemRole as string;
       session.user.name = token.name as string;
       session.user.email = token.email as string | null;
 
-      const memberships = await prisma.membership.findMany({
-        where: { userId: token.id as string },
-      });
-
-      session.user.organizations = memberships.map((m) => ({
-        id: m.organizationId,
-        role: m.role as "owner" | "editor" | "viewer",
-      }));
+      // ★ 団体所属情報は保持しない（中間テーブル廃止）
+      // session.user.organizations = [];
 
       return session;
     },

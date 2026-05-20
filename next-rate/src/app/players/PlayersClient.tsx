@@ -8,14 +8,12 @@
  * 【機能概要】
  * ・団体（organizationId）に紐づくプレイヤーの検索・登録・削除を行う。
  *
- * 【ロール仕様】
- * ・owner / editor：検索・登録・削除が可能
- * ・viewer：検索のみ可能（登録タブ非表示、削除ボタン非表示）
+ * 【ロール仕様（2ロール構成）】
+ * ・saasOwner：全団体の操作が可能（団体選択が必要）
+ * ・orgOwner ：自分の団体のみ操作可能
  *
  * 【UI 方針】
  * ・検索 / 新規登録 / 閉じる を “タブ” として扱う
- * ・閉じるはボタンではなく “タブ” として表示する
- * ・ResultsClient と UI/構造を統一
  * ・操作結果はトースト通知でフィードバック
  * ============================================================================
  */
@@ -39,21 +37,25 @@ export default function PlayersClient({
   organizationId,
   role,
 }: {
-  organizationId: string;
-  role: "owner" | "editor" | "viewer";
+  organizationId: string | null;
+  role: "saasOwner" | "orgOwner";
 }) {
   const [isFormOpen, setIsFormOpen] = useState(true);
 
-  // ★ usePlayers は organizationId を受け取る
-  const P = usePlayers(organizationId);
+  // ★ SaaSオーナーは団体未選択の可能性があるため null を許容
+  const P = organizationId ? usePlayers(organizationId) : null;
 
   // 初期ロード
   useEffect(() => {
-    P.init();
-  }, [P]);
+    if (organizationId && P) {
+      P.init();
+    }
+  }, [P, organizationId]);
 
   // トースト通知
   useEffect(() => {
+    if (!P) return;
+
     switch (P.lastAction) {
       case "search":
         toast.success("検索が完了しました");
@@ -74,10 +76,27 @@ export default function PlayersClient({
         toast.error("通信エラーが発生しました");
         break;
     }
-  }, [P.lastAction]);
+  }, [P?.lastAction]);
 
-  // ロール判定
-  const canEdit = role === "owner" || role === "editor";
+  // ロール判定（2ロール構成）
+  const canEdit = role === "saasOwner" || role === "orgOwner";
+
+  // SaaSオーナーで団体未選択の場合
+  if (!organizationId || !P) {
+    return (
+      <div className={styles.container}>
+        <PageHeader
+          title="対局者管理"
+          actions={
+            <Link href="/dashboard" className={styles.backLink}>
+              ← ダッシュボードへ戻る
+            </Link>
+          }
+        />
+        <p style={{ padding: "20px" }}>団体を選択してください。</p>
+      </div>
+    );
+  }
 
   // 絞り込み
   const filteredPlayers = useMemo(() => {
@@ -167,7 +186,7 @@ export default function PlayersClient({
           </FormBar>
         )}
 
-        {/* 新規登録タブ（owner / editor のみ） */}
+        {/* 新規登録タブ（編集可能ロールのみ） */}
         {P.activeTab === "register" && isFormOpen && canEdit && (
           <FormBar
             as="form"
@@ -206,11 +225,7 @@ export default function PlayersClient({
             className={styles.table}
             rows={filteredPlayers}
             columns={[
-              {
-                header: "名前",
-                mobileLabel: "名前",
-                render: (p) => p.name,
-              },
+              { header: "名前", mobileLabel: "名前", render: (p) => p.name },
               {
                 header: "初期レート",
                 mobileLabel: "初期レート",

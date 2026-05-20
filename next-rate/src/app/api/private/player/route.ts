@@ -1,6 +1,21 @@
 /**
  * ============================================================================
- * Player API（SaaS マルチテナント対応 / SIer 風・完全版）
+ * Player API（2ロール構成 / 中間テーブルなし）
+ *
+ * 【ロール仕様】
+ * ・SaaSオーナー（systemRole="owner"）
+ *      → 全団体の操作が可能
+ *
+ * ・団体オーナー（systemRole="user"）
+ *      → 自分が所有する団体のみ操作可能
+ *
+ * 【権限判定】
+ * ・SaaSオーナー：無条件で許可
+ * ・団体オーナー：organization.ownerId === session.user.id の場合のみ許可
+ *
+ * 【非責務】
+ * ・DB のリレーションは使用しない（すべて String FK）
+ * ・複数ユーザーの団体所属管理は行わない
  * ============================================================================
  */
 
@@ -41,18 +56,31 @@ async function requireAuth(): Promise<
 }
 
 /* ============================================================================
- * 団体権限チェック（型安全版）
+ * 団体権限チェック（2ロール構成）
+ * - SaaSオーナー：全団体操作可能
+ * - 団体オーナー：自分が所有する団体のみ操作可能
  * ========================================================================== */
-function requireOrgPermission(session: Session, organizationId: string) {
-  const membership = session.user.organizations.find(
-    (o) => o.id === organizationId
-  );
+async function requireOrgPermission(session: Session, organizationId: string) {
+  // SaaSオーナーは全団体OK
+  if (session.user.systemRole === "owner") {
+    return "saasOwner";
+  }
 
-  if (!membership) {
+  // 団体オーナーか確認
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { ownerId: true },
+  });
+
+  if (!org) {
+    return { error: "団体が存在しません", status: 404 };
+  }
+
+  if (org.ownerId !== session.user.id) {
     return { error: "この団体へのアクセス権がありません", status: 403 };
   }
 
-  return membership.role; // "owner" | "editor" | "viewer"
+  return "orgOwner";
 }
 
 /* ============================================================================
@@ -69,8 +97,8 @@ export async function GET(req: Request) {
   if (!org) return jsonError("organizationId は必須です", 400);
   const organizationId: string = org;
 
-  const role = requireOrgPermission(session, organizationId);
-  if (typeof role !== "string") return jsonError(role.error, role.status);
+  const perm = await requireOrgPermission(session, organizationId);
+  if (typeof perm !== "string") return jsonError(perm.error, perm.status);
 
   try {
     const players = await prisma.player.findMany({
@@ -86,7 +114,7 @@ export async function GET(req: Request) {
 }
 
 /* ============================================================================
- * POST: プレイヤー登録（owner / editor）
+ * POST: プレイヤー登録（団体オーナー / SaaSオーナー）
  * ========================================================================== */
 export async function POST(req: Request) {
   const auth = await requireAuth();
@@ -103,9 +131,12 @@ export async function POST(req: Request) {
 
   const { name, initialRate, organizationId } = body;
 
-  const role = requireOrgPermission(session, organizationId);
-  if (typeof role !== "string") return jsonError(role.error, role.status);
-  if (role === "viewer") return jsonError("閲覧権限では登録できません", 403);
+  const perm = await requireOrgPermission(session, organizationId);
+  if (typeof perm !== "string") return jsonError(perm.error, perm.status);
+
+  if (perm !== "saasOwner" && perm !== "orgOwner") {
+    return jsonError("登録権限がありません", 403);
+  }
 
   if (!name || !name.trim()) return jsonError("プレイヤー名は必須です", 400);
   if (!Number.isFinite(initialRate)) return jsonError("initialRate は数値である必要があります", 400);
@@ -134,7 +165,7 @@ export async function POST(req: Request) {
 }
 
 /* ============================================================================
- * DELETE: プレイヤー削除（owner / editor）
+ * DELETE: プレイヤー削除（団体オーナー / SaaSオーナー）
  * ========================================================================== */
 export async function DELETE(req: Request) {
   const auth = await requireAuth();
@@ -151,9 +182,12 @@ export async function DELETE(req: Request) {
 
   const { id, organizationId } = body;
 
-  const role = requireOrgPermission(session, organizationId);
-  if (typeof role !== "string") return jsonError(role.error, role.status);
-  if (role === "viewer") return jsonError("閲覧権限では削除できません", 403);
+  const perm = await requireOrgPermission(session, organizationId);
+  if (typeof perm !== "string") return jsonError(perm.error, perm.status);
+
+  if (perm !== "saasOwner" && perm !== "orgOwner") {
+    return jsonError("削除権限がありません", 403);
+  }
 
   try {
     const player = await prisma.player.findUnique({ where: { id } });

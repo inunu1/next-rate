@@ -1,20 +1,16 @@
 /**
  * ============================================================================
  * 【画面概要】
- * ダッシュボード画面（/dashboard）の Server Component。
+ * ダッシュボード画面（/dashboard）の Server Component（2ロール構成）
  *
  * 【責務】
  * ・認証チェック（未ログイン時は /login へリダイレクト）
- * ・ユーザーのロール判定（owner / admin）
- * ・Client Component（DashboardClient）へ必要情報を渡す
+ * ・ユーザーのロール判定（saasOwner / orgOwner）
+ * ・Client Component（DashboardClient）へ role を渡す
  *
- * 【非責務】
- * ・DB アクセス（API に集約）
- * ・業務データの取得（Client 側で実施）
- *
- * 【設計方針】
- * ・Server Component は「認証」「ロール判定」のみ担当し、
- *   UI ロジックは Client Component に委譲する。
+ * 【ロール判定仕様】
+ * ・systemRole = "owner" → SaaSオーナー
+ * ・systemRole = "user"  → 団体オーナー
  * ============================================================================
  */
 
@@ -22,6 +18,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardPage() {
   /* --------------------------------------------------------------------------
@@ -32,7 +29,30 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const role = session.user.role as "owner" | "admin";
+  const userId = session.user.id;
+
+  /* --------------------------------------------------------------------------
+   * ロール判定（2ロール構成）
+   * ------------------------------------------------------------------------ */
+  let role: "saasOwner" | "orgOwner" = "orgOwner";
+
+  // SaaSオーナー
+  if (session.user.systemRole === "owner") {
+    role = "saasOwner";
+  } else {
+    // 団体オーナーか確認（ownerId が自分の団体を持っているか）
+    const org = await prisma.organization.findFirst({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+
+    if (!org) {
+      // 団体を持っていない user はダッシュボードを利用できない
+      return <div>所属団体がありません。</div>;
+    }
+
+    role = "orgOwner";
+  }
 
   /* --------------------------------------------------------------------------
    * Client Component の描画
