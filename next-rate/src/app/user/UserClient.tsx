@@ -3,22 +3,22 @@
 /**
  * ============================================================================
  * 【画面名称】
- * 団体管理画面（UserClient）
+ * ユーザー管理画面（UserClient）
  *
  * 【機能概要】
- * ・SaaS 運営者（owner）が団体（User）を管理する画面。
- * ・団体の検索・新規登録・削除を行う。
+ * ・SaaS 運営者（owner）がユーザーを管理する画面。
+ * ・ユーザーの検索・新規登録・ロール変更・削除を行う。
  *
  * 【UI 方針】
- * ・ResultsClient と UI/構造を完全統一
- * ・role（owner / admin）を選択できるようにする
+ * ・PlayersClient / ResultsClient と UI/構造を完全統一
+ * ・systemRole（owner / user）を選択できるようにする
  * ・操作結果はトースト通知でフィードバック
  * ============================================================================
  */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner"; // ← ★ 追加：トースト通知
+import { toast } from "sonner";
 import styles from "./User.module.css";
 
 import DataGrid from "@/components/DataGrid/DataGrid";
@@ -40,26 +40,28 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
   }, [U.init]);
 
   // ------------------------------------------------------------
-  // トースト通知：検索・登録・削除の結果を監視
+  // トースト通知
   // ------------------------------------------------------------
   useEffect(() => {
-    if (U.lastAction === "search") {
-      toast.success("検索が完了しました");
-    }
-    if (U.lastAction === "register-success") {
-      toast.success("団体を登録しました");
-    }
-    if (U.lastAction === "register-error") {
-      toast.error("登録に失敗しました");
-    }
-    if (U.lastAction === "delete-success") {
-      toast.success("削除しました");
-    }
-    if (U.lastAction === "delete-error") {
-      toast.error("削除に失敗しました");
-    }
-    if (U.lastAction === "fetch-error") {
-      toast.error("通信エラーが発生しました");
+    switch (U.lastAction) {
+      case "search":
+        toast.success("検索が完了しました");
+        break;
+      case "register-success":
+        toast.success("ユーザーを登録しました");
+        break;
+      case "register-error":
+        toast.error("登録に失敗しました");
+        break;
+      case "delete-success":
+        toast.success("削除しました");
+        break;
+      case "delete-error":
+        toast.error("削除に失敗しました");
+        break;
+      case "fetch-error":
+        toast.error("通信エラーが発生しました");
+        break;
     }
   }, [U.lastAction]);
 
@@ -68,7 +70,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
   return (
     <div className={styles.container}>
       <PageHeader
-        title="団体管理"
+        title="ユーザー管理"
         actions={
           <Link href="/dashboard" className={styles.backLink}>
             ← ダッシュボードへ戻る
@@ -117,17 +119,14 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               options={U.userOptions}
               value={U.searchOpt}
               onChange={U.setSearchOpt}
-              placeholder="団体名で絞り込み"
+              placeholder="ユーザー名で絞り込み"
               width="auto"
             />
 
             <AppButton
               variant="secondary"
               size="md"
-              onClick={() => {
-                U.handleSearch();
-                toast("検索中…");
-              }}
+              onClick={() => U.handleSearch()}
             >
               検索
             </AppButton>
@@ -147,10 +146,10 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               U.handleRegister();
             }}
           >
-            {/* 団体名 */}
+            {/* ユーザー名 */}
             <Input
               type="text"
-              placeholder="新規団体名"
+              placeholder="ユーザー名"
               value={U.registerName}
               onChange={(e) => U.setRegisterName(e.target.value)}
               width={260}
@@ -174,11 +173,11 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               width={260}
             />
 
-            {/* ロール選択 */}
+            {/* ロール選択（owner / user） */}
             <Select
               options={[
                 { label: "owner", value: "owner" },
-                { label: "admin", value: "admin" },
+                { label: "user", value: "user" },
               ]}
               value={U.roleOpt}
               onChange={U.setRoleOpt}
@@ -194,7 +193,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
       </div>
 
       {/* ------------------------------------------------------------
-       * 団体一覧テーブル
+       * ユーザー一覧テーブル
        * ------------------------------------------------------------ */}
       <main className={styles.main}>
         <div className={styles.tableWrapper}>
@@ -208,14 +207,14 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
                 render: (u) => u.email,
               },
               {
-                header: "団体名",
-                mobileLabel: "団体名",
+                header: "ユーザー名",
+                mobileLabel: "ユーザー名",
                 render: (u) => u.name ?? "未設定",
               },
               {
                 header: "ロール",
                 mobileLabel: "ロール",
-                render: (u) => u.role,
+                render: (u) => u.systemRole,
               },
               {
                 header: "操作",
@@ -225,9 +224,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
                     <AppButton
                       variant="danger"
                       size="md"
-                      onClick={() => {
-                        U.handleDelete(u.id);
-                      }}
+                      onClick={() => U.handleDelete(u.id)}
                     >
                       削除
                     </AppButton>

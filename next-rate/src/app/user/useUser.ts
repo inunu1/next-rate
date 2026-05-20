@@ -1,22 +1,10 @@
 "use client";
 
-/**
- * ============================================================================
- * useUser（団体管理ロジック）完全修正版
- * ・role（owner/admin）対応
- * ・UserClient.tsx のトースト通知と完全連動
- * ・lastAction により UI 側で成功/失敗を判定可能
- * ============================================================================
- */
-
 import { useState, useCallback } from "react";
 import { parseApiResponse } from "@/lib/fetchJson";
 import type { UserOption, ManagedUser } from "@/types/domain";
 
 export function useUser(currentUserId: string) {
-  /* --------------------------------------------------------------------------
-   * 状態管理
-   * ------------------------------------------------------------------------ */
   const [mounted, setMounted] = useState(false);
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -32,16 +20,16 @@ export function useUser(currentUserId: string) {
 
   const [roleOpt, setRoleOpt] = useState<UserOption | null>(null);
 
-  // ★ トースト通知用のアクション状態
   const [lastAction, setLastAction] = useState<string | null>(null);
 
   /* --------------------------------------------------------------------------
-   * 団体一覧取得
+   * ユーザー一覧取得
    * ------------------------------------------------------------------------ */
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/private/user");
       const data = await parseApiResponse<ManagedUser[]>(res);
+
       setUsers(data);
       setFilteredUsers(data);
     } catch {
@@ -58,7 +46,7 @@ export function useUser(currentUserId: string) {
   }, [fetchUsers]);
 
   /* --------------------------------------------------------------------------
-   * オプション
+   * セレクト用オプション
    * ------------------------------------------------------------------------ */
   const userOptions: UserOption[] = users.map((u) => ({
     value: u.id,
@@ -69,19 +57,7 @@ export function useUser(currentUserId: string) {
    * 新規登録
    * ------------------------------------------------------------------------ */
   const handleRegister = useCallback(async () => {
-    if (!registerName.trim()) {
-      setLastAction("register-error");
-      return;
-    }
-    if (!email) {
-      setLastAction("register-error");
-      return;
-    }
-    if (!password) {
-      setLastAction("register-error");
-      return;
-    }
-    if (!roleOpt) {
+    if (!registerName.trim() || !email || !password || !roleOpt) {
       setLastAction("register-error");
       return;
     }
@@ -94,9 +70,10 @@ export function useUser(currentUserId: string) {
           name: registerName.trim(),
           email,
           password,
-          role: roleOpt.value,
+          systemRole: roleOpt.value, // ← ★ 新仕様
         }),
       });
+
       await parseApiResponse(res);
 
       setRegisterName("");
@@ -139,7 +116,7 @@ export function useUser(currentUserId: string) {
    * ------------------------------------------------------------------------ */
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm("この団体を削除しますか？")) return;
+      if (!confirm("このユーザーを削除しますか？")) return;
 
       try {
         const res = await fetch("/api/private/user", {
@@ -147,6 +124,7 @@ export function useUser(currentUserId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id }),
         });
+
         await parseApiResponse(res);
 
         setLastAction("delete-success");
@@ -158,9 +136,6 @@ export function useUser(currentUserId: string) {
     [fetchUsers]
   );
 
-  /* --------------------------------------------------------------------------
-   * 返却
-   * ------------------------------------------------------------------------ */
   return {
     mounted,
     init,
@@ -193,7 +168,7 @@ export function useUser(currentUserId: string) {
     handleRegister,
     handleDelete,
 
-    lastAction, // ★ 追加：UserClient でトースト通知に使う
+    lastAction,
     currentUserId,
   };
 }

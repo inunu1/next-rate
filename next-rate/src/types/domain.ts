@@ -8,5 +8,5 @@ export type ManagedUser = {
   id: string;
   name: string | null;
   email: string;
-  role: "owner" | "admin";
+  systemRole: "owner" | "user"; // ← ★ 新仕様に統一
 };
