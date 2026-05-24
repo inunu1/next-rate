@@ -60,6 +60,26 @@
   background-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
 }
 
+/* Header (inlined from PageHeader) */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--container-max-width);
+  margin: 0 auto 1rem auto;
+  padding: 0 2rem;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .main {
   margin: 0 auto;
   max-width: var(--container-max-width);

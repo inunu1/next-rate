@@ -1,8 +1,6 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import PageHeader from "@/components/PageHeader/PageHeader";
-import Tabs from "@/components/Tabs/Tabs";
 import styles from "./ManagementPanel.module.css";
 
 export interface ManagementPanelProps {
@@ -32,30 +30,37 @@ export default function ManagementPanel(props: ManagementPanelProps) {
 
   return (
     <div className={styles.container}>
-      <PageHeader title={title} actions={actions} />
+      <header className={styles.header}>
+        <div className={styles.title}>{title}</div>
+        {actions ? <div className={styles.actions}>{actions}</div> : null}
+      </header>
 
       <div className={styles.formCard}>
-        <Tabs
-          tabs={[
-            {
-              id: "search",
-              label: "🔍 検索",
-              active: activeTab === "search" && isFormOpen,
-              onClick: () => onTabChange("search"),
-            },
-            {
-              id: "register",
-              label: "✍️ 新規登録",
-              active: activeTab === "register" && isFormOpen,
-              onClick: () => onTabChange("register"),
-            },
-          ]}
-          closeButton={{
-            label: "✖️ 閉じる",
-            active: !isFormOpen,
-            onClick: onToggleOpen,
-          }}
-        />
+        <div className={styles.tabContainer}>
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === "search" && isFormOpen ? styles.tabActive : ""}`}
+            onClick={() => onTabChange("search")}
+          >
+            🔍 検索
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.tabButton} ${activeTab === "register" && isFormOpen ? styles.tabActive : ""}`}
+            onClick={() => onTabChange("register")}
+          >
+            ✍️ 新規登録
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.tabButton} ${!isFormOpen ? styles.tabActive : ""}`}
+            onClick={onToggleOpen}
+          >
+            ✖️ 閉じる
+          </button>
+        </div>
 
         {activeTab === "search" && isFormOpen ? searchContent : null}
         {activeTab === "register" && isFormOpen ? registerContent : null}
