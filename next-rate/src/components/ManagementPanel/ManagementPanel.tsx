@@ -3,7 +3,6 @@
 import React, { ReactNode } from "react";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import Tabs from "@/components/Tabs/Tabs";
-import FormBar from "@/components/FormBar/FormBar";
 import styles from "./ManagementPanel.module.css";
 
 export interface ManagementPanelProps {

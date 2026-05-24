@@ -34,21 +34,24 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
   const U = useUser(currentUserId);
   const [isFormOpen, setIsFormOpen] = useState(true);
 
+  const { init } = U;
   useEffect(() => {
-    U.init();
-  }, [U.init]);
+    init();
+  }, [init]);
 
-  // ------------------------------------------------------------
-  // トースト通知：検索・登録・削除の結果を監視
-  // ------------------------------------------------------------
-  useActionToast(U.lastAction, {
+  const userToastMessages = {
     search: "検索が完了しました",
     "register-success": "団体を登録しました",
     "register-error": "登録に失敗しました",
     "delete-success": "削除しました",
     "delete-error": "削除に失敗しました",
     "fetch-error": "通信エラーが発生しました",
-  });
+  };
+
+  // ------------------------------------------------------------
+  // トースト通知：検索・登録・削除の結果を監視
+  // ------------------------------------------------------------
+  useActionToast(U.lastAction, userToastMessages);
 
   if (!U.mounted) return null;
 

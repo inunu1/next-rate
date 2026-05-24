@@ -21,5 +21,5 @@ export function useActionToast(
     }
 
     toast.success(message);
-  }, [lastAction, JSON.stringify(messages)]);
+  }, [lastAction, messages]);
 }

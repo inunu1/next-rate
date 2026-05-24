@@ -48,22 +48,25 @@ export default function ResultsClient({
   const [isFormOpen, setIsFormOpen] = useState(true);
 
   const R = useResults(selectedUser.value);
+  const { init } = R;
 
   useEffect(() => {
-    R.init();
-  }, [R.init]);
+    init();
+  }, [init]);
 
-  // ------------------------------------------------------------
-  // トースト通知：useResults の lastAction を監視
-  // ------------------------------------------------------------
-  useActionToast(R.lastAction, {
+  const resultsToastMessages = {
     search: "検索が完了しました",
     "register-success": "対局結果を登録しました",
     "register-error": "登録に失敗しました",
     "delete-success": "削除しました",
     "delete-error": "削除に失敗しました",
     "fetch-error": "通信エラーが発生しました",
-  });
+  };
+
+  // ------------------------------------------------------------
+  // トースト通知：useResults の lastAction を監視
+  // ------------------------------------------------------------
+  useActionToast(R.lastAction, resultsToastMessages);
 
   if (!R.mounted) return null;
 

@@ -46,22 +46,25 @@ export default function PlayersClient({
   const [isFormOpen, setIsFormOpen] = useState(true);
 
   const P = usePlayers(selectedUser.value);
+  const { init } = P;
 
   useEffect(() => {
-    P.init();
-  }, [P.init]);
+    init();
+  }, [init]);
 
-  // ------------------------------------------------------------
-  // トースト通知：usePlayers の lastAction を監視
-  // ------------------------------------------------------------
-  useActionToast(P.lastAction, {
+  const playersToastMessages = {
     search: "検索が完了しました",
     "register-success": "プレイヤーを登録しました",
     "register-error": "登録に失敗しました",
     "delete-success": "削除しました",
     "delete-error": "削除に失敗しました",
     "fetch-error": "通信エラーが発生しました",
-  });
+  };
+
+  // ------------------------------------------------------------
+  // トースト通知：usePlayers の lastAction を監視
+  // ------------------------------------------------------------
+  useActionToast(P.lastAction, playersToastMessages);
 
   // 検索フォーム（プレイヤー選択）
   const filteredPlayers = useMemo(() => {
