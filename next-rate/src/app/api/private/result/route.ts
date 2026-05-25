@@ -1,19 +1,20 @@
 /**
  * ============================================================================
  * 【機能概要】
- * 対局結果（Result）を扱う REST API。
+ * 対局結果（Result）を扱う REST API（サービス層版）
  * ============================================================================
  */
 
-import { prisma } from "@/lib/prisma";
 import { jsonOk, jsonError } from "@/lib/apiResponse";
 import { requireAuth, resolveTargetUserId } from "@/lib/authService";
 
-import type {
-  PostResultBody,
-  ResultRecord,
-  ResultSearchResponse,
-} from "@/types/result";
+import {
+  searchResults,
+  createResult,
+  deleteResult,
+} from "@/lib/resultService";
+
+import type { PostResultBody } from "@/types/result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,87 +41,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    let targetMatchDate: number | null = null;
-
-    // ------------------------------------------------------------
-    // 日付指定あり
-    // ------------------------------------------------------------
-    if (dateStr) {
-      targetMatchDate = Number(dateStr.replaceAll("-", ""));
-    } else {
-      // ------------------------------------------------------------
-      // 最新日付を取得
-      // ------------------------------------------------------------
-      const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
-        SELECT DISTINCT "matchDate"
-        FROM "Result"
-        WHERE "userId" = '${target}'
-        ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
-        ORDER BY "matchDate" DESC LIMIT 1
-      `);
-
-      if (latest.length === 0) {
-        const empty: ResultSearchResponse = {
-          date: null,
-          prevDate: null,
-          nextDate: null,
-          results: [],
-        };
-        return jsonOk(empty);
-      }
-
-      targetMatchDate = latest[0].matchDate;
-    }
-
-    // ------------------------------------------------------------
-    // 対象日の対局結果
-    // ------------------------------------------------------------
-    const results = await prisma.$queryRawUnsafe<ResultRecord[]>(`
-      SELECT *
-      FROM "Result"
-      WHERE "matchDate" = ${targetMatchDate}
-        AND "userId" = '${target}'
-        ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
-      ORDER BY "roundIndex" ASC
-    `);
-
-    // ------------------------------------------------------------
-    // 前日
-    // ------------------------------------------------------------
-    const prev = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
-      SELECT DISTINCT "matchDate"
-      FROM "Result"
-      WHERE "matchDate" < ${targetMatchDate}
-        AND "userId" = '${target}'
-        ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
-      ORDER BY "matchDate" DESC LIMIT 1
-    `);
-
-    // ------------------------------------------------------------
-    // 翌日
-    // ------------------------------------------------------------
-    const next = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
-      SELECT DISTINCT "matchDate"
-      FROM "Result"
-      WHERE "matchDate" > ${targetMatchDate}
-        AND "userId" = '${target}'
-        ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
-      ORDER BY "matchDate" ASC LIMIT 1
-    `);
-
-    const fmt = (n: number | undefined) => {
-      if (!n) return null;
-      const s = n.toString();
-      return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
-    };
-
-    const response: ResultSearchResponse = {
-      date: fmt(targetMatchDate)!,
-      prevDate: fmt(prev[0]?.matchDate),
-      nextDate: fmt(next[0]?.matchDate),
-      results,
-    };
-
+    const response = await searchResults(target, dateStr, playerId);
     return jsonOk(response);
   } catch (err) {
     console.error("GET /api/private/result error:", err);
@@ -146,67 +67,22 @@ export async function POST(req: Request) {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const {
-    winnerId,
-    winnerName,
-    winnerRate,
-    loserId,
-    loserName,
-    loserRate,
-    matchDate,
-    roundIndex,
-    userId,
-  } = body;
-
-  const target = resolveTargetUserId(session, userId ?? null);
+  const target = resolveTargetUserId(session, body.userId ?? null);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }
 
   try {
-    if (!winnerId || !loserId || !matchDate || !roundIndex) {
-      return jsonError("必須項目が不足しています", 400);
+    const result = await createResult(body, target);
+
+    if ("error" in result) {
+      return jsonError(
+        result.error ?? "エラーが発生しました",
+        result.status ?? 400
+      );
     }
 
-    const winner = await prisma.player.findUnique({ where: { id: winnerId } });
-    const loser = await prisma.player.findUnique({ where: { id: loserId } });
-
-    if (!winner || !loser) {
-      return jsonError("プレイヤーが存在しません", 404);
-    }
-
-    if (winner.userId !== target || loser.userId !== target) {
-      return jsonError("他団体のプレイヤーは登録できません", 403);
-    }
-
-    const conflict = await prisma.result.findFirst({
-      where: {
-        matchDate,
-        roundIndex,
-        userId: target,
-        OR: [{ winnerId }, { loserId }],
-      },
-    });
-
-    if (conflict) {
-      return jsonError("同一ラウンドで既に対局済みのプレイヤーが含まれています", 409);
-    }
-
-    const result = await prisma.result.create({
-      data: {
-        winnerId,
-        winnerName,
-        winnerRate,
-        loserId,
-        loserName,
-        loserRate,
-        matchDate,
-        roundIndex,
-        userId: target,
-      },
-    });
-
-    return jsonOk(result);
+    return jsonOk(result.data);
   } catch (err) {
     console.error("POST /api/private/result error:", err);
     return jsonError("対局結果登録に失敗しました", 500);
@@ -228,29 +104,22 @@ export async function DELETE(req: Request) {
   const id = searchParams.get("id");
   const userIdParam = searchParams.get("userId");
 
-  if (!id) {
-    return jsonError("id が必要です", 400);
-  }
-
   const target = resolveTargetUserId(session, userIdParam);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }
 
   try {
-    const result = await prisma.result.findUnique({ where: { id } });
+    const result = await deleteResult(id ?? "", target);
 
-    if (!result) {
-      return jsonError("対局結果が存在しません", 404);
+    if ("error" in result) {
+      return jsonError(
+        result.error ?? "エラーが発生しました",
+        result.status ?? 400
+      );
     }
 
-    if (result.userId !== target) {
-      return jsonError("他団体の対局結果は削除できません", 403);
-    }
-
-    await prisma.result.delete({ where: { id } });
-
-    return jsonOk({ success: true });
+    return jsonOk(result.data);
   } catch (err) {
     console.error("DELETE /api/private/result error:", err);
     return jsonError("対局結果削除に失敗しました", 500);

@@ -23,7 +23,6 @@ import type {
   PostPlayerBody,
   DeletePlayerBody,
   PlayerListResponse,
-  PlayerRecord,
 } from "@/types/player";
 
 /* ============================================================================
