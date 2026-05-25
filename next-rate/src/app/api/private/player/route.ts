@@ -13,16 +13,11 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { getServerSession, Session } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { jsonOk, jsonError } from "@/lib/apiResponse";
+import { requireAuth, resolveTargetUserId } from "@/lib/authService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type AuthSuccess = { session: Session };
-type AuthError = { error: string; status: number };
-type AuthResult = AuthSuccess | AuthError;
 
 type PostPlayerBody = {
   name: string;
@@ -34,47 +29,6 @@ type DeletePlayerBody = {
   id: string;
   userId?: string;
 };
-
-/* ============================================================================
- * 共通レスポンスヘルパ
- * ========================================================================== */
-/* ============================================================================
- * 認証チェック
- * ========================================================================== */
-async function requireAuth(): Promise<AuthResult> {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return { error: "Unauthorized", status: 401 };
-  }
-
-  return { session };
-}
-
-/* ============================================================================
- * targetUserId の決定ロジック
- *  - admin: 自分自身の userId 固定
- *  - owner: userIdParam が必須
- * ========================================================================== */
-function resolveTargetUserId(
-  session: Session,
-  userIdParam: string | null
-): string | AuthError {
-  const role = session.user.role;
-
-  if (role === "admin") {
-    return session.user.id;
-  }
-
-  if (!userIdParam) {
-    return {
-      error: "userId が指定されていません（owner のみ必須）",
-      status: 400,
-    };
-  }
-
-  return userIdParam;
-}
 
 /* ============================================================================
  * バリデーション

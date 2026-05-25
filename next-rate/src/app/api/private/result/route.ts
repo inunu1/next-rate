@@ -7,9 +7,8 @@
 
 import { prisma } from "@/lib/prisma";
 import type { Result } from "@prisma/client";
-import { getServerSession, Session } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { jsonOk, jsonError } from "@/lib/apiResponse";
+import { requireAuth, resolveTargetUserId } from "@/lib/authService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,10 +16,6 @@ export const dynamic = "force-dynamic";
 /* ============================================================================
  * 型定義
  * ============================================================================ */
-type AuthSuccess = { session: Session };
-type AuthError = { error: string; status: number };
-type AuthResult = AuthSuccess | AuthError;
-
 type PostResultBody = {
   winnerId: string;
   winnerName: string;
@@ -32,37 +27,6 @@ type PostResultBody = {
   roundIndex: number;
   userId?: string;
 };
-
-/* ============================================================================
- * 認証チェック
- * ============================================================================ */
-async function requireAuth(): Promise<AuthResult> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return { error: "Unauthorized", status: 401 };
-  }
-  return { session };
-}
-
-/* ============================================================================
- * targetUserId の決定ロジック
- * ============================================================================ */
-function resolveTargetUserId(
-  session: Session,
-  userIdParam: string | null
-): string | AuthError {
-  const role = session.user.role;
-
-  if (role === "admin") {
-    return session.user.id;
-  }
-
-  if (!userIdParam) {
-    return { error: "userId が指定されていません（owner のみ必須）", status: 400 };
-  }
-
-  return userIdParam;
-}
 
 /* ============================================================================
  * GET: 対局結果検索
@@ -87,16 +51,22 @@ export async function GET(req: Request) {
   try {
     let targetMatchDate: number | null = null;
 
+    // ------------------------------------------------------------
+    // 日付指定がある場合
+    // ------------------------------------------------------------
     if (dateStr) {
       targetMatchDate = Number(dateStr.replaceAll("-", ""));
     } else {
+      // ------------------------------------------------------------
+      // 最新日付を取得
+      // ------------------------------------------------------------
       const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
-      SELECT DISTINCT "matchDate"
-      FROM "Result"
-      WHERE "userId" = '${target}'
-      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
-      ORDER BY "matchDate" DESC LIMIT 1
-    `);
+        SELECT DISTINCT "matchDate"
+        FROM "Result"
+        WHERE "userId" = '${target}'
+        ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+        ORDER BY "matchDate" DESC LIMIT 1
+      `);
 
       if (latest.length === 0) {
         return jsonOk({ date: null, prevDate: null, nextDate: null, results: [] });
@@ -105,6 +75,9 @@ export async function GET(req: Request) {
       targetMatchDate = latest[0].matchDate;
     }
 
+    // ------------------------------------------------------------
+    // 対象日の対局結果
+    // ------------------------------------------------------------
     const results = await prisma.$queryRawUnsafe<Result[]>(`
       SELECT *
       FROM "Result"
@@ -114,6 +87,9 @@ export async function GET(req: Request) {
       ORDER BY "roundIndex" ASC
     `);
 
+    // ------------------------------------------------------------
+    // 前日
+    // ------------------------------------------------------------
     const prev = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
       SELECT DISTINCT "matchDate"
       FROM "Result"
@@ -123,6 +99,9 @@ export async function GET(req: Request) {
       ORDER BY "matchDate" DESC LIMIT 1
     `);
 
+    // ------------------------------------------------------------
+    // 翌日
+    // ------------------------------------------------------------
     const next = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
       SELECT DISTINCT "matchDate"
       FROM "Result"
