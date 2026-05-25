@@ -6,31 +6,23 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import type { Result } from "@prisma/client";
 import { jsonOk, jsonError } from "@/lib/apiResponse";
 import { requireAuth, resolveTargetUserId } from "@/lib/authService";
+
+import type {
+  PostResultBody,
+  ResultRecord,
+  ResultSearchResponse,
+  DeleteResultQuery,
+} from "@/types/result";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================================
- * 型定義
- * ============================================================================ */
-type PostResultBody = {
-  winnerId: string;
-  winnerName: string;
-  winnerRate: number;
-  loserId: string;
-  loserName: string;
-  loserRate: number;
-  matchDate: number;
-  roundIndex: number;
-  userId?: string;
-};
-
-/* ============================================================================
  * GET: 対局結果検索
- * ============================================================================ */
+ * ============================================================================
+ */
 export async function GET(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
@@ -52,7 +44,7 @@ export async function GET(req: Request) {
     let targetMatchDate: number | null = null;
 
     // ------------------------------------------------------------
-    // 日付指定がある場合
+    // 日付指定あり
     // ------------------------------------------------------------
     if (dateStr) {
       targetMatchDate = Number(dateStr.replaceAll("-", ""));
@@ -69,7 +61,13 @@ export async function GET(req: Request) {
       `);
 
       if (latest.length === 0) {
-        return jsonOk({ date: null, prevDate: null, nextDate: null, results: [] });
+        const empty: ResultSearchResponse = {
+          date: null,
+          prevDate: null,
+          nextDate: null,
+          results: [],
+        };
+        return jsonOk(empty);
       }
 
       targetMatchDate = latest[0].matchDate;
@@ -78,7 +76,7 @@ export async function GET(req: Request) {
     // ------------------------------------------------------------
     // 対象日の対局結果
     // ------------------------------------------------------------
-    const results = await prisma.$queryRawUnsafe<Result[]>(`
+    const results = await prisma.$queryRawUnsafe<ResultRecord[]>(`
       SELECT *
       FROM "Result"
       WHERE "matchDate" = ${targetMatchDate}
@@ -117,12 +115,14 @@ export async function GET(req: Request) {
       return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
     };
 
-    return jsonOk({
+    const response: ResultSearchResponse = {
       date: fmt(targetMatchDate)!,
       prevDate: fmt(prev[0]?.matchDate),
       nextDate: fmt(next[0]?.matchDate),
       results,
-    });
+    };
+
+    return jsonOk(response);
   } catch (err) {
     console.error("GET /api/private/result error:", err);
     return jsonError("対局結果の取得に失敗しました", 500);
@@ -131,7 +131,8 @@ export async function GET(req: Request) {
 
 /* ============================================================================
  * POST: 対局結果登録
- * ============================================================================ */
+ * ============================================================================
+ */
 export async function POST(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
@@ -215,7 +216,8 @@ export async function POST(req: Request) {
 
 /* ============================================================================
  * DELETE: 対局結果削除
- * ============================================================================ */
+ * ============================================================================
+ */
 export async function DELETE(req: Request) {
   const auth = await requireAuth();
   if ("error" in auth) {
@@ -223,20 +225,20 @@ export async function DELETE(req: Request) {
   }
   const session = auth.session;
 
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const userIdParam = searchParams.get("userId");
+
+  if (!id) {
+    return jsonError("id が必要です", 400);
+  }
+
+  const target = resolveTargetUserId(session, userIdParam);
+  if (typeof target !== "string") {
+    return jsonError(target.error, target.status);
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const userIdParam = searchParams.get("userId");
-
-    if (!id) {
-      return jsonError("id が必要です", 400);
-    }
-
-    const target = resolveTargetUserId(session, userIdParam);
-    if (typeof target !== "string") {
-      return jsonError(target.error, target.status);
-    }
-
     const result = await prisma.result.findUnique({ where: { id } });
 
     if (!result) {

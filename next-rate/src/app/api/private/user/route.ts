@@ -22,52 +22,34 @@
  * ============================================================
  */
 
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { jsonOk, jsonError } from '@/lib/apiResponse';
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
+import { jsonOk, jsonError } from "@/lib/apiResponse";
+import { requireOwner } from "@/lib/authService";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import type { PostUserBody, DeleteUserBody } from "@/types/user";
 
-type AuthOwnerResult = { session: Awaited<ReturnType<typeof getServerSession>> } | { error: string; status: number };
-
-/* ============================================================
- * owner 専用チェック
- * ============================================================ */
-async function requireOwner(): Promise<AuthOwnerResult> {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return { error: 'Unauthorized', status: 401 };
-  }
-
-  if (session.user.role !== 'owner') {
-    return { error: '権限がありません（owner のみ利用可能）', status: 403 };
-  }
-
-  return { session };
-}
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /* ============================================================
  * GET: 全団体ユーザー一覧（owner 専用）
  * ============================================================ */
 export async function GET() {
   const auth = await requireOwner();
-  if ('error' in auth) {
+  if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
 
   try {
     const users = await prisma.user.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
 
     return jsonOk(users);
   } catch (err) {
-    console.error('GET /api/private/user error:', err);
-    return jsonError('団体ユーザー取得に失敗しました', 500);
+    console.error("GET /api/private/user error:", err);
+    return jsonError("団体ユーザー取得に失敗しました", 500);
   }
 }
 
@@ -76,25 +58,31 @@ export async function GET() {
  * ============================================================ */
 export async function POST(req: Request) {
   const auth = await requireOwner();
-  if ('error' in auth) {
+  if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
 
+  let body: PostUserBody;
   try {
-    const body = await req.json();
-    const { name, email, password, role } = body;
+    body = (await req.json()) as PostUserBody;
+  } catch {
+    return jsonError("リクエストボディの解析に失敗しました", 400);
+  }
 
-    if (!name || !email || !password || !role) {
-      return jsonError('name, email, password, role は必須です', 400);
-    }
+  const { name, email, password, role } = body;
 
-    if (!['owner', 'admin'].includes(role)) {
-      return jsonError('role は owner または admin のみ指定可能です', 400);
-    }
+  if (!name || !email || !password || !role) {
+    return jsonError("name, email, password, role は必須です", 400);
+  }
 
+  if (!["owner", "admin"].includes(role)) {
+    return jsonError("role は owner または admin のみ指定可能です", 400);
+  }
+
+  try {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) {
-      return jsonError('既に登録済みの email です', 400);
+      return jsonError("既に登録済みの email です", 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -110,8 +98,8 @@ export async function POST(req: Request) {
 
     return jsonOk(created);
   } catch (err) {
-    console.error('POST /api/private/user error:', err);
-    return jsonError('団体ユーザー登録に失敗しました', 500);
+    console.error("POST /api/private/user error:", err);
+    return jsonError("団体ユーザー登録に失敗しました", 500);
   }
 }
 
@@ -120,25 +108,31 @@ export async function POST(req: Request) {
  * ============================================================ */
 export async function DELETE(req: Request) {
   const auth = await requireOwner();
-  if ('error' in auth) {
+  if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
 
+  let body: DeleteUserBody;
   try {
-    const body = await req.json();
-    const { id } = body;
+    body = (await req.json()) as DeleteUserBody;
+  } catch {
+    return jsonError("リクエストボディの解析に失敗しました", 400);
+  }
 
-    if (!id) {
-      return jsonError('id は必須です', 400);
-    }
+  const { id } = body;
 
+  if (!id) {
+    return jsonError("id は必須です", 400);
+  }
+
+  try {
     const deleted = await prisma.user.delete({
       where: { id },
     });
 
     return jsonOk(deleted);
   } catch (err) {
-    console.error('DELETE /api/private/user error:', err);
-    return jsonError('団体ユーザー削除に失敗しました', 500);
+    console.error("DELETE /api/private/user error:", err);
+    return jsonError("団体ユーザー削除に失敗しました", 500);
   }
 }

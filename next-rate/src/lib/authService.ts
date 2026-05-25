@@ -11,6 +11,7 @@
  * - next-auth を用いた認証チェック（requireAuth）
  * - ロール（admin / owner）に基づく操作対象 userId の決定
  *   （resolveTargetUserId）
+ * - owner 専用 API の権限チェック（requireOwner）
  *
  * 【利用箇所】
  * - private API 全般（/api/private/...）
@@ -46,9 +47,6 @@ export type AuthResult = AuthSuccess | AuthError;
 export async function requireAuth(): Promise<AuthResult> {
   const session = await getServerSession(authOptions);
 
-  // ------------------------------------------------------------
-  // 認証失敗（セッションなし）
-  // ------------------------------------------------------------
   if (!session?.user) {
     return {
       error: "Unauthorized",
@@ -56,9 +54,37 @@ export async function requireAuth(): Promise<AuthResult> {
     };
   }
 
-  // ------------------------------------------------------------
-  // 認証成功
-  // ------------------------------------------------------------
+  return { session };
+}
+
+/* ============================================================================
+ * owner 専用チェック（requireOwner）
+ *
+ * 【仕様】
+ * - 認証済みであること（requireAuth を内包）
+ * - user.role が owner の場合のみ成功
+ *
+ * 【返却仕様】
+ * - 正常: { session }
+ * - 異常: { error, status }
+ * ============================================================================
+ */
+export async function requireOwner(): Promise<AuthResult> {
+  const auth = await requireAuth();
+
+  if ("error" in auth) {
+    return auth; // Unauthorized
+  }
+
+  const session = auth.session;
+
+  if (session.user.role !== "owner") {
+    return {
+      error: "権限がありません（owner のみ利用可能）",
+      status: 403,
+    };
+  }
+
   return { session };
 }
 
@@ -82,16 +108,10 @@ export function resolveTargetUserId(
 ): string | AuthError {
   const role = session.user.role;
 
-  // ------------------------------------------------------------
-  // admin → 自分自身の userId 固定
-  // ------------------------------------------------------------
   if (role === "admin") {
     return session.user.id;
   }
 
-  // ------------------------------------------------------------
-  // owner → userId の指定が必須
-  // ------------------------------------------------------------
   if (!userIdParam) {
     return {
       error: "userId が指定されていません（owner のみ必須）",
@@ -99,8 +119,5 @@ export function resolveTargetUserId(
     };
   }
 
-  // ------------------------------------------------------------
-  // 正常（owner が userId を指定したケース）
-  // ------------------------------------------------------------
   return userIdParam;
 }

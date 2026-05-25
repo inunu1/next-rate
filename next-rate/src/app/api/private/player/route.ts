@@ -16,32 +16,27 @@ import { prisma } from "@/lib/prisma";
 import { jsonOk, jsonError } from "@/lib/apiResponse";
 import { requireAuth, resolveTargetUserId } from "@/lib/authService";
 
+import type {
+  PostPlayerBody,
+  DeletePlayerBody,
+  PlayerListResponse,
+} from "@/types/player";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type PostPlayerBody = {
-  name: string;
-  initialRate: number;
-  userId?: string;
-};
-
-type DeletePlayerBody = {
-  id: string;
-  userId?: string;
-};
 
 /* ============================================================================
  * バリデーション
  * ========================================================================== */
-function validatePlayerInput(name: string, initialRate: number) {
+function validatePlayerInput(name: string, rate: number) {
   if (!name || !name.trim()) {
     return "プレイヤー名は必須です";
   }
-  if (!Number.isFinite(initialRate)) {
-    return "initialRate は数値である必要があります";
+  if (!Number.isFinite(rate)) {
+    return "rate は数値である必要があります";
   }
-  if (initialRate < 0) {
-    return "initialRate は 0 以上である必要があります";
+  if (rate < 0) {
+    return "rate は 0 以上である必要があります";
   }
   if (name.length > 100) {
     return "プレイヤー名が長すぎます（100文字以内）";
@@ -68,7 +63,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const players = await prisma.player.findMany({
+    const players: PlayerListResponse = await prisma.player.findMany({
       where: {
         deletedAt: null,
         userId: target,
@@ -101,14 +96,14 @@ export async function POST(req: Request) {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const { name, initialRate, userId } = body;
+  const { name, rate, userId } = body;
 
   const target = resolveTargetUserId(session, userId ?? null);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }
 
-  const validationError = validatePlayerInput(name, initialRate);
+  const validationError = validatePlayerInput(name, rate);
   if (validationError) {
     return jsonError(validationError, 400);
   }
@@ -130,8 +125,8 @@ export async function POST(req: Request) {
     const created = await prisma.player.create({
       data: {
         name: name.trim(),
-        initialRate,
-        currentRate: initialRate,
+        initialRate: rate,
+        currentRate: rate,
         userId: target,
       },
     });
