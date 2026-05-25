@@ -13,7 +13,6 @@ import type {
   PostResultBody,
   ResultRecord,
   ResultSearchResponse,
-  DeleteResultQuery,
 } from "@/types/result";
 
 export const runtime = "nodejs";
