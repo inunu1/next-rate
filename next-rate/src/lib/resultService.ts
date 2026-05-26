@@ -1,23 +1,11 @@
 /**
  * ============================================================================
- * 【ファイル名】
- * resultService.ts
- *
- * 【機能概要】
- * 対局結果（Result）に関するビジネスロジックを集約するサービス層。
- *
- * 【役割】
- * - Result API（/api/private/result）から呼び出される業務処理を担当
- * - Prisma アクセスを一元化し、API 層を薄く保つ
- * - バリデーション・重複チェック・整形処理を担当
- *
- * 【設計方針】
- * - route.ts は「認証 → body → service 呼び出し → jsonOk」に限定
- * - Prisma への直接アクセスは本ファイルに集約
+ * resultService.ts（Prisma.sql 版・完全安全）
  * ============================================================================
  */
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client"; // ← これが正しい！
 import type {
   PostResultBody,
   ResultRecord,
@@ -25,7 +13,7 @@ import type {
 } from "@/types/result";
 
 /* ============================================================================
- * GET: 対局結果検索
+ * GET: 対局結果検索（安全版）
  * ============================================================================ */
 export async function searchResults(
   targetUserId: string,
@@ -34,22 +22,20 @@ export async function searchResults(
 ): Promise<ResultSearchResponse> {
   let targetMatchDate: number | null = null;
 
-  // ------------------------------------------------------------
-  // 日付指定あり
-  // ------------------------------------------------------------
   if (dateStr) {
     targetMatchDate = Number(dateStr.replaceAll("-", ""));
   } else {
-    // ------------------------------------------------------------
-    // 最新日付を取得
-    // ------------------------------------------------------------
-    const latest = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
+    const latest = await prisma.$queryRaw<{ matchDate: number }[]>`
       SELECT DISTINCT "matchDate"
       FROM "Result"
-      WHERE "userId" = '${targetUserId}'
-      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+      WHERE "userId" = ${targetUserId}
+      ${
+        playerId
+          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
+          : Prisma.empty
+      }
       ORDER BY "matchDate" DESC LIMIT 1
-    `);
+    `;
 
     if (latest.length === 0) {
       return {
@@ -63,41 +49,44 @@ export async function searchResults(
     targetMatchDate = latest[0].matchDate;
   }
 
-  // ------------------------------------------------------------
-  // 対象日の対局結果
-  // ------------------------------------------------------------
-  const results = await prisma.$queryRawUnsafe<ResultRecord[]>(`
+  const results = await prisma.$queryRaw<ResultRecord[]>`
     SELECT *
     FROM "Result"
     WHERE "matchDate" = ${targetMatchDate}
-      AND "userId" = '${targetUserId}'
-      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+      AND "userId" = ${targetUserId}
+      ${
+        playerId
+          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
+          : Prisma.empty
+      }
     ORDER BY "roundIndex" ASC
-  `);
+  `;
 
-  // ------------------------------------------------------------
-  // 前日
-  // ------------------------------------------------------------
-  const prev = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
+  const prev = await prisma.$queryRaw<{ matchDate: number }[]>`
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" < ${targetMatchDate}
-      AND "userId" = '${targetUserId}'
-      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+      AND "userId" = ${targetUserId}
+      ${
+        playerId
+          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
+          : Prisma.empty
+      }
     ORDER BY "matchDate" DESC LIMIT 1
-  `);
+  `;
 
-  // ------------------------------------------------------------
-  // 翌日
-  // ------------------------------------------------------------
-  const next = await prisma.$queryRawUnsafe<{ matchDate: number }[]>(`
+  const next = await prisma.$queryRaw<{ matchDate: number }[]>`
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" > ${targetMatchDate}
-      AND "userId" = '${targetUserId}'
-      ${playerId ? `AND ("winnerId" = '${playerId}' OR "loserId" = '${playerId}')` : ""}
+      AND "userId" = ${targetUserId}
+      ${
+        playerId
+          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
+          : Prisma.empty
+      }
     ORDER BY "matchDate" ASC LIMIT 1
-  `);
+  `;
 
   const fmt = (n: number | undefined) => {
     if (!n) return null;
@@ -135,7 +124,6 @@ export async function createResult(
     return { error: "必須項目が不足しています", status: 400 };
   }
 
-  // プレイヤー存在チェック
   const winner = await prisma.player.findUnique({ where: { id: winnerId } });
   const loser = await prisma.player.findUnique({ where: { id: loserId } });
 
@@ -147,7 +135,6 @@ export async function createResult(
     return { error: "他団体のプレイヤーは登録できません", status: 403 };
   }
 
-  // 同一ラウンドでの重複チェック
   const conflict = await prisma.result.findFirst({
     where: {
       matchDate,
