@@ -20,7 +20,7 @@
 
 import { prisma } from "@/lib/prisma";
 import type { PostUserBody, DeleteUserBody, UserListResponse } from "@/types/user";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 /* ============================================================================
  * バリデーション
