@@ -79,7 +79,7 @@ export function usePlayers(userId: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          initialRate: Number(initialRate),
+          rate: Number(initialRate),
           userId,
         }),
       });
