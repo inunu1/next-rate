@@ -133,45 +133,41 @@ export async function POST(): Promise<NextResponse> {
     metrics.push({ label: "phase3_extract_logical_diffs", ms: getTimestamp() - sectionStartTime });
 
     /* =========================================================================
-     * フェーズ 4: 安全な一括更新処理（SQLインジェクション対策の徹底）
+     * フェーズ 4: 高速バルク更新処理（VALUES句による1クエリ実行）
      * =========================================================================
      */
     sectionStartTime = getTimestamp();
     
-    if (diffResults.length > 0 || diffPlayers.length > 0) {
-      // 型安全性を担保した更新クエリ・スタックの定義
-      const transactionQueue: any[] = [];
-
-      // Resultテーブル更新クエリのプッシュ
-      diffResults.forEach(target => {
-        transactionQueue.push(
-          prisma.result.update({
-            where: { id: target.id },
-            data: {
-              winnerRate: target.winnerRate,
-              loserRate: target.loserRate,
-            },
-          })
-        );
-      });
-
-      // Playerテーブル更新クエリのプッシュ
-      diffPlayers.forEach(([targetId, nextRate]) => {
-        transactionQueue.push(
-          prisma.player.update({
-            where: { id: targetId },
-            data: {
-              currentRate: nextRate,
-            },
-          })
-        );
-      });
-
-      // Prisma内部の型安全なエスケープ機構を利用した一括トランザクション実行
-      // ※注意：データ数が1万件を超える規模にスケールした場合はチャンク分割処理を要検討
-      await prisma.$transaction(transactionQueue);
+    /* Result 差分 UPDATE */
+    if (diffResults.length > 0) {
+      await prisma.$executeRawUnsafe(`
+        UPDATE "Result" AS r
+        SET 
+          "winnerRate" = v."winnerRate",
+          "loserRate" = v."loserRate"
+        FROM (VALUES
+          ${diffResults
+            .map(
+              r => `('${r.id}', ${r.winnerRate}, ${r.loserRate})`
+            )
+            .join(",")}
+        ) AS v("id", "winnerRate", "loserRate")
+        WHERE r.id = v."id";
+      `);
     }
-    metrics.push({ label: "phase4_db_safe_bulk_update", ms: getTimestamp() - sectionStartTime });
+
+    /* Player 差分 UPDATE */
+    if (diffPlayers.length > 0) {
+      await prisma.$executeRawUnsafe(`
+        UPDATE "Player" AS p
+        SET "currentRate" = v."currentRate"
+        FROM (VALUES
+          ${diffPlayers.map(([id, rate]) => `('${id}', ${rate})`).join(",")}
+        ) AS v("id", "currentRate")
+        WHERE p.id = v."id";
+      `);
+    }
+    metrics.push({ label: "phase4_db_bulk_update", ms: getTimestamp() - sectionStartTime });
 
     /* =========================================================================
      * フェーズ 5: レスポンス返却処理
