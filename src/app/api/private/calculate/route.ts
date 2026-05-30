@@ -186,17 +186,19 @@ export async function POST(): Promise<NextResponse> {
       performanceMetrics: metrics,
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // 例外発生時の共通ハンドリング（ログ出力およびシステムエラー応答）
     console.error("[FATAL ERROR] API-PRI-001 実行中にシステム例外を検知しました。");
     console.error(error);
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown exception";
 
     return NextResponse.json(
       {
         status: "ERROR",
         errorCode: "ERR-SYS-500",
         message: "致命的なシステムエラーが発生しました。システム管理者に連絡してください。",
-        errorDetails: error?.message ?? "Unknown exception",
+        errorDetails: errorMessage,
       },
       { status: 500 }
     );
