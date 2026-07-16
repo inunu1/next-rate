@@ -16,7 +16,7 @@ export type PostPlayerBody = {
   rate: number;
 
   /** owner のみ指定必須（admin は不要） */
-  userId?: string;
+  organizationId?: string;
 };
 
 export type DeletePlayerBody = {
@@ -24,7 +24,7 @@ export type DeletePlayerBody = {
   id: string;
 
   /** owner のみ指定必須（admin は不要） */
-  userId?: string;
+  organizationId?: string;
 };
 
 /* ============================================================================
@@ -36,7 +36,7 @@ export type PlayerRecord = {
   name: string;
   initialRate: number;
   currentRate: number;
-  userId: string;
+  organizationId: string;
   createdAt: Date;
   deletedAt: Date | null;
 };

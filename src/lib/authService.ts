@@ -9,8 +9,8 @@
  *
  * 【役割】
  * - next-auth を用いた認証チェック（requireAuth）
- * - ロール（admin / owner）に基づく操作対象 userId の決定
- *   （resolveTargetUserId）
+ * - ロール（admin / owner）に基づく操作対象 organizationId の決定
+ *   （resolveTargetOrganizationId）
  * - owner 専用 API の権限チェック（requireOwner）
  *
  * 【利用箇所】
@@ -89,35 +89,35 @@ export async function requireOwner(): Promise<AuthResult> {
 }
 
 /* ============================================================================
- * 操作対象 userId の決定（resolveTargetUserId）
+ * 操作対象 organizationId の決定（resolveTargetOrganizationId）
  *
  * 【ロール仕様】
  * - admin:
- *     - 常に自分自身の userId を使用（他団体操作不可）
+ *     - 常に自分自身の organizationId を使用（他団体操作不可）
  * - owner:
- *     - クエリ or ボディで userId の指定が必須
+ *     - クエリ or ボディで organizationId の指定が必須
  *
  * 【返却仕様】
- * - 正常: userId（string）
+ * - 正常: organizationId（string）
  * - 異常: { error, status }
  * ============================================================================
  */
-export function resolveTargetUserId(
+export function resolveTargetOrganizationId(
   session: Session,
-  userIdParam: string | null
+  organizationIdParam: string | null
 ): string | AuthError {
   const role = session.user.role;
 
   if (role === "admin") {
-    return session.user.id;
+    return session.user.organizationId ?? session.user.id;
   }
 
-  if (!userIdParam) {
+  if (!organizationIdParam) {
     return {
-      error: "userId が指定されていません（owner のみ必須）",
+      error: "organizationId が指定されていません（owner のみ必須）",
       status: 400,
     };
   }
 
-  return userIdParam;
+  return organizationIdParam;
 }

@@ -33,17 +33,17 @@ import { useResults } from "./useResults";
 type Option = { label: string; value: string };
 
 export default function ResultsClient({
-  currentUserId,
+  currentOrganizationId,
   role,
   allUsers,
 }: {
-  currentUserId: string;
+  currentOrganizationId: string;
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
-    value: currentUserId,
+    value: currentOrganizationId,
   });
   const [isFormOpen, setIsFormOpen] = useState(true);
 

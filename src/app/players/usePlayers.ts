@@ -15,7 +15,7 @@ import { parseApiResponse } from "@/lib/fetchJson";
 
 export type PlayerOption = { value: string; label: string };
 
-export function usePlayers(userId: string) {
+export function usePlayers(organizationId: string) {
   /* --------------------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------------------ */
@@ -40,13 +40,13 @@ export function usePlayers(userId: string) {
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
     try {
-      const res = await fetch(`/api/private/player?userId=${userId}`);
+      const res = await fetch(`/api/private/player?organizationId=${organizationId}`);
       const data = await parseApiResponse<Player[]>(res);
       setPlayers(data);
     } catch {
       setLastAction("fetch-error");
     }
-  }, [userId]);
+  }, [organizationId]);
 
   /* --------------------------------------------------------------------------
    * 初期化
@@ -80,7 +80,7 @@ export function usePlayers(userId: string) {
         body: JSON.stringify({
           name,
           rate: Number(initialRate),
-          userId,
+          organizationId,
         }),
       });
 
@@ -94,7 +94,7 @@ export function usePlayers(userId: string) {
     } catch {
       setLastAction("register-error");
     }
-  }, [name, initialRate, userId, fetchPlayers]);
+  }, [name, initialRate, organizationId, fetchPlayers]);
 
   /* --------------------------------------------------------------------------
    * 削除
@@ -107,7 +107,7 @@ export function usePlayers(userId: string) {
         const res = await fetch("/api/private/player", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, userId }),
+          body: JSON.stringify({ id, organizationId }),
         });
 
         await parseApiResponse(res);
@@ -118,7 +118,7 @@ export function usePlayers(userId: string) {
         setLastAction("delete-error");
       }
     },
-    [userId, fetchPlayers]
+    [organizationId, fetchPlayers]
   );
 
   /* --------------------------------------------------------------------------

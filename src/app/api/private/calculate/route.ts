@@ -47,10 +47,23 @@ function calculateElo(winnerRate: number, loserRate: number): IEloCalculationRes
  * @description エントリポイント：フル再計算および論理差分一括更新処理
  * @returns     {Promise<NextResponse>} 処理結果メタデータを含むJSONレスポンス
  */
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
   const getTimestamp = () => performance.now();
   const metrics: { label: string; ms: number }[] = [];
   const totalStartTime = getTimestamp();
+
+  let body: { organizationId?: string } = {};
+  try {
+    body = (await req.json()) as { organizationId?: string };
+  } catch {
+    return NextResponse.json({ ok: false, error: "organizationId の解析に失敗しました" }, { status: 400 });
+  }
+
+  if (!body.organizationId) {
+    return NextResponse.json({ ok: false, error: "organizationId が指定されていません" }, { status: 400 });
+  }
+
+  const targetOrganizationId = body.organizationId;
 
   try {
     /* =========================================================================
@@ -61,13 +74,16 @@ export async function POST(): Promise<NextResponse> {
     
     // ソート条件（時系列昇順）を指定し、Resultテーブルのマスターデータを一括取得
     const allResults = await prisma.result.findMany({
+      where: { organizationId: targetOrganizationId },
       orderBy: [
         { matchDate: "asc" },
         { roundIndex: "asc" },
       ],
     });
-    // 同一コンテキスト内でPlayerテーブルの全データを一括取得
-    const allPlayers = await prisma.player.findMany();
+    // 同一コンテキスト内でPlayerテーブルの団体データを一括取得
+    const allPlayers = await prisma.player.findMany({
+      where: { organizationId: targetOrganizationId },
+    });
     
     metrics.push({ label: "phase1_fetch_db_data", ms: getTimestamp() - sectionStartTime });
 

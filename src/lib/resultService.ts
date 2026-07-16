@@ -28,7 +28,7 @@ export async function searchResults(
     const latest = await prisma.$queryRaw<{ matchDate: number }[]>`
       SELECT DISTINCT "matchDate"
       FROM "Result"
-      WHERE "userId" = ${targetUserId}
+      WHERE "organizationId" = ${targetUserId}
       ${
         playerId
           ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
@@ -53,7 +53,7 @@ export async function searchResults(
     SELECT *
     FROM "Result"
     WHERE "matchDate" = ${targetMatchDate}
-      AND "userId" = ${targetUserId}
+      AND "organizationId" = ${targetUserId}
       ${
         playerId
           ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
@@ -66,7 +66,7 @@ export async function searchResults(
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" < ${targetMatchDate}
-      AND "userId" = ${targetUserId}
+      AND "organizationId" = ${targetUserId}
       ${
         playerId
           ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
@@ -79,7 +79,7 @@ export async function searchResults(
     SELECT DISTINCT "matchDate"
     FROM "Result"
     WHERE "matchDate" > ${targetMatchDate}
-      AND "userId" = ${targetUserId}
+      AND "organizationId" = ${targetUserId}
       ${
         playerId
           ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
@@ -131,7 +131,7 @@ export async function createResult(
     return { error: "プレイヤーが存在しません", status: 404 };
   }
 
-  if (winner.userId !== targetUserId || loser.userId !== targetUserId) {
+  if (winner.organizationId !== targetUserId || loser.organizationId !== targetUserId) {
     return { error: "他団体のプレイヤーは登録できません", status: 403 };
   }
 
@@ -139,7 +139,7 @@ export async function createResult(
     where: {
       matchDate,
       roundIndex,
-      userId: targetUserId,
+      organizationId: targetUserId,
       OR: [{ winnerId }, { loserId }],
     },
   });
@@ -161,7 +161,7 @@ export async function createResult(
       loserRate,
       matchDate,
       roundIndex,
-      userId: targetUserId,
+      organizationId: targetUserId,
     },
   });
 
@@ -182,7 +182,7 @@ export async function deleteResult(id: string, targetUserId: string) {
     return { error: "対局結果が存在しません", status: 404 };
   }
 
-  if (result.userId !== targetUserId) {
+  if (result.organizationId !== targetUserId) {
     return { error: "他団体の対局結果は削除できません", status: 403 };
   }
 

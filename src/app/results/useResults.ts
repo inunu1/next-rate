@@ -15,7 +15,7 @@ import { parseApiResponse } from "@/lib/fetchJson";
 
 export type PlayerOption = { value: string; label: string };
 
-export function useResults(userId: string) {
+export function useResults(organizationId: string) {
   /* --------------------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------------------ */
@@ -51,13 +51,13 @@ export function useResults(userId: string) {
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
     try {
-      const res = await fetch(`/api/private/player?userId=${userId}`);
+      const res = await fetch(`/api/private/player?organizationId=${organizationId}`);
       const data = await parseApiResponse<Player[]>(res);
       setPlayers(data);
     } catch {
       setLastAction("fetch-error");
     }
-  }, [userId]);
+  }, [organizationId]);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
@@ -76,7 +76,7 @@ export function useResults(userId: string) {
 
         const qs = new URLSearchParams({
           ...filtered,
-          userId,
+          organizationId,
         }).toString();
 
         const res = await fetch(`/api/private/result?${qs}`);
@@ -97,7 +97,7 @@ export function useResults(userId: string) {
         setLastAction("fetch-error");
       }
     },
-    [userId]
+    [organizationId]
   );
 
   /* --------------------------------------------------------------------------
@@ -166,14 +166,14 @@ export function useResults(userId: string) {
           loserRate: l.currentRate,
           matchDate: Number(registerDate.replaceAll("-", "")),
           roundIndex: Number(roundIndex),
-          userId,
+          organizationId,
         }),
       });
       await parseApiResponse(res);
 
       await fetch("/api/private/calculate", {
         method: "POST",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ organizationId }),
       });
 
       setLastAction("register-success");
@@ -190,7 +190,7 @@ export function useResults(userId: string) {
     registerDate,
     roundIndex,
     players,
-    userId,
+    organizationId,
     fetchResults,
   ]);
 
@@ -205,14 +205,14 @@ export function useResults(userId: string) {
       if (!confirm("この対局結果を削除しますか？")) return;
 
       try {
-        const res = await fetch(`/api/private/result?id=${id}&userId=${userId}`, {
+        const res = await fetch(`/api/private/result?id=${id}&organizationId=${organizationId}`, {
           method: "DELETE",
         });
         await parseApiResponse(res);
 
         await fetch("/api/private/calculate", {
           method: "POST",
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify({ organizationId }),
         });
 
         setLastAction("delete-success");
@@ -228,7 +228,7 @@ export function useResults(userId: string) {
         setLastAction("delete-error");
       }
     },
-    [results, userId, searchParams, fetchResults]
+    [results, organizationId, searchParams, fetchResults]
   );
 
   /* --------------------------------------------------------------------------

@@ -50,7 +50,7 @@ function validatePlayerInput(name: string, rate: number): string | null {
 export async function getPlayers(userId: string): Promise<PlayerListResponse> {
   const players = await prisma.player.findMany({
     where: {
-      userId,
+      organizationId: userId,
       deletedAt: null,
     },
     orderBy: { name: "asc" },
@@ -77,8 +77,8 @@ export async function createPlayer(
   const exists = await prisma.player.findFirst({
     where: {
       name,
-      userId: targetUserId,
       deletedAt: null,
+      organizationId: targetUserId,
     },
   });
 
@@ -91,7 +91,7 @@ export async function createPlayer(
       name: name.trim(),
       initialRate: rate,
       currentRate: rate,
-      userId: targetUserId,
+      organizationId: targetUserId,
     },
   });
 
@@ -117,7 +117,7 @@ export async function deletePlayer(
     return { error: "対象プレイヤーが存在しません", status: 404 };
   }
 
-  if (player.userId !== targetUserId) {
+  if (player.organizationId !== targetUserId) {
     return { error: "このプレイヤーを削除する権限がありません", status: 403 };
   }
 

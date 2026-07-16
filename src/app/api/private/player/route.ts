@@ -6,7 +6,7 @@
  */
 
 import { jsonOk, jsonError } from "@/lib/apiResponse";
-import { requireAuth, resolveTargetUserId } from "@/lib/authService";
+import { requireAuth, resolveTargetOrganizationId } from "@/lib/authService";
 
 import { getPlayers, createPlayer, deletePlayer } from "@/lib/playerService";
 import type { PostPlayerBody, DeletePlayerBody } from "@/types/player";
@@ -26,9 +26,9 @@ export async function GET(req: Request) {
   const session = auth.session;
 
   const { searchParams } = new URL(req.url);
-  const userIdParam = searchParams.get("userId");
+  const organizationIdParam = searchParams.get("organizationId");
 
-  const target = resolveTargetUserId(session, userIdParam);
+  const target = resolveTargetOrganizationId(session, organizationIdParam);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const target = resolveTargetUserId(session, body.userId ?? null);
+  const target = resolveTargetOrganizationId(session, body.organizationId ?? null);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }
@@ -100,7 +100,7 @@ export async function DELETE(req: Request) {
     return jsonError("リクエストボディの解析に失敗しました", 400);
   }
 
-  const target = resolveTargetUserId(session, body.userId ?? null);
+  const target = resolveTargetOrganizationId(session, body.organizationId ?? null);
   if (typeof target !== "string") {
     return jsonError(target.error, target.status);
   }

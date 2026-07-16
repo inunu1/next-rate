@@ -31,17 +31,17 @@ import { usePlayers } from "./usePlayers";
 type Option = { label: string; value: string };
 
 export default function PlayersClient({
-  currentUserId,
+  currentOrganizationId,
   role,
   allUsers,
 }: {
-  currentUserId: string;
+  currentOrganizationId: string;
   role: "owner" | "admin";
   allUsers?: { id: string; name: string }[];
 }) {
   const [selectedUser, setSelectedUser] = useState<Option>({
     label: "自団体",
-    value: currentUserId,
+    value: currentOrganizationId,
   });
   const [isFormOpen, setIsFormOpen] = useState(true);
 

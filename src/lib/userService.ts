@@ -72,12 +72,24 @@ export async function createUser(body: PostUserBody) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // 登録
+  let organizationId: string | undefined;
+
+  if (role === "admin") {
+    const organization = await prisma.organization.create({
+      data: {
+        name,
+      },
+    });
+    organizationId = organization.id;
+  }
+
   const created = await prisma.user.create({
     data: {
       name,
       email,
       hashedPassword,
       role,
+      organizationId,
     },
   });
 

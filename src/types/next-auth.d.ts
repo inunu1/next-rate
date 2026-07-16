@@ -37,11 +37,13 @@ declare module "next-auth" {
    */
   interface Session {
     user: {
-      id: string;                 // 必須：アプリケーション内でのユーザー識別子（＝団体ID）
+      id: string;                 // 必須：アプリケーション内でのログインユーザー識別子
       role: string;               // 必須：権限（owner / admin）
       email?: string | null;      // 任意：メールアドレス
-      name?: string | null;       // 任意：表示名（団体名）
+      name?: string | null;       // 任意：表示名（ユーザー名または団体名）
       image?: string | null;      // 任意：アイコン画像
+      organizationId?: string;    // 任意：所属団体ID（admin の場合に必須）
+      organizationName?: string;  // 任意：所属団体名
     };
   }
 
@@ -58,6 +60,8 @@ declare module "next-auth" {
     email?: string | null;
     name?: string | null;
     image?: string | null;
+    organizationId?: string | null;
+    organizationName?: string | null;
   }
 }
 
@@ -74,5 +78,7 @@ declare module "next-auth/jwt" {
     role: string;                 // 必須：権限（owner / admin）
     email?: string | null;
     name?: string | null;
+    organizationId?: string | null;
+    organizationName?: string | null;
   }
 }

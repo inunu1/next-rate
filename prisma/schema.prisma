@@ -12,38 +12,50 @@ enum Role {
   admin
 }
 
+model Organization {
+  id        String    @id @default(uuid())
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model User {
   id             String   @id @default(uuid())
   email          String   @unique
   name           String?
   hashedPassword String
   role           Role
+  organizationId String?  @db.Uuid
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
 
 model Player {
-  id          String    @id @default(uuid())
-  userId      String
-  name        String
-  initialRate Int
-  currentRate Int
-  createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
+  id             String   @id @default(uuid())
+  organizationId String   @db.Uuid
+  name           String
+  initialRate    Int
+  currentRate    Int
+  createdAt      DateTime @default(now())
+  deletedAt      DateTime?
+
+  @@index([organizationId])
 }
 
 model Result {
-  id         String   @id @default(uuid())
-  userId     String
-  winnerId   String
-  winnerName String
-  winnerRate Int
-  loserId    String
-  loserName  String
-  loserRate  Int
-  matchDate  Int
-  roundIndex Int
-  updatedAt  DateTime @updatedAt
-  @@unique([userId, matchDate, roundIndex, winnerId])
-  @@unique([userId, matchDate, roundIndex, loserId])
+  id             String   @id @default(uuid())
+  organizationId String   @db.Uuid
+  winnerId       String
+  winnerName     String
+  winnerRate     Int
+  loserId        String
+  loserName      String
+  loserRate      Int
+  matchDate      Int
+  roundIndex     Int
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, matchDate, roundIndex, winnerId])
+  @@unique([organizationId, matchDate, roundIndex, loserId])
+  @@index([organizationId])
 }

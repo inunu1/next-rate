@@ -25,8 +25,8 @@ export default async function PlayersPage() {
     redirect("/login");
   }
 
-  const currentUserId = session.user.id;
   const role = session.user.role as "owner" | "admin";
+  const currentOrganizationId = session.user.organizationId ?? session.user.id;
 
   // --------------------------------------------------------------------------
   // owner の場合のみ団体一覧を取得
@@ -36,14 +36,16 @@ export default async function PlayersPage() {
 
   if (role === "owner") {
     const users = await prisma.user.findMany({
-      select: { id: true, name: true },
+      select: { id: true, name: true, organizationId: true },
       orderBy: { name: "asc" },
     });
 
-    allUsers = users.map((u) => ({
-      id: u.id,
-      name: u.name ?? "", // ★ null を空文字に変換
-    }));
+    allUsers = users
+      .filter((u) => u.organizationId)
+      .map((u) => ({
+        id: u.organizationId!,
+        name: u.name ?? "", // ★ null を空文字に変換
+      }));
   }
 
   // --------------------------------------------------------------------------
@@ -51,7 +53,7 @@ export default async function PlayersPage() {
   // --------------------------------------------------------------------------
   return (
     <PlayersClient
-      currentUserId={currentUserId}
+      currentOrganizationId={currentOrganizationId}
       role={role}
       allUsers={allUsers}
     />

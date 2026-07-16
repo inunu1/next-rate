@@ -53,7 +53,7 @@ export type PostResultBody = {
   roundIndex: number;
 
   /** owner のみ指定必須（admin は不要） */
-  userId?: string;
+  organizationId?: string;
 };
 
 /* ============================================================================
@@ -97,7 +97,7 @@ export type ResultRecord = {
   loserRate: number;
   matchDate: number;
   roundIndex: number;
-  userId: string;
+  organizationId: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -107,10 +107,10 @@ export type ResultRecord = {
  *
  * 【業務仕様】
  * - id: 削除対象の対局結果ID
- * - userId: owner のみ指定必須（admin は不要）
- * ============================================================================
+ * - organizationId: owner のみ指定必須（admin は不要）
+ * ==========================================================================
  */
 export type DeleteResultQuery = {
   id: string;
-  userId?: string;
+  organizationId?: string;
 };
