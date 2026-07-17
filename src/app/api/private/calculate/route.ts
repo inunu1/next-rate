@@ -168,7 +168,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             )
             .join(",")}
         ) AS v("id", "winnerRate", "loserRate")
-        WHERE r.id = v."id";
+        WHERE r.id = v."id"::uuid;
       `);
     }
 
@@ -180,7 +180,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         FROM (VALUES
           ${diffPlayers.map(([id, rate]) => `('${id}', ${rate})`).join(",")}
         ) AS v("id", "currentRate")
-        WHERE p.id = v."id";
+        WHERE p.id = v."id"::uuid;
       `);
     }
     metrics.push({ label: "phase4_db_bulk_update", ms: getTimestamp() - sectionStartTime });
