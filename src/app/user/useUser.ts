@@ -22,7 +22,8 @@ export type ManagedUser = {
   id: string;
   name: string | null;
   email: string;
-  role: "owner" | "admin";
+  role: "owner" | "admin" | "editer" | "viewer";
+  organizationId?: string | null;
 };
 
 export function useUser(currentUserId: string) {
@@ -33,6 +34,10 @@ export function useUser(currentUserId: string) {
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<ManagedUser[]>([]);
+  const [organizations, setOrganizations] = useState<{
+    id: string;
+    name: string | null;
+  }[]>([]);
 
   const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
@@ -43,6 +48,7 @@ export function useUser(currentUserId: string) {
   const [password, setPassword] = useState("");
 
   const [roleOpt, setRoleOpt] = useState<UserOption | null>(null);
+  const [organizationOpt, setOrganizationOpt] = useState<UserOption | null>(null);
 
   // ★ トースト通知用のアクション状態
   const [lastAction, setLastAction] = useState<string | null>(null);
@@ -61,13 +67,23 @@ export function useUser(currentUserId: string) {
     }
   }, []);
 
+  const fetchOrganizations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/private/organization");
+      const data = await parseApiResponse<{ id: string; name: string | null }[]>(res);
+      setOrganizations(data);
+    } catch {
+      setLastAction("fetch-error");
+    }
+  }, []);
+
   /* --------------------------------------------------------------------------
    * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
     setMounted(true);
-    await fetchUsers();
-  }, [fetchUsers]);
+    await Promise.all([fetchUsers(), fetchOrganizations()]);
+  }, [fetchUsers, fetchOrganizations]);
 
   /* --------------------------------------------------------------------------
    * オプション
@@ -75,6 +91,11 @@ export function useUser(currentUserId: string) {
   const userOptions: UserOption[] = users.map((u) => ({
     value: u.id,
     label: u.name ?? "(名前なし)",
+  }));
+
+  const organizationOptions: UserOption[] = organizations.map((org) => ({
+    value: org.id,
+    label: org.name ?? "(名前なし)",
   }));
 
   /* --------------------------------------------------------------------------
@@ -98,6 +119,11 @@ export function useUser(currentUserId: string) {
       return;
     }
 
+    if (roleOpt.value === "admin" && !organizationOpt) {
+      setLastAction("register-error");
+      return;
+    }
+
     try {
       const res = await fetch("/api/private/user", {
         method: "POST",
@@ -107,6 +133,7 @@ export function useUser(currentUserId: string) {
           email,
           password,
           role: roleOpt.value,
+          organizationId: organizationOpt?.value ?? null,
         }),
       });
       await parseApiResponse(res);
@@ -115,13 +142,14 @@ export function useUser(currentUserId: string) {
       setEmail("");
       setPassword("");
       setRoleOpt(null);
+      setOrganizationOpt(null);
 
       setLastAction("register-success");
       await fetchUsers();
     } catch {
       setLastAction("register-error");
     }
-  }, [registerName, email, password, roleOpt, fetchUsers]);
+  }, [registerName, email, password, roleOpt, organizationOpt, fetchUsers]);
 
   /* --------------------------------------------------------------------------
    * 検索
@@ -145,6 +173,11 @@ export function useUser(currentUserId: string) {
     setFilteredUsers(users);
     setLastAction("search");
   }, [users]);
+
+  const getOrganizationLabel = (organizationId?: string | null) => {
+    if (!organizationId) return "-";
+    return organizations.find((org) => org.id === organizationId)?.name ?? "(削除済み団体)";
+  };
 
   /* --------------------------------------------------------------------------
    * 削除
@@ -179,6 +212,7 @@ export function useUser(currentUserId: string) {
 
     users,
     filteredUsers,
+    organizations,
 
     activeTab,
     setActiveTab,
@@ -197,8 +231,11 @@ export function useUser(currentUserId: string) {
 
     roleOpt,
     setRoleOpt,
+    organizationOpt,
+    setOrganizationOpt,
 
     userOptions,
+    organizationOptions,
 
     handleSearch,
     clearSearch,
@@ -207,5 +244,6 @@ export function useUser(currentUserId: string) {
 
     lastAction, // ★ 追加：UserClient でトースト通知に使う
     currentUserId,
+    getOrganizationLabel,
   };
 }

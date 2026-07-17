@@ -38,7 +38,7 @@ export default function ResultsClient({
   allUsers,
 }: {
   currentOrganizationId: string;
-  role: "owner" | "admin";
+  role: "owner" | "admin" | "editer" | "viewer";
   allUsers?: { id: string; name: string }[];
 }) {
   const [selectedUser, setSelectedUser] = useState<Option>({

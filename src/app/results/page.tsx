@@ -34,8 +34,12 @@ export default async function ResultsPage() {
     redirect("/login");
   }
 
-  const role = session.user.role as "owner" | "admin";
+  const role = session.user.role as "owner" | "admin" | "editer" | "viewer";
   const currentOrganizationId = session.user.organizationId ?? session.user.id;
+
+  if (role === "viewer") {
+    redirect("/dashboard");
+  }
 
   /* --------------------------------------------------------------------------
    * owner の場合のみ団体一覧を取得

@@ -32,8 +32,8 @@ function validateUserInput(body: PostUserBody): string | null {
     return "name, email, password, role は必須です";
   }
 
-  if (!["owner", "admin"].includes(role)) {
-    return "role は owner または admin のみ指定可能です";
+  if (!["owner", "admin", "editer", "viewer"].includes(role)) {
+    return "role は owner, admin, editer, viewer のいずれかで指定してください";
   }
 
   return null;
@@ -60,7 +60,7 @@ export async function createUser(body: PostUserBody) {
     return { error, status: 400 };
   }
 
-  const { name, email, password, role } = body;
+  const { name, email, password, role, organizationId } = body;
 
   // email 重複チェック
   const exists = await prisma.user.findUnique({ where: { email } });
@@ -68,20 +68,26 @@ export async function createUser(body: PostUserBody) {
     return { error: "既に登録済みの email です", status: 400 };
   }
 
+  // ロールに応じた団体紐付けバリデーション
+  if (role === "owner" && organizationId) {
+    return { error: "owner は団体に所属できません", status: 400 };
+  }
+
+  if (role !== "owner" && !organizationId) {
+    return { error: "owner 以外のユーザーは organizationId が必須です", status: 400 };
+  }
+
+  if (organizationId) {
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+    if (!organization) {
+      return { error: "指定された団体が存在しません", status: 404 };
+    }
+  }
+
   // パスワードハッシュ化
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  // 登録
-  let organizationId: string | undefined;
-
-  if (role === "admin") {
-    const organization = await prisma.organization.create({
-      data: {
-        name,
-      },
-    });
-    organizationId = organization.id;
-  }
 
   const created = await prisma.user.create({
     data: {
@@ -89,7 +95,7 @@ export async function createUser(body: PostUserBody) {
       email,
       hashedPassword,
       role,
-      organizationId,
+      organizationId: organizationId ?? undefined,
     },
   });
 

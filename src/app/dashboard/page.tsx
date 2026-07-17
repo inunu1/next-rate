@@ -32,7 +32,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const role = session.user.role as "owner" | "admin";
+  const role = session.user.role as "owner" | "admin" | "editer" | "viewer";
 
   /* --------------------------------------------------------------------------
    * Client Component の描画

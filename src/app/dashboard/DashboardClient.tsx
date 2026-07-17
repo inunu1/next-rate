@@ -35,7 +35,7 @@ import PageHeader from "@/components/PageHeader/PageHeader";
 export default function DashboardClient({
   role,
 }: {
-  role: "owner" | "admin";
+  role: "owner" | "admin" | "editer" | "viewer";
 }) {
   return (
     <div className={styles.container}>
@@ -62,27 +62,51 @@ export default function DashboardClient({
          * メニューグリッド（ロール別に表示内容を切り替える）
          * -------------------------------------------------------------------- */}
         <div className={styles.grid}>
-          {/* owner のみ表示：団体管理 */}
+          {/* owner のみ表示：ユーザー管理 */}
           {role === "owner" && (
             <Link href="/user" className={styles.card}>
-              <div className={styles.cardIcon}>⚙️</div>
-              <div className={styles.cardTitle}>団体管理</div>
+              <div className={styles.cardIcon}>👤</div>
+              <div className={styles.cardTitle}>ユーザー管理</div>
               <div className={styles.cardDescription}>
-                団体（ユーザー）の追加・編集・削除を行います。
+                ユーザーの追加・編集・削除を行います。
               </div>
             </Link>
           )}
 
-          {/* 共通：対局者管理 */}
-          <Link href="/players" className={styles.card}>
-            <div className={styles.cardIcon}>👥</div>
-            <div className={styles.cardTitle}>対局者管理</div>
-            <div className={styles.cardDescription}>
-              プレイヤーの登録情報やレートを確認します。
-            </div>
-          </Link>
+          {/* owner のみ表示：団体管理 */}
+          {role === "owner" && (
+            <Link href="/organization" className={styles.card}>
+              <div className={styles.cardIcon}>⚙️</div>
+              <div className={styles.cardTitle}>団体管理</div>
+              <div className={styles.cardDescription}>
+                団体の追加・削除を行います。
+              </div>
+            </Link>
+          )}
 
-          {/* 共通：対局結果管理 */}
+          {/* owner/admin/editer のみ表示：対局者管理 */}
+          {role !== "viewer" && (
+            <Link href="/players" className={styles.card}>
+              <div className={styles.cardIcon}>👥</div>
+              <div className={styles.cardTitle}>対局者管理</div>
+              <div className={styles.cardDescription}>
+                プレイヤーの登録情報やレートを確認します。
+              </div>
+            </Link>
+          )}
+
+          {/* owner/admin/editer のみ表示：対局結果管理 */}
+          {role !== "viewer" && (
+            <Link href="/results" className={styles.card}>
+              <div className={styles.cardIcon}>📊</div>
+              <div className={styles.cardTitle}>対局結果管理</div>
+              <div className={styles.cardDescription}>
+                対戦履歴の閲覧と、結果の登録・削除を行います。
+              </div>
+            </Link>
+          )}
+
+          {/* 共通：その他 */}
           <Link href="/results" className={styles.card}>
             <div className={styles.cardIcon}>📊</div>
             <div className={styles.cardTitle}>対局結果管理</div>

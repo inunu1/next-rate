@@ -108,7 +108,7 @@ export function resolveTargetOrganizationId(
 ): string | AuthError {
   const role = session.user.role;
 
-  if (role === "admin") {
+  if (role === "admin" || role === "editer" || role === "viewer") {
     return session.user.organizationId ?? session.user.id;
   }
 

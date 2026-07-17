@@ -10,6 +10,8 @@ datasource db {
 enum Role {
   owner
   admin
+  editer
+  viewer
 }
 
 model Organization {

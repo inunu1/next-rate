@@ -3,11 +3,11 @@
 /**
  * ============================================================================
  * 【画面名称】
- * 団体管理画面（UserClient）
+ * ユーザー管理画面（UserClient）
  *
  * 【機能概要】
- * ・SaaS 運営者（owner）が団体（User）を管理する画面。
- * ・団体の検索・新規登録・削除を行う。
+ * ・SaaS 運営者（owner）がユーザーを管理する画面。
+ * ・ユーザーの検索・新規登録・削除を行う。
  *
  * 【UI 方針】
  * ・ResultsClient と UI/構造を完全統一
@@ -41,7 +41,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
 
   const userToastMessages = {
     search: "検索が完了しました",
-    "register-success": "団体を登録しました",
+    "register-success": "ユーザーを登録しました",
     "register-error": "登録に失敗しました",
     "delete-success": "削除しました",
     "delete-error": "削除に失敗しました",
@@ -57,7 +57,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
 
   return (
     <ManagementPanel
-      title="団体管理"
+      title="ユーザー管理"
       actions={
         <Link href="/dashboard" className={managementStyles.backLink}>
           ← ダッシュボードへ戻る
@@ -76,7 +76,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
             options={U.userOptions}
             value={U.searchOpt}
             onChange={U.setSearchOpt}
-            placeholder="団体名で絞り込み"
+            placeholder="ユーザー名で絞り込み"
             width="auto"
           />
 
@@ -99,7 +99,7 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
         >
           <Input
             type="text"
-            placeholder="新規団体名"
+            placeholder="新規ユーザー名"
             value={U.registerName}
             onChange={(e) => U.setRegisterName(e.target.value)}
             width={260}
@@ -125,12 +125,24 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
             options={[
               { label: "owner", value: "owner" },
               { label: "admin", value: "admin" },
+              { label: "editer", value: "editer" },
+              { label: "viewer", value: "viewer" },
             ]}
             value={U.roleOpt}
             onChange={U.setRoleOpt}
             placeholder="ロールを選択"
             width="auto"
           />
+
+          {U.roleOpt?.value !== "owner" && U.roleOpt ? (
+            <Select
+              options={U.organizationOptions}
+              value={U.organizationOpt}
+              onChange={U.setOrganizationOpt}
+              placeholder="所属団体を選択"
+              width="auto"
+            />
+          ) : null}
 
           <AppButton variant="primary" size="md" type="submit">
             新規登録
@@ -148,8 +160,8 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
               render: (u) => u.email,
             },
             {
-              header: "団体名",
-              mobileLabel: "団体名",
+              header: "名前",
+              mobileLabel: "名前",
               render: (u) => u.name ?? "未設定",
             },
             {

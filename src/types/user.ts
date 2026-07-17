@@ -12,14 +12,14 @@
  * ロール種別（User.role）
  * ============================================================================
  */
-export type UserRole = "owner" | "admin";
+export type UserRole = "owner" | "admin" | "editer" | "viewer";
 
 /* ============================================================================
  * POST /api/private/user のリクエストボディ
  * ============================================================================
  */
 export type PostUserBody = {
-  /** 団体名（表示名） */
+  /** ユーザー名（表示名） */
   name: string;
 
   /** ログイン用メールアドレス（ユニーク） */
@@ -30,6 +30,9 @@ export type PostUserBody = {
 
   /** ロール（owner / admin） */
   role: UserRole;
+
+  /** 所属団体 ID（admin 登録時に紐づけ） */
+  organizationId?: string | null;
 };
 
 /* ============================================================================
@@ -54,6 +57,7 @@ export type UserListResponse = {
   name: string | null;
   hashedPassword: string;
   role: UserRole;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }[];
