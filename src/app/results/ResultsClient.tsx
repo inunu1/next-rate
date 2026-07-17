@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useActionToast } from "@/hooks/useActionToast";
 
@@ -46,6 +47,7 @@ export default function ResultsClient({
     value: currentOrganizationId,
   });
   const [isFormOpen, setIsFormOpen] = useState(true);
+  const router = useRouter();
 
   const R = useResults(selectedUser.value);
   const { init } = R;
@@ -125,9 +127,12 @@ export default function ResultsClient({
       registerContent={
         <FormBar
           as="form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            R.handleRegister();
+            const success = await R.handleRegister();
+            if (success) {
+              router.push("/results");
+            }
           }}
         >
           {role === "owner" && allUsers && (

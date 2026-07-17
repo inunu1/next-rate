@@ -139,15 +139,15 @@ export function useResults(organizationId: string) {
   /* --------------------------------------------------------------------------
    * 登録
    * ------------------------------------------------------------------------ */
-  const handleRegister = useCallback(async () => {
+  const handleRegister = useCallback(async (): Promise<boolean> => {
     if (!winnerOpt || !loserOpt || !registerDate || !roundIndex) {
       setLastAction("register-error");
-      return;
+      return false;
     }
 
     if (winnerOpt.value === loserOpt.value) {
       setLastAction("register-error");
-      return;
+      return false;
     }
 
     try {
@@ -171,11 +171,12 @@ export function useResults(organizationId: string) {
       });
       await parseApiResponse(res);
 
-      await fetch("/api/private/calculate", {
+      const calculateRes = await fetch("/api/private/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId }),
       });
+      await parseApiResponse(calculateRes);
 
       await fetchPlayers();
       setLastAction("register-success");
@@ -183,8 +184,10 @@ export function useResults(organizationId: string) {
       const params = { date: registerDate };
       setSearchParams(params);
       await fetchResults(params);
+      return true;
     } catch {
       setLastAction("register-error");
+      return false;
     }
   }, [
     winnerOpt,
