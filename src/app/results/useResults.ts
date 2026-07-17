@@ -173,9 +173,11 @@ export function useResults(organizationId: string) {
 
       await fetch("/api/private/calculate", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId }),
       });
 
+      await fetchPlayers();
       setLastAction("register-success");
 
       const params = { date: registerDate };
