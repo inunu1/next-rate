@@ -98,7 +98,6 @@ export type ResultRecord = {
   matchDate: number;
   roundIndex: number;
   organizationId: string;
-  createdAt: Date;
   updatedAt: Date;
 };
 

@@ -5,12 +5,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client"; // ← これが正しい！
-import type {
-  PostResultBody,
-  ResultRecord,
-  ResultSearchResponse,
-} from "@/types/result";
+import type { PostResultBody, ResultSearchResponse } from "@/types/result";
 
 /* ============================================================================
  * GET: 対局結果検索（安全版）
