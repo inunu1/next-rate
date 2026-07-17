@@ -20,22 +20,23 @@ export async function searchResults(
   dateStr: string | null,
   playerId: string | null
 ): Promise<ResultSearchResponse> {
+  const baseFilter = {
+    organizationId: targetUserId,
+    ...(playerId ? { OR: [{ winnerId: playerId }, { loserId: playerId }] } : {}),
+  };
+
   let targetMatchDate: number | null = null;
 
   if (dateStr) {
     targetMatchDate = Number(dateStr.replaceAll("-", ""));
   } else {
-    const latest = await prisma.$queryRaw<{ matchDate: number }[]>`
-      SELECT DISTINCT "matchDate"
-      FROM "Result"
-      WHERE "organizationId" = ${targetUserId}
-      ${
-        playerId
-          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
-          : Prisma.empty
-      }
-      ORDER BY "matchDate" DESC LIMIT 1
-    `;
+    const latest = await prisma.result.findMany({
+      where: baseFilter,
+      distinct: ["matchDate"],
+      orderBy: { matchDate: "desc" },
+      select: { matchDate: true },
+      take: 1,
+    });
 
     if (latest.length === 0) {
       return {
@@ -49,44 +50,35 @@ export async function searchResults(
     targetMatchDate = latest[0].matchDate;
   }
 
-  const results = await prisma.$queryRaw<ResultRecord[]>`
-    SELECT *
-    FROM "Result"
-    WHERE "matchDate" = ${targetMatchDate}
-      AND "organizationId" = ${targetUserId}
-      ${
-        playerId
-          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
-          : Prisma.empty
-      }
-    ORDER BY "roundIndex" ASC
-  `;
+  const results = await prisma.result.findMany({
+    where: {
+      ...baseFilter,
+      matchDate: targetMatchDate!,
+    },
+    orderBy: { roundIndex: "asc" },
+  });
 
-  const prev = await prisma.$queryRaw<{ matchDate: number }[]>`
-    SELECT DISTINCT "matchDate"
-    FROM "Result"
-    WHERE "matchDate" < ${targetMatchDate}
-      AND "organizationId" = ${targetUserId}
-      ${
-        playerId
-          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
-          : Prisma.empty
-      }
-    ORDER BY "matchDate" DESC LIMIT 1
-  `;
+  const prev = await prisma.result.findMany({
+    where: {
+      ...baseFilter,
+      matchDate: { lt: targetMatchDate! },
+    },
+    distinct: ["matchDate"],
+    orderBy: { matchDate: "desc" },
+    select: { matchDate: true },
+    take: 1,
+  });
 
-  const next = await prisma.$queryRaw<{ matchDate: number }[]>`
-    SELECT DISTINCT "matchDate"
-    FROM "Result"
-    WHERE "matchDate" > ${targetMatchDate}
-      AND "organizationId" = ${targetUserId}
-      ${
-        playerId
-          ? Prisma.sql`AND ("winnerId" = ${playerId} OR "loserId" = ${playerId})`
-          : Prisma.empty
-      }
-    ORDER BY "matchDate" ASC LIMIT 1
-  `;
+  const next = await prisma.result.findMany({
+    where: {
+      ...baseFilter,
+      matchDate: { gt: targetMatchDate! },
+    },
+    distinct: ["matchDate"],
+    orderBy: { matchDate: "asc" },
+    select: { matchDate: true },
+    take: 1,
+  });
 
   const fmt = (n: number | undefined) => {
     if (!n) return null;
