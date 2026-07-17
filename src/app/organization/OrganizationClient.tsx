@@ -14,8 +14,6 @@ import managementStyles from "@/components/ManagementPanel/ManagementPanel.modul
 
 import { useOrganization } from "./useOrganization";
 
-type Option = { label: string; value: string };
-
 export default function OrganizationClient() {
   const O = useOrganization();
   const [isFormOpen, setIsFormOpen] = useState(true);
