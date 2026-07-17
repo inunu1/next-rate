@@ -105,15 +105,6 @@ export default function DashboardClient({
               </div>
             </Link>
           )}
-
-          {/* 共通：その他 */}
-          <Link href="/results" className={styles.card}>
-            <div className={styles.cardIcon}>📊</div>
-            <div className={styles.cardTitle}>対局結果管理</div>
-            <div className={styles.cardDescription}>
-              対戦履歴の閲覧と、結果の登録・削除を行います。
-            </div>
-          </Link>
         </div>
       </main>
     </div>
