@@ -7,7 +7,7 @@
  */
 
 import { jsonOk, jsonError } from "@/lib/apiResponse";
-import { requireOwner } from "@/lib/authService";
+import { requireOwnerOrAdmin } from "@/lib/authService";
 
 import { getAllUsers, createUser, deleteUser } from "@/lib/userService";
 import type { PostUserBody, DeleteUserBody } from "@/types/user";
@@ -16,16 +16,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================
- * GET: 全団体ユーザー一覧（owner 専用）
+ * GET: 団体ユーザー一覧（owner/admin）
  * ============================================================ */
 export async function GET() {
-  const auth = await requireOwner();
+  const auth = await requireOwnerOrAdmin();
   if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
 
+  const session = auth.session;
+  const requesterRole = session.user.role as "owner" | "admin";
+  const requesterOrganizationId = session.user.organizationId ?? null;
+
   try {
-    const users = await getAllUsers();
+    const users = await getAllUsers(requesterRole, requesterOrganizationId);
     return jsonOk(users);
   } catch (err) {
     console.error("GET /api/private/user error:", err);
@@ -34,13 +38,15 @@ export async function GET() {
 }
 
 /* ============================================================
- * POST: 団体ユーザー新規登録（owner 専用）
+ * POST: 団体ユーザー新規登録（owner / admin）
  * ============================================================ */
 export async function POST(req: Request) {
-  const auth = await requireOwner();
+  const auth = await requireOwnerOrAdmin();
   if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
+
+  const session = auth.session;
 
   let body: PostUserBody;
   try {
@@ -50,7 +56,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await createUser(body);
+    const result = await createUser(
+      body,
+      session.user.role as "owner" | "admin",
+      session.user.organizationId ?? null
+    );
 
     if ("error" in result) {
       return jsonError(
@@ -67,13 +77,15 @@ export async function POST(req: Request) {
 }
 
 /* ============================================================
- * DELETE: 団体ユーザー削除（owner 専用）
+ * DELETE: 団体ユーザー削除（owner / admin）
  * ============================================================ */
 export async function DELETE(req: Request) {
-  const auth = await requireOwner();
+  const auth = await requireOwnerOrAdmin();
   if ("error" in auth) {
     return jsonError(auth.error, auth.status);
   }
+
+  const session = auth.session;
 
   let body: DeleteUserBody;
   try {
@@ -83,7 +95,11 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const result = await deleteUser(body);
+    const result = await deleteUser(
+      body,
+      session.user.role as "owner" | "admin",
+      session.user.organizationId ?? null
+    );
 
     if ("error" in result) {
       return jsonError(

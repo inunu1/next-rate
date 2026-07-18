@@ -26,7 +26,11 @@ export type ManagedUser = {
   organizationId?: string | null;
 };
 
-export function useUser(currentUserId: string) {
+export function useUser(
+  currentUserId: string,
+  currentUserRole: "owner" | "admin",
+  currentOrganizationId: string
+) {
   /* --------------------------------------------------------------------------
    * 状態管理
    * ------------------------------------------------------------------------ */
@@ -48,7 +52,11 @@ export function useUser(currentUserId: string) {
   const [password, setPassword] = useState("");
 
   const [roleOpt, setRoleOpt] = useState<UserOption | null>(null);
-  const [organizationOpt, setOrganizationOpt] = useState<UserOption | null>(null);
+  const [organizationOpt, setOrganizationOpt] = useState<UserOption | null>(
+    currentUserRole === "admin"
+      ? { value: currentOrganizationId, label: "自団体" }
+      : null
+  );
 
   // ★ トースト通知用のアクション状態
   const [lastAction, setLastAction] = useState<string | null>(null);
@@ -98,6 +106,19 @@ export function useUser(currentUserId: string) {
     label: org.name ?? "(名前なし)",
   }));
 
+  const roleOptions: UserOption[] =
+    currentUserRole === "owner"
+      ? [
+          { label: "owner", value: "owner" },
+          { label: "admin", value: "admin" },
+          { label: "editer", value: "editer" },
+          { label: "viewer", value: "viewer" },
+        ]
+      : [
+          { label: "editer", value: "editer" },
+          { label: "viewer", value: "viewer" },
+        ];
+
   /* --------------------------------------------------------------------------
    * 新規登録
    * ------------------------------------------------------------------------ */
@@ -119,7 +140,7 @@ export function useUser(currentUserId: string) {
       return;
     }
 
-    if (roleOpt.value === "admin" && !organizationOpt) {
+    if (currentUserRole === "owner" && roleOpt.value !== "owner" && !organizationOpt) {
       setLastAction("register-error");
       return;
     }
@@ -133,7 +154,10 @@ export function useUser(currentUserId: string) {
           email,
           password,
           role: roleOpt.value,
-          organizationId: organizationOpt?.value ?? null,
+          organizationId:
+            currentUserRole === "admin"
+              ? currentOrganizationId
+              : organizationOpt?.value ?? null,
         }),
       });
       await parseApiResponse(res);

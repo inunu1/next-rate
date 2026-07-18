@@ -128,45 +128,47 @@ export default function PlayersClient({
         </FormBar>
       }
       registerContent={
-        <FormBar
-          as="form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            P.handleRegister();
-          }}
-        >
-          {role === "owner" && allUsers && (
-            <Select
-              options={allUsers.map((u) => ({
-                label: u.name,
-                value: u.id,
-              }))}
-              value={selectedUser}
-              onChange={(opt) => opt && setSelectedUser(opt)}
-              width={260}
+        role !== "viewer" ? (
+          <FormBar
+            as="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              P.handleRegister();
+            }}
+          >
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width={260}
+              />
+            )}
+
+            <Input
+              type="text"
+              placeholder="新規プレイヤー名"
+              value={P.name}
+              onChange={(e) => P.setName(e.target.value)}
+              width="auto"
             />
-          )}
 
-          <Input
-            type="text"
-            placeholder="新規プレイヤー名"
-            value={P.name}
-            onChange={(e) => P.setName(e.target.value)}
-            width="auto"
-          />
+            <Input
+              type="number"
+              placeholder="初期レート"
+              value={P.initialRate}
+              onChange={(e) => P.setInitialRate(e.target.value)}
+              width={180}
+            />
 
-          <Input
-            type="number"
-            placeholder="初期レート"
-            value={P.initialRate}
-            onChange={(e) => P.setInitialRate(e.target.value)}
-            width={180}
-          />
-
-          <AppButton variant="primary" size="md" type="submit">
-            登録
-          </AppButton>
-        </FormBar>
+            <AppButton variant="primary" size="md" type="submit">
+              登録
+            </AppButton>
+          </FormBar>
+        ) : null
       }
     >
       <ManagementTable>
@@ -191,15 +193,16 @@ export default function PlayersClient({
             {
               header: "操作",
               mobileLabel: "操作",
-              render: (p) => (
-                <AppButton
-                  variant="danger"
-                  size="md"
-                  onClick={() => P.handleDelete(p.id)}
-                >
-                  削除
-                </AppButton>
-              ),
+              render: (p) =>
+                role !== "viewer" ? (
+                  <AppButton
+                    variant="danger"
+                    size="md"
+                    onClick={() => P.handleDelete(p.id)}
+                  >
+                    削除
+                  </AppButton>
+                ) : null,
             },
           ]}
         />

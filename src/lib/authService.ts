@@ -88,6 +88,26 @@ export async function requireOwner(): Promise<AuthResult> {
   return { session };
 }
 
+/**
+ * owner または admin のどちらかを許可するチェック
+ */
+export async function requireOwnerOrAdmin(): Promise<AuthResult> {
+  const auth = await requireAuth();
+  if ("error" in auth) {
+    return auth;
+  }
+
+  const session = auth.session;
+  if (session.user.role !== "owner" && session.user.role !== "admin") {
+    return {
+      error: "権限がありません（owner または admin のみ利用可能）",
+      status: 403,
+    };
+  }
+
+  return { session };
+}
+
 /* ============================================================================
  * 操作対象 organizationId の決定（resolveTargetOrganizationId）
  *

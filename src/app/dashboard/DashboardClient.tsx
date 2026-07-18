@@ -84,27 +84,23 @@ export default function DashboardClient({
             </Link>
           )}
 
-          {/* owner/admin/editer のみ表示：対局者管理 */}
-          {role !== "viewer" && (
-            <Link href="/players" className={styles.card}>
-              <div className={styles.cardIcon}>👥</div>
-              <div className={styles.cardTitle}>対局者管理</div>
-              <div className={styles.cardDescription}>
-                プレイヤーの登録情報やレートを確認します。
-              </div>
-            </Link>
-          )}
+          {/* 対局者管理（全ユーザーに表示。閲覧者は編集操作を UI 側で制限） */}
+          <Link href="/players" className={styles.card}>
+            <div className={styles.cardIcon}>👥</div>
+            <div className={styles.cardTitle}>対局者管理</div>
+            <div className={styles.cardDescription}>
+              プレイヤーの登録情報やレートを確認します。
+            </div>
+          </Link>
 
-          {/* owner/admin/editer のみ表示：対局結果管理 */}
-          {role !== "viewer" && (
-            <Link href="/results" className={styles.card}>
-              <div className={styles.cardIcon}>📊</div>
-              <div className={styles.cardTitle}>対局結果管理</div>
-              <div className={styles.cardDescription}>
-                対戦履歴の閲覧と、結果の登録・削除を行います。
-              </div>
-            </Link>
-          )}
+          {/* 対局結果管理（全ユーザーに表示。閲覧者は編集操作を UI 側で制限） */}
+          <Link href="/results" className={styles.card}>
+            <div className={styles.cardIcon}>📊</div>
+            <div className={styles.cardTitle}>対局結果管理</div>
+            <div className={styles.cardDescription}>
+              対戦履歴の閲覧と、結果の登録・削除を行います。
+            </div>
+          </Link>
         </div>
       </main>
     </div>

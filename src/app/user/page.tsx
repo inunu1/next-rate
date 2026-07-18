@@ -35,12 +35,21 @@ export default async function UserPage() {
   /* ------------------------------------------------------------
    * ロールチェック（owner 専用）
    * ------------------------------------------------------------ */
-  if (session.user.role !== "owner") {
+  if (session.user.role !== "owner" && session.user.role !== "admin") {
     redirect("/dashboard");
   }
+
+  const role = session.user.role as "owner" | "admin";
+  const currentOrganizationId = session.user.organizationId ?? session.user.id;
 
   /* ------------------------------------------------------------
    * Client Component の描画
    * ------------------------------------------------------------ */
-  return <UserClient currentUserId={session.user.id} />;
+  return (
+    <UserClient
+      currentUserId={session.user.id}
+      role={role}
+      currentOrganizationId={currentOrganizationId}
+    />
+  );
 }

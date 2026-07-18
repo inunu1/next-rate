@@ -125,68 +125,70 @@ export default function ResultsClient({
         </FormBar>
       }
       registerContent={
-        <FormBar
-          as="form"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const success = await R.handleRegister();
-            if (success) {
-              router.push("/results");
-            }
-          }}
-        >
-          {role === "owner" && allUsers && (
+        role !== "viewer" ? (
+          <FormBar
+            as="form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const success = await R.handleRegister();
+              if (success) {
+                router.push("/results");
+              }
+            }}
+          >
+            {role === "owner" && allUsers && (
+              <Select
+                options={allUsers.map((u) => ({
+                  label: u.name,
+                  value: u.id,
+                }))}
+                value={selectedUser}
+                onChange={(opt) => opt && setSelectedUser(opt)}
+                width="auto"
+              />
+            )}
+
             <Select
-              options={allUsers.map((u) => ({
-                label: u.name,
-                value: u.id,
-              }))}
-              value={selectedUser}
-              onChange={(opt) => opt && setSelectedUser(opt)}
+              options={R.playerOptions}
+              value={R.winnerOpt}
+              onChange={R.setWinnerOpt}
+              placeholder="勝者"
               width="auto"
             />
-          )}
 
-          <Select
-            options={R.playerOptions}
-            value={R.winnerOpt}
-            onChange={R.setWinnerOpt}
-            placeholder="勝者"
-            width="auto"
-          />
+            <Select
+              options={R.playerOptions}
+              value={R.loserOpt}
+              onChange={R.setLoserOpt}
+              placeholder="敗者"
+              width="auto"
+            />
 
-          <Select
-            options={R.playerOptions}
-            value={R.loserOpt}
-            onChange={R.setLoserOpt}
-            placeholder="敗者"
-            width="auto"
-          />
+            <DateInput
+              value={R.registerDate}
+              onChange={(e) => R.setRegisterDate(e.target.value)}
+              width={180}
+            />
 
-          <DateInput
-            value={R.registerDate}
-            onChange={(e) => R.setRegisterDate(e.target.value)}
-            width={180}
-          />
+            <Select
+              options={R.selectableRounds.map((r) => ({
+                value: String(r),
+                label: `第${r}ラウンド`,
+              }))}
+              value={
+                R.roundIndex
+                  ? { value: R.roundIndex, label: `第${R.roundIndex}ラウンド` }
+                  : null
+              }
+              onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
+              width="auto"
+            />
 
-          <Select
-            options={R.selectableRounds.map((r) => ({
-              value: String(r),
-              label: `第${r}ラウンド`,
-            }))}
-            value={
-              R.roundIndex
-                ? { value: R.roundIndex, label: `第${R.roundIndex}ラウンド` }
-                : null
-            }
-            onChange={(opt) => R.setRoundIndex(opt?.value ?? "1")}
-            width="auto"
-          />
-
-          <AppButton variant="primary" size="md" type="submit">
-            登録
-          </AppButton>
-        </FormBar>
+            <AppButton variant="primary" size="md" type="submit">
+              登録
+            </AppButton>
+          </FormBar>
+        ) : null
       }
     >
       <div className={styles.paginationBar}>
@@ -239,15 +241,16 @@ export default function ResultsClient({
             {
               header: "操作",
               mobileLabel: "操作",
-              render: (r) => (
-                <AppButton
-                  variant="danger"
-                  size="md"
-                  onClick={() => R.handleDelete(r.id)}
-                >
-                  削除
-                </AppButton>
-              ),
+              render: (r) =>
+                role !== "viewer" ? (
+                  <AppButton
+                    variant="danger"
+                    size="md"
+                    onClick={() => R.handleDelete(r.id)}
+                  >
+                    削除
+                  </AppButton>
+                ) : null,
             },
           ]}
         />

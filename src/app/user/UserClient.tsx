@@ -30,8 +30,16 @@ import managementStyles from "@/components/ManagementPanel/ManagementPanel.modul
 
 import { useUser } from "./useUser";
 
-export default function UserClient({ currentUserId }: { currentUserId: string }) {
-  const U = useUser(currentUserId);
+export default function UserClient({
+  currentUserId,
+  role,
+  currentOrganizationId,
+}: {
+  currentUserId: string;
+  role: "owner" | "admin";
+  currentOrganizationId: string;
+}) {
+  const U = useUser(currentUserId, role, currentOrganizationId);
   const [isFormOpen, setIsFormOpen] = useState(true);
 
   const { init } = U;
@@ -122,19 +130,26 @@ export default function UserClient({ currentUserId }: { currentUserId: string })
           />
 
           <Select
-            options={[
-              { label: "owner", value: "owner" },
-              { label: "admin", value: "admin" },
-              { label: "editer", value: "editer" },
-              { label: "viewer", value: "viewer" },
-            ]}
+            options={
+              role === "owner"
+                ? [
+                    { label: "owner", value: "owner" },
+                    { label: "admin", value: "admin" },
+                    { label: "editer", value: "editer" },
+                    { label: "viewer", value: "viewer" },
+                  ]
+                : [
+                    { label: "editer", value: "editer" },
+                    { label: "viewer", value: "viewer" },
+                  ]
+            }
             value={U.roleOpt}
             onChange={U.setRoleOpt}
             placeholder="ロールを選択"
             width="auto"
           />
 
-          {U.roleOpt?.value !== "owner" && U.roleOpt ? (
+          {role === "owner" && U.roleOpt?.value !== "owner" && U.roleOpt ? (
             <Select
               options={U.organizationOptions}
               value={U.organizationOpt}

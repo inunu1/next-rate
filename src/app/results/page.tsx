@@ -37,9 +37,7 @@ export default async function ResultsPage() {
   const role = session.user.role as "owner" | "admin" | "editer" | "viewer";
   const currentOrganizationId = session.user.organizationId ?? session.user.id;
 
-  if (role === "viewer") {
-    redirect("/dashboard");
-  }
+  // 閲覧者もページを表示できるようにリダイレクトを撤去
 
   /* --------------------------------------------------------------------------
    * owner の場合のみ団体一覧を取得

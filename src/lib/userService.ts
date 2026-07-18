@@ -42,18 +42,28 @@ function validateUserInput(body: PostUserBody): string | null {
 /* ============================================================================
  * GET: 団体ユーザー一覧取得
  * ============================================================================ */
-export async function getAllUsers(): Promise<UserListResponse> {
-  const users = await prisma.user.findMany({
+export async function getAllUsers(
+  requesterRole: "owner" | "admin",
+  requesterOrganizationId: string | null
+): Promise<UserListResponse> {
+  if (requesterRole === "owner") {
+    return prisma.user.findMany({ orderBy: { name: "asc" } });
+  }
+
+  return prisma.user.findMany({
+    where: { organizationId: requesterOrganizationId ?? undefined },
     orderBy: { name: "asc" },
   });
-
-  return users;
 }
 
 /* ============================================================================
  * POST: 団体ユーザー新規登録
  * ============================================================================ */
-export async function createUser(body: PostUserBody) {
+export async function createUser(
+  body: PostUserBody,
+  requesterRole: "owner" | "admin",
+  requesterOrganizationId: string | null
+) {
   // 入力チェック
   const error = validateUserInput(body);
   if (error) {
@@ -73,8 +83,16 @@ export async function createUser(body: PostUserBody) {
     return { error: "owner は団体に所属できません", status: 400 };
   }
 
-  if (role !== "owner" && !organizationId) {
-    return { error: "owner 以外のユーザーは organizationId が必須です", status: 400 };
+  if (role !== "owner") {
+    if (!organizationId) {
+      return { error: "admin/editer/viewer は organizationId が必須です", status: 400 };
+    }
+
+    if (requesterRole === "admin") {
+      if (organizationId !== requesterOrganizationId) {
+        return { error: "admin は自団体以外のユーザーを追加できません", status: 403 };
+      }
+    }
   }
 
   if (organizationId) {
@@ -105,7 +123,11 @@ export async function createUser(body: PostUserBody) {
 /* ============================================================================
  * DELETE: 団体ユーザー削除
  * ============================================================================ */
-export async function deleteUser(body: DeleteUserBody) {
+export async function deleteUser(
+  body: DeleteUserBody,
+  requesterRole: "owner" | "admin",
+  requesterOrganizationId: string | null
+) {
   const { id } = body;
 
   if (!id) {
@@ -116,6 +138,12 @@ export async function deleteUser(body: DeleteUserBody) {
   const exists = await prisma.user.findUnique({ where: { id } });
   if (!exists) {
     return { error: "対象ユーザーが存在しません", status: 404 };
+  }
+
+  if (requesterRole === "admin") {
+    if (exists.organizationId !== requesterOrganizationId) {
+      return { error: "admin は自団体以外のユーザーを削除できません", status: 403 };
+    }
   }
 
   // 削除
