@@ -12,8 +12,8 @@
  * 【設計方針】
  * ① admin（団体オーナー）
  *      - 自団体の管理のみ可能
- *      - 表示メニュー：対局者管理 / 対局結果管理
- *      - User 管理（団体管理）は表示しない
+ *      - 表示メニュー：ユーザー管理 / 対局者管理 / 対局結果管理
+ *      - User 管理は自団体のユーザー追加が可能（UI は owner と一部共通）
  *
  * ② owner（SaaS 運営者）
  *      - 複数団体を管理可能
@@ -62,8 +62,8 @@ export default function DashboardClient({
          * メニューグリッド（ロール別に表示内容を切り替える）
          * -------------------------------------------------------------------- */}
         <div className={styles.grid}>
-          {/* owner のみ表示：ユーザー管理 */}
-          {role === "owner" && (
+          {/* owner / admin：ユーザー管理（admin は自団体のみ操作可） */}
+          {(role === "owner" || role === "admin") && (
             <Link href="/user" className={styles.card}>
               <div className={styles.cardIcon}>👤</div>
               <div className={styles.cardTitle}>ユーザー管理</div>
