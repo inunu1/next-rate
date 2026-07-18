@@ -173,7 +173,7 @@ export function useUser(
     } catch {
       setLastAction("register-error");
     }
-  }, [registerName, email, password, roleOpt, organizationOpt, fetchUsers]);
+  }, [registerName, email, password, roleOpt, organizationOpt, fetchUsers, currentUserRole, currentOrganizationId]);
 
   /* --------------------------------------------------------------------------
    * 検索
@@ -269,5 +269,6 @@ export function useUser(
     lastAction, // ★ 追加：UserClient でトースト通知に使う
     currentUserId,
     getOrganizationLabel,
+    roleOptions,
   };
 }

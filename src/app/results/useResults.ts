@@ -197,6 +197,7 @@ export function useResults(organizationId: string) {
     players,
     organizationId,
     fetchResults,
+    fetchPlayers,
   ]);
 
   /* --------------------------------------------------------------------------
