@@ -37,17 +37,12 @@ export default async function PlayersPage() {
   let allUsers: { id: string; name: string }[] | undefined = undefined;
 
   if (role === "owner") {
-    const users = await prisma.user.findMany({
-      select: { id: true, name: true, organizationId: true },
+    const orgs = await prisma.organization.findMany({
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     });
 
-    allUsers = users
-      .filter((u) => u.organizationId)
-      .map((u) => ({
-        id: u.organizationId!,
-        name: u.name ?? "", // ★ null を空文字に変換
-      }));
+    allUsers = orgs.map((o) => ({ id: o.id, name: o.name ?? "" }));
   }
 
   // --------------------------------------------------------------------------
