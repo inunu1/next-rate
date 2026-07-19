@@ -86,6 +86,22 @@ npm run dev
 
 ブラウザで `http://localhost:3000` を開いて確認します。
 
+## テスト
+
+テストは Vitest で実行します。
+
+- `pnpm test` - すべてのテストを実行
+- `pnpm test:watch` - 変更を監視しながらテストを実行
+
+現状のテストは以下の通りです。
+
+- `src/lib/userService.test.ts`
+  - `getAllUsers` の `owner` / `admin` の動作検証
+  - `createUser` の入力バリデーションと重複チェック
+  - `deleteUser` の ID 必須チェック
+
+追加のテストシナリオとしては、API ルートの認可、`viewer` の閲覧専用UI、`results` / `players` のフロントエンド挙動などが想定されます。
+
 ## 本番運用
 
 本番ビルドを作成します。
