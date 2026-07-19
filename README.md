@@ -69,11 +69,12 @@ npx prisma migrate dev --name init
 
 `prisma/schema.prisma` には以下のモデルがあります。
 
-- `User` - 認証ユーザー（owner/admin）
+- `Organization` - 団体を表すエンティティ
+- `User` - 認証ユーザー（owner/admin/admin の団体ユーザー）
 - `Player` - 団体に紐づくプレイヤー
 - `Result` - 対局結果とレート情報
 
-`Result` は `userId`, `matchDate`, `roundIndex` の組み合わせでユニーク性を持つ設計です。
+`Result` は `organizationId`, `matchDate`, `roundIndex`, `winnerId/loserId` の組み合わせでユニーク性を持つ設計です。
 
 ## 開発
 
@@ -104,8 +105,60 @@ npm start
 - ログイン / 認証管理
 - 対局結果の登録・検索
 - プレイヤー管理
-- ページ単位の認可制御（owner/admin）
+- ユーザー管理（owner/admin）
+- ページ単位の認可制御
 - API への認証付きアクセス
+
+## ロールとアクセス
+
+- `owner`
+  - SaaS 管理者
+  - 団体管理、ユーザー管理、対局者管理、対局結果管理が可能
+  - 全団体のユーザー・プレイヤー・結果を閲覧・編集できる
+- `admin`
+  - 団体オーナー
+  - 自団体のユーザー管理（`editer` / `viewer` の追加・削除）
+  - 自団体の対局者管理、対局結果管理が可能
+  - 団体管理画面へのアクセスは不可
+- `editer`
+  - 自団体の対局者管理・対局結果管理が可能
+  - ユーザー管理・団体管理は不可
+- `viewer`
+  - 自団体の対局者一覧・対局結果一覧を閲覧可能
+  - 登録・削除などの編集操作は不可
+
+## 現状の設計・挙動
+
+- `owner` は複数団体を横断できる
+- `admin` は自団体内のみ操作可能
+- `viewer` はダッシュボードから対局者/対局結果画面に遷移でき、一覧を閲覧できる
+- `players` / `results` の絞り込みは `Organization` 名で行う
+- `User` 管理画面は `owner` / `admin` に表示されるが、`admin` は自団体のみ管理できる
+
+## ロール別アクセスマトリクス
+
+| REST リソース / 行動 | owner | admin | editer | viewer |
+| --- | --- | --- | --- | --- |
+| GET `/api/private/user` | 全ユーザー | 自団体のみ | × | × |
+| POST `/api/private/user` | 全ユーザー（任意組織） | 自団体のみ（`editer` / `viewer` 登録可） | × | × |
+| DELETE `/api/private/user` | 全ユーザー | 自団体のみ | × | × |
+| GET `/api/private/player` | 全団体 | 自団体 | 自団体 | × |
+| POST `/api/private/player` | 全団体 | 自団体 | 自団体 | × |
+| DELETE `/api/private/player` | 全団体 | 自団体 | 自団体 | × |
+| GET `/api/private/result` | 全団体 | 自団体 | 自団体 | × |
+| POST `/api/private/result` | 全団体 | 自団体 | 自団体 | × |
+| DELETE `/api/private/result` | 全団体 | 自団体 | 自団体 | × |
+| POST `/api/private/calculate` | 全団体 | 自団体 | 自団体 | × |
+| GET `/user` ページ | 全団体ユーザー一覧 | 自団体ユーザー一覧 | × | × |
+| GET `/players` ページ | 全団体プレイヤー | 自団体プレイヤー | 自団体プレイヤー | 自団体プレイヤー（閲覧のみ） |
+| GET `/results` ページ | 全団体結果 | 自団体結果 | 自団体結果 | 自団体結果（閲覧のみ） |
+| GET `/organization` ページ | 団体管理 | × | × | × |
+
+### 補足
+- `owner` は全団体を横断して閲覧・作成・削除が可能
+- `admin` は自団体に限定される。`/user` では `editer` / `viewer` の追加・削除が可能
+- `editer` は自団体の `player` / `result` を編集できるが、ユーザー管理・団体管理は不可
+- `viewer` は自団体の一覧を閲覧できるが、登録・更新・削除はできない
 
 ## 注意点
 
