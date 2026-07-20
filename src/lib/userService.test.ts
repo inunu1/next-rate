@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAllUsers, createUser, deleteUser } from './userService';
 import { prisma } from '@/lib/prisma';
 import type { PostUserBody } from '@/types/user';
+import type { User } from '@prisma/client';
 
 describe('userService', () => {
   beforeEach(() => {
@@ -9,8 +10,19 @@ describe('userService', () => {
   });
 
   it('getAllUsers returns all users for owner', async () => {
-    const expected = [{ id: '1', name: 'Owner', email: 'owner@example.com' }];
-    vi.spyOn(prisma.user, 'findMany').mockResolvedValue(expected as any);
+    const expected: User[] = [
+      {
+        id: '1',
+        email: 'owner@example.com',
+        name: 'Owner',
+        hashedPassword: 'hash',
+        role: 'owner',
+        organizationId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    vi.spyOn(prisma.user, 'findMany').mockResolvedValue(expected);
 
     const result = await getAllUsers('owner', null);
     expect(result).toEqual(expected);
@@ -18,8 +30,19 @@ describe('userService', () => {
   });
 
   it('getAllUsers returns self organization users for admin', async () => {
-    const expected = [{ id: '2', name: 'Admin User', email: 'admin@example.com' }];
-    vi.spyOn(prisma.user, 'findMany').mockResolvedValue(expected as any);
+    const expected: User[] = [
+      {
+        id: '2',
+        email: 'admin@example.com',
+        name: 'Admin User',
+        hashedPassword: 'hash',
+        role: 'admin',
+        organizationId: 'org-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    vi.spyOn(prisma.user, 'findMany').mockResolvedValue(expected);
 
     const result = await getAllUsers('admin', 'org-1');
     expect(result).toEqual(expected);
@@ -44,7 +67,7 @@ describe('userService', () => {
   });
 
   it('createUser rejects duplicate email', async () => {
-    vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({ id: '1' } as any);
+    vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({ id: '1' } as User | null);
 
     const result = await createUser(
       { name: 'Test', email: 'test@example.com', password: 'pass', role: 'viewer', organizationId: 'org-1' },
