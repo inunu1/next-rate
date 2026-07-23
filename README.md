@@ -78,6 +78,13 @@ npx prisma migrate dev --name init
 
 ## 開発
 
+## ドキュメント
+
+- API 仕様: [docs/API.md](docs/API.md)
+- 共通処理: [docs/processing.md](docs/processing.md)
+- 画面設計: [docs/screens.md](docs/screens.md)
+- DB マイグレーション注意: [docs/migration.md](docs/migration.md)
+
 開発サーバーを起動します。
 
 ```bash
