@@ -26,7 +26,7 @@ next-rate は、団体向けの対局結果管理アプリです。プレイヤ�
 ### 1. 依存関係インストール
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. 環境変数を準備
@@ -48,7 +48,7 @@ NEXTAUTH_SECRET=your-secret-value
 ### 3. Prisma クライアント生成
 
 ```bash
-npx prisma generate
+pnpm prisma generate
 ```
 
 ### 4. データベースマイグレーション
@@ -56,13 +56,13 @@ npx prisma generate
 既存のマイグレーションを適用する場合:
 
 ```bash
-npx prisma migrate deploy
+pnpm prisma migrate deploy
 ```
 
 開発中にスキーマ変更を行う場合:
 
 ```bash
-npx prisma migrate dev --name init
+pnpm prisma migrate dev --name init
 ```
 
 ## データベース
@@ -81,7 +81,7 @@ npx prisma migrate dev --name init
 開発サーバーを起動します。
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ブラウザで `http://localhost:3000` を開いて確認します。
@@ -107,13 +107,13 @@ npm run dev
 本番ビルドを作成します。
 
 ```bash
-npm run build
+pnpm build
 ```
 
 本番サーバーを起動します。
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## 主な機能
@@ -185,7 +185,7 @@ npm start
 
 ## スクリプト
 
-- `npm run dev` - 開発サーバー起動
-- `npm run build` - 本番ビルド
-- `npm start` - 本番サーバー起動
-- `npm run lint` - ESLint 実行
+- `pnpm dev` - 開発サーバー起動
+- `pnpm build` - 本番ビルド
+- `pnpm start` - 本番サーバー起動
+- `pnpm lint` - ESLint 実行
