@@ -52,7 +52,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const metrics: { label: string; ms: number }[] = [];
   const totalStartTime = getTimestamp();
 
-  let body: { organizationId?: string } = {};
+  let body: { organizationId?: string };
   try {
     body = (await req.json()) as { organizationId?: string };
   } catch {

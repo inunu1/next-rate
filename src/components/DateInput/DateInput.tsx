@@ -1,11 +1,7 @@
 "use client";
 
-import React, {
-  InputHTMLAttributes,
-  useEffect,
-  useState,
-  CSSProperties,
-} from "react";
+import { useEffect, useState } from "react";
+import type { CSSProperties, InputHTMLAttributes } from "react";
 import styles from "./DateInput.module.css";
 
 /**
