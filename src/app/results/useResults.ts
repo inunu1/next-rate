@@ -9,7 +9,7 @@
  * ============================================================================
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { Player, Result } from "@prisma/client";
 import { parseApiResponse } from "@/lib/fetchJson";
 
@@ -91,6 +91,9 @@ export function useResults(organizationId: string) {
         setDate(data.date ?? null);
         setPrevDate(data.prevDate ?? null);
         setNextDate(data.nextDate ?? null);
+        if (data.date) {
+          setSearchDate(data.date);
+        }
 
         return data;
       } catch {
@@ -247,15 +250,6 @@ export function useResults(organizationId: string) {
     { length: Math.min(maxRound + 1) },
     (_, i) => i + 1
   );
-
-  /* --------------------------------------------------------------------------
-   * 初期ロード後に日付欄へ反映
-   * ------------------------------------------------------------------------ */
-  useEffect(() => {
-    if (mounted && date) {
-      setSearchDate(date);
-    }
-  }, [mounted, date]);
 
   /* --------------------------------------------------------------------------
    * 返却

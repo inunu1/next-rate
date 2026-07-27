@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import SelectBase from "react-select";
 import CreatableSelect from "react-select/creatable";
 import styles from "./Select.module.css";

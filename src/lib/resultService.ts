@@ -20,7 +20,7 @@ export async function searchResults(
     ...(playerId ? { OR: [{ winnerId: playerId }, { loserId: playerId }] } : {}),
   };
 
-  let targetMatchDate: number | null = null;
+  let targetMatchDate: number;
 
   if (dateStr) {
     targetMatchDate = Number(dateStr.replaceAll("-", ""));
@@ -48,7 +48,7 @@ export async function searchResults(
   const results = await prisma.result.findMany({
     where: {
       ...baseFilter,
-      matchDate: targetMatchDate!,
+      matchDate: targetMatchDate,
     },
     orderBy: { roundIndex: "asc" },
   });
@@ -56,7 +56,7 @@ export async function searchResults(
   const prev = await prisma.result.findMany({
     where: {
       ...baseFilter,
-      matchDate: { lt: targetMatchDate! },
+      matchDate: { lt: targetMatchDate },
     },
     distinct: ["matchDate"],
     orderBy: { matchDate: "desc" },
@@ -67,7 +67,7 @@ export async function searchResults(
   const next = await prisma.result.findMany({
     where: {
       ...baseFilter,
-      matchDate: { gt: targetMatchDate! },
+      matchDate: { gt: targetMatchDate },
     },
     distinct: ["matchDate"],
     orderBy: { matchDate: "asc" },
@@ -82,7 +82,7 @@ export async function searchResults(
   };
 
   return {
-    date: fmt(targetMatchDate)!,
+    date: fmt(targetMatchDate),
     prevDate: fmt(prev[0]?.matchDate),
     nextDate: fmt(next[0]?.matchDate),
     results,
