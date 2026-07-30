@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useActionToast } from "@/hooks/useActionToast";
 
 import DataGrid from "@/components/DataGrid/DataGrid";
@@ -39,11 +38,11 @@ export default function OrganizationClient() {
   return (
     <ManagementPanel
       title="団体管理"
-      actions={
-        <Link href="/dashboard" className={managementStyles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      }
+      action={{
+        href: "/dashboard",
+        label: "← ダッシュボードへ戻る",
+        className: managementStyles.backLink,
+      }}
       activeTab={O.activeTab}
       onTabChange={(tab) => {
         O.setActiveTab(tab);

@@ -1,7 +1,10 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import type { FormEvent, ReactElement } from "react";
 import styles from "./FormBar.module.css";
+
+export type FormBarChild = ReactElement | null;
+export type FormBarChildren = FormBarChild | FormBarChild[];
 
 /**
  * FormBar の基本プロパティ
@@ -9,7 +12,7 @@ import styles from "./FormBar.module.css";
  * - open: 開閉状態（true: 開く / false: 閉じる）
  */
 export interface BaseProps {
-  children: ReactNode;
+  children: FormBarChildren;
   open?: boolean;
 }
 
@@ -20,7 +23,7 @@ export interface BaseProps {
  */
 export interface FormProps extends BaseProps {
   as: "form";
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
 /**

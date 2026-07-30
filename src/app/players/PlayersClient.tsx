@@ -15,7 +15,6 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useActionToast } from "@/hooks/useActionToast";
 
 import AppButton from "@/components/Button/Button";
@@ -77,11 +76,11 @@ export default function PlayersClient({
   return (
     <ManagementPanel
       title="対局者管理"
-      actions={
-        <Link href="/dashboard" className={managementStyles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      }
+      action={{
+        href: "/dashboard",
+        label: "← ダッシュボードへ戻る",
+        className: managementStyles.backLink,
+      }}
       activeTab={P.activeTab}
       onTabChange={(tab) => {
         P.setActiveTab(tab);
@@ -91,7 +90,7 @@ export default function PlayersClient({
       onToggleOpen={() => setIsFormOpen((prev) => !prev)}
       searchContent={
         <FormBar>
-          {role === "owner" && allUsers && (
+          {role === "owner" && allUsers ? (
             <Select
               options={allUsers.map((u) => ({
                 label: u.name,
@@ -101,7 +100,7 @@ export default function PlayersClient({
               onChange={(opt) => opt && setSelectedUser(opt)}
               width="auto"
             />
-          )}
+          ) : null}
 
           <Select
             options={P.playerOptions}
@@ -136,7 +135,7 @@ export default function PlayersClient({
               P.handleRegister();
             }}
           >
-            {role === "owner" && allUsers && (
+            {role === "owner" && allUsers ? (
               <Select
                 options={allUsers.map((u) => ({
                   label: u.name,
@@ -146,7 +145,7 @@ export default function PlayersClient({
                 onChange={(opt) => opt && setSelectedUser(opt)}
                 width={260}
               />
-            )}
+            ) : null}
 
             <Input
               type="text"

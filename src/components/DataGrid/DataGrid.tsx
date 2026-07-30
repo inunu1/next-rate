@@ -1,11 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import styles from "./DataGrid.module.css";
+
+export type CellValue = string | number | ReactElement | null;
 
 export interface Column<T> {
   header: string;
-  render: (row: T) => ReactNode;
+  render: (row: T) => CellValue;
   mobileLabel?: string;
   hideOnMobile?: boolean;
 }
