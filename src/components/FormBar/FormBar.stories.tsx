@@ -32,6 +32,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {
+  args: {
+    children: null,
+  },
   render: (args) => (
     <FormBar {...args}>
       <DateInput defaultValue="2026-07-31" width={180} />
