@@ -44,11 +44,11 @@ export default function DashboardClient({
        * -------------------------------------------------------------------- */}
       <PageHeader
         title="next-rate"
-        actions={
-          <Link href="/api/auth/signout" className={styles.logoutButton}>
-            ログアウト
-          </Link>
-        }
+        action={{
+          href: "/api/auth/signout",
+          label: "ログアウト",
+          className: styles.logoutButton,
+        }}
       />
 
       <main className={styles.main}>

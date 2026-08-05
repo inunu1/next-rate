@@ -17,7 +17,6 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useActionToast } from "@/hooks/useActionToast";
 
 import DataGrid from "@/components/DataGrid/DataGrid";
@@ -66,11 +65,11 @@ export default function UserClient({
   return (
     <ManagementPanel
       title="ユーザー管理"
-      actions={
-        <Link href="/dashboard" className={managementStyles.backLink}>
-          ← ダッシュボードへ戻る
-        </Link>
-      }
+      action={{
+        href: "/dashboard",
+        label: "← ダッシュボードへ戻る",
+        className: managementStyles.backLink,
+      }}
       activeTab={U.activeTab}
       onTabChange={(tab) => {
         U.setActiveTab(tab);
@@ -188,7 +187,7 @@ export default function UserClient({
               header: "操作",
               mobileLabel: "操作",
               render: (u) =>
-                u.id !== U.currentUserId && (
+                u.id !== U.currentUserId ? (
                   <AppButton
                     variant="danger"
                     size="md"
@@ -198,7 +197,7 @@ export default function UserClient({
                   >
                     削除
                   </AppButton>
-                ),
+                ) : null,
             },
           ]}
         />

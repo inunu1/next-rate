@@ -1,16 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import Link from "next/link";
 import styles from "./PageHeader.module.css";
 
 /**
  * PageHeader コンポーネントのプロパティ定義
- * - title: 画面タイトル（文字列 or ReactNode）
- * - actions: 右側に配置する操作ボタン群（任意）
+ * - title: 画面タイトル
+ * - action: 右側に配置するリンク（任意）
  */
 export interface PageHeaderProps {
-  title: ReactNode;
-  actions?: ReactNode;
+  title: string;
+  action?: {
+    href: string;
+    label: string;
+    className?: string;
+  };
 }
 
 /**
@@ -23,14 +27,18 @@ export interface PageHeaderProps {
  * ---------------------------------------------------------
  */
 export default function PageHeader(props: PageHeaderProps) {
-  const { title, actions } = props;
+  const { title, action } = props;
 
   /**
-   * actions が存在する場合のみ右側に表示する。
+   * action が存在する場合のみ右側に表示する。
    * 存在しない場合は null を返し、余計な DOM を生成しない。
    */
-  const actionsElement = actions ? (
-    <div className={styles.actions}>{actions}</div>
+  const actionElement = action ? (
+    <div className={styles.actions}>
+      <Link href={action.href} className={action.className}>
+        {action.label}
+      </Link>
+    </div>
   ) : null;
 
   return (
@@ -39,7 +47,7 @@ export default function PageHeader(props: PageHeaderProps) {
       <div className={styles.title}>{title}</div>
 
       {/* アクション部分（任意） */}
-      {actionsElement}
+      {actionElement}
     </header>
   );
 }

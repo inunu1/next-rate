@@ -1,24 +1,34 @@
 "use client";
 
-import type { ReactNode } from "react";
+import Link from "next/link";
+import type { ReactElement } from "react";
 import styles from "./ManagementPanel.module.css";
+
+export type ManagementPanelContent = ReactElement | null;
+export type ManagementPanelChildren =
+  | ManagementPanelContent
+  | ManagementPanelContent[];
 
 export interface ManagementPanelProps {
   title: string;
-  actions?: ReactNode;
+  action?: {
+    href: string;
+    label: string;
+    className?: string;
+  };
   activeTab: "search" | "register";
   onTabChange: (tab: "search" | "register") => void;
   isFormOpen: boolean;
   onToggleOpen: () => void;
-  searchContent: ReactNode;
-  registerContent: ReactNode;
-  children?: ReactNode;
+  searchContent: ManagementPanelContent;
+  registerContent: ManagementPanelContent;
+  children?: ManagementPanelChildren;
 }
 
 export default function ManagementPanel(props: ManagementPanelProps) {
   const {
     title,
-    actions,
+    action,
     activeTab,
     onTabChange,
     isFormOpen,
@@ -32,7 +42,13 @@ export default function ManagementPanel(props: ManagementPanelProps) {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.title}>{title}</div>
-        {actions ? <div className={styles.actions}>{actions}</div> : null}
+        {action ? (
+          <div className={styles.actions}>
+            <Link href={action.href} className={action.className}>
+              {action.label}
+            </Link>
+          </div>
+        ) : null}
       </header>
 
       <div className={styles.formCard}>
@@ -71,7 +87,7 @@ export default function ManagementPanel(props: ManagementPanelProps) {
   );
 }
 
-export function ManagementTable({ children }: { children: ReactNode }) {
+export function ManagementTable({ children }: { children: ManagementPanelContent }) {
   return (
     <main className={styles.main}>
       <div className={styles.tableWrapper}>{children}</div>
