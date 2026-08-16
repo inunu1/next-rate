@@ -3,18 +3,7 @@
 import { useState, useCallback } from "react";
 import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
-
-export type OrganizationOption = {
-  value: string;
-  label: string;
-};
-
-export type OrganizationRecord = {
-  id: string;
-  name: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+import type { OrganizationOption, OrganizationRecord } from "@/types/organization";
 
 export function useOrganization() {
   const management = useManagementState<"search" | "register">("search");

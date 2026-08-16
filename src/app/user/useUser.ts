@@ -3,24 +3,11 @@
 import { useState, useCallback } from "react";
 import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
-
-export type UserOption = {
-  value: string;
-  label: string;
-  __isNew__?: boolean;
-};
-
-export type ManagedUser = {
-  id: string;
-  name: string | null;
-  email: string;
-  role: "owner" | "admin" | "editer" | "viewer";
-  organizationId?: string | null;
-};
+import type { ManagedUser, UserOption, UserRole } from "@/types/user";
 
 export function useUser(
   currentUserId: string,
-  currentUserRole: "owner" | "admin",
+  currentUserRole: Extract<UserRole, "owner" | "admin">,
   currentOrganizationId: string
 ) {
   const management = useManagementState<"search" | "register">("search");

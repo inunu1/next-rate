@@ -8,6 +8,16 @@
  * ============================================================================
  */
 
+export type OrganizationOption = {
+  value: string;
+  label: string;
+};
+
+export type OrganizationSummary = {
+  id: string;
+  name: string | null;
+};
+
 export type PostOrganizationBody = {
   /** 団体名 */
   name: string;
@@ -18,9 +28,7 @@ export type DeleteOrganizationBody = {
   id: string;
 };
 
-export type OrganizationRecord = {
-  id: string;
-  name: string | null;
+export type OrganizationRecord = OrganizationSummary & {
   createdAt: string;
   updatedAt: string;
 };

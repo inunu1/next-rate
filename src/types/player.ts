@@ -8,6 +8,11 @@
  * ============================================================================
  */
 
+export type PlayerOption = {
+  value: string;
+  label: string;
+};
+
 export type PostPlayerBody = {
   /** プレイヤー名（団体内でユニーク） */
   name: string;

@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Player, Result } from "@prisma/client";
 import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
-
-export type PlayerOption = { value: string; label: string };
+import type { PlayerOption, PlayerRecord } from "@/types/player";
+import type { ResultRecord, ResultSearchResponse } from "@/types/result";
 
 export function useResults(organizationId: string) {
   const management = useManagementState<"search" | "register">("search");
   const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
 
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
+  const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const [results, setResults] = useState<ResultRecord[]>([]);
 
   const [date, setDate] = useState<string | null>(null);
   const [prevDate, setPrevDate] = useState<string | null>(null);
@@ -36,7 +35,7 @@ export function useResults(organizationId: string) {
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
     const data = await runApiAction(
-      () => requestJson<Player[]>(`/api/private/player?organizationId=${organizationId}`),
+      () => requestJson<PlayerRecord[]>(`/api/private/player?organizationId=${organizationId}`),
       setLastAction,
       null,
       "fetch-error"
@@ -67,13 +66,7 @@ export function useResults(organizationId: string) {
       }).toString();
 
       const data = await runApiAction(
-        () =>
-          requestJson<{
-            date: string | null;
-            prevDate: string | null;
-            nextDate: string | null;
-            results: Result[];
-          }>(`/api/private/result?${qs}`),
+        () => requestJson<ResultSearchResponse>(`/api/private/result?${qs}`),
         setLastAction,
         null,
         "fetch-error"

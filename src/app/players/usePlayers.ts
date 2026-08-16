@@ -1,17 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Player } from "@prisma/client";
 import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
-
-export type PlayerOption = { value: string; label: string };
+import type { PlayerOption, PlayerRecord } from "@/types/player";
 
 export function usePlayers(organizationId: string) {
   const management = useManagementState<"search" | "register">("search");
   const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
 
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const [playerOpt, setPlayerOpt] = useState<PlayerOption | null>(null);
 
   const [name, setName] = useState("");
@@ -27,7 +25,7 @@ export function usePlayers(organizationId: string) {
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
     const data = await runApiAction(
-      () => requestJson<Player[]>(`/api/private/player?organizationId=${organizationId}`),
+      () => requestJson<PlayerRecord[]>(`/api/private/player?organizationId=${organizationId}`),
       setLastAction,
       null,
       "fetch-error"
