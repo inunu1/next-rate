@@ -2,72 +2,65 @@
  * カード一覧（PC：グリッド、SP：1カラム）
  * - PC では 2〜3 カラムの自動グリッド
  * - SP では 1 カラム
- * - 画面幅に応じて自然に並ぶ令和 SaaS レイアウト
  ************************************************************/
 .mobileCards {
   display: grid;
   gap: 1.25rem;
-
-  /* PC：カードを横に並べる（自動で2〜3カラム） */
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-
-  /* 画面幅いっぱいを使う */
   width: 100%;
   box-sizing: border-box;
 }
 
-/************************************************************
- * カード本体
- * - 背景色・枠線・影を統一
- * - グリッド内で自然に広がる
- ************************************************************/
 .card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 1rem;
-  box-shadow: var(--shadow-xs);
-
-  /* 長い文字列がはみ出さないように */
+  box-shadow: var(--shadow-sm);
   word-break: break-word;
 }
 
-/************************************************************
- * カード内の 1 行（ラベル＋値）
- ************************************************************/
 .cardRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .cardRow:last-child {
   border-bottom: none;
 }
 
-/************************************************************
- * ラベル部分
- ************************************************************/
 .cardLabel {
   font-weight: 600;
   color: var(--color-text-muted);
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-
   flex-shrink: 0;
   margin-right: 1rem;
 }
 
-/************************************************************
- * 値部分
- ************************************************************/
 .cardValue {
   color: var(--color-text-main);
   font-size: 0.95rem;
   text-align: right;
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .mobileCards {
+    grid-template-columns: 1fr;
+  }
+
+  .cardRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .cardValue {
+    text-align: left;
+  }
 }

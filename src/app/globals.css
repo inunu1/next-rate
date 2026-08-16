@@ -1,4 +1,58 @@
 /* =========================================
+   Design Tokens
+   ========================================= */
+:root {
+  --primary-h: 221;
+  --primary-s: 83%;
+  --primary-l: 53%;
+
+  --color-primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  --color-primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
+  --color-success: hsl(142, 71%, 45%);
+  --color-warning: hsl(45, 93%, 47%);
+  --color-danger: hsl(0, 84%, 60%);
+
+  --color-bg-app: hsl(210, 40%, 98%);
+  --color-bg-surface: #ffffff;
+  --color-text-main: hsl(215, 25%, 27%);
+  --color-text-muted: hsl(215, 16%, 47%);
+  --color-border: hsl(214, 32%, 91%);
+
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --container-max-width: 1200px;
+  --header-height: 70px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  --transition-fast: 0.2s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-app: hsl(220, 20%, 14%);
+    --color-bg-surface: hsl(220, 20%, 18%);
+    --color-text-main: hsl(220, 20%, 94%);
+    --color-text-muted: hsl(220, 10%, 70%);
+    --color-border: hsl(220, 20%, 26%);
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --color-table-bg: hsl(220, 20%, 22%);
+    --color-table-header-bg: hsl(220, 20%, 16%);
+    --color-table-border: hsl(220, 20%, 28%);
+    --color-btn-danger-bg: hsla(0, 84%, 60%, 0.18);
+    --color-btn-danger-hover: hsla(0, 84%, 60%, 0.32);
+    --color-btn-danger-text: hsl(0, 84%, 70%);
+  }
+}
+
+/* =========================================
    Common Button Styles (Global)
    ========================================= */
 .btn-primary {
@@ -15,6 +69,7 @@
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
   transition: all var(--transition-fast);
 }
+
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
@@ -34,6 +89,7 @@
   font-size: 0.9rem;
   transition: all var(--transition-fast);
 }
+
 .btn-ghost:hover {
   background-color: rgba(0, 0, 0, 0.05);
   border-color: var(--color-text-muted);
@@ -52,6 +108,7 @@
   font-size: 0.9rem;
   transition: all var(--transition-fast);
 }
+
 .btn-clear:hover {
   background-color: rgba(0, 0, 0, 0.08);
   color: var(--color-text-main);
@@ -68,9 +125,39 @@
   font-weight: 600;
   transition: all var(--transition-fast);
 }
+
 .btn-danger:hover {
   background-color: rgba(220, 38, 38, 0.2);
 }
+
+@media (prefers-color-scheme: dark) {
+  .tableWrapper {
+    background-color: var(--color-table-bg) !important;
+    border-color: var(--color-table-border) !important;
+  }
+
+  .table th {
+    background-color: var(--color-table-header-bg) !important;
+    color: var(--color-text-muted) !important;
+    border-bottom: 1px solid var(--color-table-border) !important;
+  }
+
+  .table td {
+    color: var(--color-text-main) !important;
+    border-bottom: 1px solid var(--color-table-border) !important;
+  }
+
+  .btn-danger {
+    background-color: var(--color-btn-danger-bg) !important;
+    color: var(--color-btn-danger-text) !important;
+  }
+
+  .btn-danger:hover {
+    background-color: var(--color-btn-danger-hover) !important;
+    color: #fff !important;
+  }
+}
+
 /* =========================================
    Input Field Styling (Global)
    ========================================= */
@@ -85,7 +172,6 @@
   flex-shrink: 0;
   outline: none;
   transition: all var(--transition-fast);
-  /* widthはpropsや親要素で制御 */
 }
 
 .input:focus {
@@ -95,90 +181,6 @@
 
 .input::placeholder {
   color: var(--color-text-muted);
-}
-/* =========================================
-   Modern Design System & Variables
-   ========================================= */
-:root {
-  /* Color Palette (HSL for easier manipulation) */
-  --primary-h: 221;
-  --primary-s: 83%;
-  --primary-l: 53%;
-  --color-primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-  --color-primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
-
-  --color-success: hsl(142, 71%, 45%);
-  --color-warning: hsl(45, 93%, 47%);
-  --color-danger: hsl(0, 84%, 60%);
-
-  /* Neutrals */
-  --color-bg-app: hsl(210, 40%, 98%);     /* Slightly cool gray background */
-  --color-bg-surface: #ffffff;
-  --color-text-main: hsl(215, 25%, 27%);
-  --color-text-muted: hsl(215, 16%, 47%);
-  --color-border: hsl(214, 32%, 91%);
-
-  /* Typography */
-  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  /* Spacing & Sizing */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --container-max-width: 1200px;
-  --header-height: 70px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-  /* Transitions */
-  --transition-fast: 0.2s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg-app: hsl(220, 20%, 14%);
-    --color-bg-surface: hsl(220, 20%, 18%);
-    --color-text-main: hsl(220, 20%, 94%);
-    --color-text-muted: hsl(220, 10%, 70%);
-    --color-border: hsl(220, 20%, 26%);
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    /* テーブル・ボタンのダーク用色調整 */
-    --color-table-bg: hsl(220, 20%, 22%);
-    --color-table-header-bg: hsl(220, 20%, 16%);
-    --color-table-border: hsl(220, 20%, 28%);
-    --color-btn-danger-bg: hsla(0, 84%, 60%, 0.18);
-    --color-btn-danger-hover: hsla(0, 84%, 60%, 0.32);
-    --color-btn-danger-text: hsl(0, 84%, 70%);
-  }
-}
-/* ===== ダークモード用 テーブル・ボタン色調整 ===== */
-@media (prefers-color-scheme: dark) {
-  .tableWrapper {
-    background-color: var(--color-table-bg) !important;
-    border-color: var(--color-table-border) !important;
-  }
-  .table th {
-    background-color: var(--color-table-header-bg) !important;
-    color: var(--color-text-muted) !important;
-    border-bottom: 1px solid var(--color-table-border) !important;
-  }
-  .table td {
-    color: var(--color-text-main) !important;
-    border-bottom: 1px solid var(--color-table-border) !important;
-  }
-  .btn-danger {
-    background-color: var(--color-btn-danger-bg) !important;
-    color: var(--color-btn-danger-text) !important;
-  }
-  .btn-danger:hover {
-    background-color: var(--color-btn-danger-hover) !important;
-    color: #fff !important;
-  }
 }
 
 /* =========================================
@@ -190,7 +192,8 @@
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -212,6 +215,45 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+}
+
+/* =========================================
+   Shared Layout Utilities
+   ========================================= */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.page-shell {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--header-height);
+  margin-bottom: 1.5rem;
+  padding: 0 2rem;
+}
+
+.panel-card {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .page-shell,
+  .page-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
 /* =========================================
