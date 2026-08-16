@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { parseApiResponse } from "@/lib/fetchJson";
+import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
 
 export type OrganizationOption = {
@@ -26,15 +26,18 @@ export function useOrganization() {
   const [registerName, setRegisterName] = useState("");
 
   const fetchOrganizations = useCallback(async () => {
-    try {
-      const res = await fetch("/api/private/organization");
-      const data = await parseApiResponse<OrganizationRecord[]>(res);
+    const data = await runApiAction(
+      () => requestJson<OrganizationRecord[]>("/api/private/organization"),
+      setLastAction,
+      null,
+      "fetch-error"
+    );
+
+    if (data) {
       setOrganizations(data);
       setFilteredOrganizations(data);
-    } catch {
-      setLastAction("fetch-error");
     }
-  }, []);
+  }, [setLastAction]);
 
   const init = useCallback(async () => {
     initialize();
@@ -52,21 +55,23 @@ export function useOrganization() {
       return;
     }
 
-    try {
-      const res = await fetch("/api/private/organization", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: registerName.trim() }),
-      });
-      await parseApiResponse(res);
+    const result = await runApiAction(
+      async () => {
+        await requestJson("/api/private/organization", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: registerName.trim() }),
+        });
+        setRegisterName("");
+        await fetchOrganizations();
+      },
+      setLastAction,
+      "register-success",
+      "register-error"
+    );
 
-      setRegisterName("");
-      setLastAction("register-success");
-      await fetchOrganizations();
-    } catch {
-      setLastAction("register-error");
-    }
-  }, [registerName, fetchOrganizations]);
+    return result;
+  }, [registerName, fetchOrganizations, setLastAction]);
 
   const handleSearch = useCallback(() => {
     if (!searchOpt) {
@@ -88,20 +93,21 @@ export function useOrganization() {
     async (id: string) => {
       if (!confirm("この団体を削除しますか？")) return;
 
-      try {
-        const res = await fetch("/api/private/organization", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-        await parseApiResponse(res);
-        setLastAction("delete-success");
-        await fetchOrganizations();
-      } catch {
-        setLastAction("delete-error");
-      }
+      await runApiAction(
+        async () => {
+          await requestJson("/api/private/organization", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+          await fetchOrganizations();
+        },
+        setLastAction,
+        "delete-success",
+        "delete-error"
+      );
     },
-    [fetchOrganizations]
+    [fetchOrganizations, setLastAction]
   );
 
   return {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { parseApiResponse } from "@/lib/fetchJson";
+import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
 
 export type UserOption = {
@@ -50,25 +50,31 @@ export function useUser(
    * 団体一覧取得
    * ------------------------------------------------------------------------ */
   const fetchUsers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/private/user");
-      const data = await parseApiResponse<ManagedUser[]>(res);
+    const data = await runApiAction(
+      () => requestJson<ManagedUser[]>("/api/private/user"),
+      setLastAction,
+      null,
+      "fetch-error"
+    );
+
+    if (data) {
       setUsers(data);
       setFilteredUsers(data);
-    } catch {
-      setLastAction("fetch-error");
     }
-  }, []);
+  }, [setLastAction]);
 
   const fetchOrganizations = useCallback(async () => {
-    try {
-      const res = await fetch("/api/private/organization");
-      const data = await parseApiResponse<{ id: string; name: string | null }[]>(res);
+    const data = await runApiAction(
+      () => requestJson<{ id: string; name: string | null }[]>("/api/private/organization"),
+      setLastAction,
+      null,
+      "fetch-error"
+    );
+
+    if (data) {
       setOrganizations(data);
-    } catch {
-      setLastAction("fetch-error");
     }
-  }, []);
+  }, [setLastAction]);
 
   /* --------------------------------------------------------------------------
    * 初期化
@@ -130,35 +136,36 @@ export function useUser(
       return;
     }
 
-    try {
-      const res = await fetch("/api/private/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: registerName.trim(),
-          email,
-          password,
-          role: roleOpt.value,
-          organizationId:
-            currentUserRole === "admin"
-              ? currentOrganizationId
-              : organizationOpt?.value ?? null,
-        }),
-      });
-      await parseApiResponse(res);
+    await runApiAction(
+      async () => {
+        await requestJson("/api/private/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: registerName.trim(),
+            email,
+            password,
+            role: roleOpt.value,
+            organizationId:
+              currentUserRole === "admin"
+                ? currentOrganizationId
+                : organizationOpt?.value ?? null,
+          }),
+        });
 
-      setRegisterName("");
-      setEmail("");
-      setPassword("");
-      setRoleOpt(null);
-      setOrganizationOpt(null);
+        setRegisterName("");
+        setEmail("");
+        setPassword("");
+        setRoleOpt(null);
+        setOrganizationOpt(null);
 
-      setLastAction("register-success");
-      await fetchUsers();
-    } catch {
-      setLastAction("register-error");
-    }
-  }, [registerName, email, password, roleOpt, organizationOpt, fetchUsers, currentUserRole, currentOrganizationId]);
+        await fetchUsers();
+      },
+      setLastAction,
+      "register-success",
+      "register-error"
+    );
+  }, [registerName, email, password, roleOpt, organizationOpt, fetchUsers, currentUserRole, currentOrganizationId, setLastAction]);
 
   /* --------------------------------------------------------------------------
    * 検索
@@ -195,21 +202,21 @@ export function useUser(
     async (id: string) => {
       if (!confirm("この団体を削除しますか？")) return;
 
-      try {
-        const res = await fetch("/api/private/user", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-        await parseApiResponse(res);
-
-        setLastAction("delete-success");
-        await fetchUsers();
-      } catch {
-        setLastAction("delete-error");
-      }
+      await runApiAction(
+        async () => {
+          await requestJson("/api/private/user", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+          await fetchUsers();
+        },
+        setLastAction,
+        "delete-success",
+        "delete-error"
+      );
     },
-    [fetchUsers]
+    [fetchUsers, setLastAction]
   );
 
   /* --------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { Player } from "@prisma/client";
-import { parseApiResponse } from "@/lib/fetchJson";
+import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
 
 export type PlayerOption = { value: string; label: string };
@@ -26,14 +26,17 @@ export function usePlayers(organizationId: string) {
    * プレイヤー一覧取得
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/private/player?organizationId=${organizationId}`);
-      const data = await parseApiResponse<Player[]>(res);
+    const data = await runApiAction(
+      () => requestJson<Player[]>(`/api/private/player?organizationId=${organizationId}`),
+      setLastAction,
+      null,
+      "fetch-error"
+    );
+
+    if (data) {
       setPlayers(data);
-    } catch {
-      setLastAction("fetch-error");
     }
-  }, [organizationId]);
+  }, [organizationId, setLastAction]);
 
   /* --------------------------------------------------------------------------
    * 初期化
@@ -60,28 +63,27 @@ export function usePlayers(organizationId: string) {
       return;
     }
 
-    try {
-      const res = await fetch("/api/private/player", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          rate: Number(initialRate),
-          organizationId,
-        }),
-      });
+    await runApiAction(
+      async () => {
+        await requestJson("/api/private/player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            rate: Number(initialRate),
+            organizationId,
+          }),
+        });
 
-      await parseApiResponse(res);
-
-      setName("");
-      setInitialRate("1500");
-
-      setLastAction("register-success");
-      await fetchPlayers();
-    } catch {
-      setLastAction("register-error");
-    }
-  }, [name, initialRate, organizationId, fetchPlayers]);
+        setName("");
+        setInitialRate("1500");
+        await fetchPlayers();
+      },
+      setLastAction,
+      "register-success",
+      "register-error"
+    );
+  }, [name, initialRate, organizationId, fetchPlayers, setLastAction]);
 
   /* --------------------------------------------------------------------------
    * 削除
@@ -90,22 +92,21 @@ export function usePlayers(organizationId: string) {
     async (id: string) => {
       if (!confirm("このプレイヤーを削除しますか？")) return;
 
-      try {
-        const res = await fetch("/api/private/player", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, organizationId }),
-        });
-
-        await parseApiResponse(res);
-
-        setLastAction("delete-success");
-        await fetchPlayers();
-      } catch {
-        setLastAction("delete-error");
-      }
+      await runApiAction(
+        async () => {
+          await requestJson("/api/private/player", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, organizationId }),
+          });
+          await fetchPlayers();
+        },
+        setLastAction,
+        "delete-success",
+        "delete-error"
+      );
     },
-    [organizationId, fetchPlayers]
+    [organizationId, fetchPlayers, setLastAction]
   );
 
   /* --------------------------------------------------------------------------

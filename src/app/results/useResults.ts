@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { Player, Result } from "@prisma/client";
-import { parseApiResponse } from "@/lib/fetchJson";
+import { requestJson, runApiAction } from "@/lib/apiAction";
 import { useManagementState } from "@/hooks/useManagementState";
 
 export type PlayerOption = { value: string; label: string };
@@ -35,14 +35,17 @@ export function useResults(organizationId: string) {
    * プレイヤー一覧取得
    * ------------------------------------------------------------------------ */
   const fetchPlayers = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/private/player?organizationId=${organizationId}`);
-      const data = await parseApiResponse<Player[]>(res);
+    const data = await runApiAction(
+      () => requestJson<Player[]>(`/api/private/player?organizationId=${organizationId}`),
+      setLastAction,
+      null,
+      "fetch-error"
+    );
+
+    if (data) {
       setPlayers(data);
-    } catch {
-      setLastAction("fetch-error");
     }
-  }, [organizationId]);
+  }, [organizationId, setLastAction]);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
@@ -54,38 +57,43 @@ export function useResults(organizationId: string) {
    * ------------------------------------------------------------------------ */
   const fetchResults = useCallback(
     async (params: Record<string, string | undefined>) => {
-      try {
-        const filtered = Object.fromEntries(
-          Object.entries(params).filter(([, v]) => v !== undefined)
-        ) as Record<string, string>;
+      const filtered = Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined)
+      ) as Record<string, string>;
 
-        const qs = new URLSearchParams({
-          ...filtered,
-          organizationId,
-        }).toString();
+      const qs = new URLSearchParams({
+        ...filtered,
+        organizationId,
+      }).toString();
 
-        const res = await fetch(`/api/private/result?${qs}`);
-        const data = await parseApiResponse<{
-          date: string | null;
-          prevDate: string | null;
-          nextDate: string | null;
-          results: Result[];
-        }>(res);
+      const data = await runApiAction(
+        () =>
+          requestJson<{
+            date: string | null;
+            prevDate: string | null;
+            nextDate: string | null;
+            results: Result[];
+          }>(`/api/private/result?${qs}`),
+        setLastAction,
+        null,
+        "fetch-error"
+      );
 
-        setResults(data.results ?? []);
-        setDate(data.date ?? null);
-        setPrevDate(data.prevDate ?? null);
-        setNextDate(data.nextDate ?? null);
-        if (data.date) {
-          setSearchDate(data.date);
-        }
-
-        return data;
-      } catch {
-        setLastAction("fetch-error");
+      if (!data) {
+        return undefined;
       }
+
+      setResults(data.results ?? []);
+      setDate(data.date ?? null);
+      setPrevDate(data.prevDate ?? null);
+      setNextDate(data.nextDate ?? null);
+      if (data.date) {
+        setSearchDate(data.date);
+      }
+
+      return data;
     },
-    [organizationId]
+    [organizationId, setLastAction]
   );
 
   /* --------------------------------------------------------------------------
@@ -138,45 +146,46 @@ export function useResults(organizationId: string) {
       return false;
     }
 
-    try {
-      const w = players.find((p) => p.id === winnerOpt.value)!;
-      const l = players.find((p) => p.id === loserOpt.value)!;
+    const w = players.find((p) => p.id === winnerOpt.value)!;
+    const l = players.find((p) => p.id === loserOpt.value)!;
 
-      const res = await fetch("/api/private/result", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          winnerId: w.id,
-          winnerName: w.name,
-          winnerRate: w.currentRate,
-          loserId: l.id,
-          loserName: l.name,
-          loserRate: l.currentRate,
-          matchDate: Number(registerDate.replaceAll("-", "")),
-          roundIndex: Number(roundIndex),
-          organizationId,
-        }),
-      });
-      await parseApiResponse(res);
+    const result = await runApiAction(
+      async () => {
+        await requestJson("/api/private/result", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            winnerId: w.id,
+            winnerName: w.name,
+            winnerRate: w.currentRate,
+            loserId: l.id,
+            loserName: l.name,
+            loserRate: l.currentRate,
+            matchDate: Number(registerDate.replaceAll("-", "")),
+            roundIndex: Number(roundIndex),
+            organizationId,
+          }),
+        });
 
-      const calculateRes = await fetch("/api/private/calculate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId }),
-      });
-      await parseApiResponse(calculateRes);
+        await requestJson("/api/private/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ organizationId }),
+        });
 
-      await fetchPlayers();
-      setLastAction("register-success");
+        await fetchPlayers();
 
-      const params = { date: registerDate };
-      setSearchParams(params);
-      await fetchResults(params);
-      return true;
-    } catch {
-      setLastAction("register-error");
-      return false;
-    }
+        const params = { date: registerDate };
+        setSearchParams(params);
+        await fetchResults(params);
+        return true;
+      },
+      setLastAction,
+      "register-success",
+      "register-error"
+    );
+
+    return Boolean(result);
   }, [
     winnerOpt,
     loserOpt,
@@ -186,6 +195,7 @@ export function useResults(organizationId: string) {
     organizationId,
     fetchResults,
     fetchPlayers,
+    setLastAction,
   ]);
 
   /* --------------------------------------------------------------------------
@@ -198,31 +208,32 @@ export function useResults(organizationId: string) {
 
       if (!confirm("この対局結果を削除しますか？")) return;
 
-      try {
-        const res = await fetch(`/api/private/result?id=${id}&organizationId=${organizationId}`, {
-          method: "DELETE",
-        });
-        await parseApiResponse(res);
+      await runApiAction(
+        async () => {
+          await requestJson(`/api/private/result?id=${id}&organizationId=${organizationId}`, {
+            method: "DELETE",
+          });
 
-        await fetch("/api/private/calculate", {
-          method: "POST",
-          body: JSON.stringify({ organizationId }),
-        });
+          await requestJson("/api/private/calculate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ organizationId }),
+          });
 
-        setLastAction("delete-success");
+          const s = target.matchDate.toString();
+          const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 
-        const s = target.matchDate.toString();
-        const dateStr = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+          const params = { ...searchParams, date: dateStr };
+          setSearchParams(params);
 
-        const params = { ...searchParams, date: dateStr };
-        setSearchParams(params);
-
-        await fetchResults(params);
-      } catch {
-        setLastAction("delete-error");
-      }
+          await fetchResults(params);
+        },
+        setLastAction,
+        "delete-success",
+        "delete-error"
+      );
     },
-    [results, organizationId, searchParams, fetchResults]
+    [results, organizationId, searchParams, fetchResults, setLastAction]
   );
 
   /* --------------------------------------------------------------------------
