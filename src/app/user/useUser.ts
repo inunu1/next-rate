@@ -1,16 +1,8 @@
 "use client";
 
-/**
- * ============================================================================
- * useUser（団体管理ロジック）完全修正版
- * ・role（owner/admin）対応
- * ・UserClient.tsx のトースト通知と完全連動
- * ・lastAction により UI 側で成功/失敗を判定可能
- * ============================================================================
- */
-
 import { useState, useCallback } from "react";
 import { parseApiResponse } from "@/lib/fetchJson";
+import { useManagementState } from "@/hooks/useManagementState";
 
 export type UserOption = {
   value: string;
@@ -31,10 +23,8 @@ export function useUser(
   currentUserRole: "owner" | "admin",
   currentOrganizationId: string
 ) {
-  /* --------------------------------------------------------------------------
-   * 状態管理
-   * ------------------------------------------------------------------------ */
-  const [mounted, setMounted] = useState(false);
+  const management = useManagementState<"search" | "register">("search");
+  const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<ManagedUser[]>([]);
@@ -42,8 +32,6 @@ export function useUser(
     id: string;
     name: string | null;
   }[]>([]);
-
-  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
 
   const [searchOpt, setSearchOpt] = useState<UserOption | null>(null);
   const [registerName, setRegisterName] = useState("");
@@ -57,9 +45,6 @@ export function useUser(
       ? { value: currentOrganizationId, label: "自団体" }
       : null
   );
-
-  // ★ トースト通知用のアクション状態
-  const [lastAction, setLastAction] = useState<string | null>(null);
 
   /* --------------------------------------------------------------------------
    * 団体一覧取得
@@ -89,9 +74,9 @@ export function useUser(
    * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
-    setMounted(true);
+    initialize();
     await Promise.all([fetchUsers(), fetchOrganizations()]);
-  }, [fetchUsers, fetchOrganizations]);
+  }, [fetchUsers, fetchOrganizations, initialize]);
 
   /* --------------------------------------------------------------------------
    * オプション

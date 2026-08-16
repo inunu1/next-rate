@@ -1,34 +1,21 @@
 "use client";
 
-/**
- * ============================================================================
- * usePlayers（対局者管理ロジック）完全修正版
- * ・トースト通知用 lastAction を追加
- * ・alert() を全廃し、UI 側で toast を出せる構造に統一
- * ・User / Results と同じ設計思想で責務分離
- * ============================================================================
- */
-
 import { useState, useCallback } from "react";
 import type { Player } from "@prisma/client";
 import { parseApiResponse } from "@/lib/fetchJson";
+import { useManagementState } from "@/hooks/useManagementState";
 
 export type PlayerOption = { value: string; label: string };
 
 export function usePlayers(organizationId: string) {
-  /* --------------------------------------------------------------------------
-   * 状態管理
-   * ------------------------------------------------------------------------ */
-  const [mounted, setMounted] = useState(false);
+  const management = useManagementState<"search" | "register">("search");
+  const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
+
   const [players, setPlayers] = useState<Player[]>([]);
-  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
   const [playerOpt, setPlayerOpt] = useState<PlayerOption | null>(null);
 
   const [name, setName] = useState("");
   const [initialRate, setInitialRate] = useState("1500");
-
-  // ★ トースト通知用
-  const [lastAction, setLastAction] = useState<string | null>(null);
 
   const playerOptions: PlayerOption[] = players.map((p) => ({
     value: p.id,
@@ -52,9 +39,9 @@ export function usePlayers(organizationId: string) {
    * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
-    setMounted(true);
+    initialize();
     await fetchPlayers();
-  }, [fetchPlayers]);
+  }, [fetchPlayers, initialize]);
 
   /* --------------------------------------------------------------------------
    * 検索（Players は playerOpt のみでフィルタ）

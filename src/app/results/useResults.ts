@@ -1,25 +1,15 @@
 "use client";
 
-/**
- * ============================================================================
- * useResults（対局結果管理ロジック）完全修正版
- * ・トースト通知用 lastAction を追加
- * ・alert() を全廃し、UI 側で toast を出せる構造に統一
- * ・UserClient と同じ設計思想で責務分離
- * ============================================================================
- */
-
 import { useState, useCallback } from "react";
 import type { Player, Result } from "@prisma/client";
 import { parseApiResponse } from "@/lib/fetchJson";
+import { useManagementState } from "@/hooks/useManagementState";
 
 export type PlayerOption = { value: string; label: string };
 
 export function useResults(organizationId: string) {
-  /* --------------------------------------------------------------------------
-   * 状態管理
-   * ------------------------------------------------------------------------ */
-  const [mounted, setMounted] = useState(false);
+  const management = useManagementState<"search" | "register">("search");
+  const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [results, setResults] = useState<Result[]>([]);
@@ -36,15 +26,10 @@ export function useResults(organizationId: string) {
   const [registerDate, setRegisterDate] = useState("");
   const [roundIndex, setRoundIndex] = useState("1");
 
-  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
-
   const [searchParams, setSearchParams] = useState<{
     date?: string;
     playerId?: string;
   }>({});
-
-  // ★ トースト通知用
-  const [lastAction, setLastAction] = useState<string | null>(null);
 
   /* --------------------------------------------------------------------------
    * プレイヤー一覧取得
@@ -107,11 +92,11 @@ export function useResults(organizationId: string) {
    * 初期化
    * ------------------------------------------------------------------------ */
   const init = useCallback(async () => {
-    setMounted(true);
+    initialize();
     await fetchPlayers();
     const data = await fetchResults({});
     setSearchParams({ date: data?.date ?? undefined });
-  }, [fetchPlayers, fetchResults]);
+  }, [fetchPlayers, fetchResults, initialize]);
 
   /* --------------------------------------------------------------------------
    * 検索

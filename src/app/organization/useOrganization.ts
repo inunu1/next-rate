@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { parseApiResponse } from "@/lib/fetchJson";
+import { useManagementState } from "@/hooks/useManagementState";
 
 export type OrganizationOption = {
   value: string;
@@ -16,13 +17,13 @@ export type OrganizationRecord = {
 };
 
 export function useOrganization() {
-  const [mounted, setMounted] = useState(false);
+  const management = useManagementState<"search" | "register">("search");
+  const { mounted, activeTab, setActiveTab, lastAction, setLastAction, initialize } = management;
+
   const [organizations, setOrganizations] = useState<OrganizationRecord[]>([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState<OrganizationRecord[]>([]);
-  const [activeTab, setActiveTab] = useState<"search" | "register">("search");
   const [searchOpt, setSearchOpt] = useState<OrganizationOption | null>(null);
   const [registerName, setRegisterName] = useState("");
-  const [lastAction, setLastAction] = useState<string | null>(null);
 
   const fetchOrganizations = useCallback(async () => {
     try {
@@ -36,9 +37,9 @@ export function useOrganization() {
   }, []);
 
   const init = useCallback(async () => {
-    setMounted(true);
+    initialize();
     await fetchOrganizations();
-  }, [fetchOrganizations]);
+  }, [fetchOrganizations, initialize]);
 
   const userOptions: OrganizationOption[] = organizations.map((o) => ({
     value: o.id,
