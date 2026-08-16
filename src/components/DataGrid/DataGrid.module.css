@@ -1,8 +1,9 @@
-/************************************************************
- * カード一覧（PC：グリッド、SP：1カラム）
- * - PC では 2〜3 カラムの自動グリッド
- * - SP では 1 カラム
- ************************************************************/
+/* ============================================================
+ * DataGrid
+ *  - shared card-based list layout
+ *  - keep current responsive presentation intact
+ * ============================================================ */
+
 .mobileCards {
   display: grid;
   gap: 1.25rem;
@@ -22,8 +23,8 @@
 
 .cardRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--color-border);
 }
@@ -33,20 +34,20 @@
 }
 
 .cardLabel {
-  font-weight: 600;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   flex-shrink: 0;
   margin-right: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .cardValue {
-  color: var(--color-text-main);
-  font-size: 0.95rem;
-  text-align: right;
   flex: 1;
+  font-size: 0.95rem;
+  color: var(--color-text-main);
+  text-align: right;
 }
 
 @media (max-width: 768px) {

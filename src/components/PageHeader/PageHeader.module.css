@@ -1,17 +1,17 @@
-/************************************************************
- * PageHeader 全体のヘッダー領域
- * - 画面上部に固定されるタイトル＋アクションのコンテナ
- * - 横幅は常に 100%
- * - 高さはアプリ共通のヘッダー高さを使用
- ************************************************************/
+/* ============================================================
+ * PageHeader
+ *  - simple shared header for page titles and action controls
+ *  - preserve the current visual rhythm and spacing
+ * ============================================================ */
+
 .header {
-  height: var(--header-height);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  margin-bottom: 2rem;
   padding: 0 2rem;
   background-color: transparent;
-  margin-bottom: 2rem;
 }
 
 .title {
